@@ -1,0 +1,26 @@
+{
+    "name": "HyperLinker",
+    "version": "0.0.0.1",
+    "manifest_version": 3,
+    "description": "An extension to play the Wikipedia Game with customizations",
+    "permissions": ["declarativeContent", "tabs", "storage"],
+    "host_permissions": [
+        "https://*.wikipedia.org/wiki/*",
+        "https://*.wikipedia.org/w/*"
+    ],
+    "icons": { 
+        "128" : "icons/WG_transparent.png"
+    },
+    "action": {
+        "default_popup": "popup/popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": ["https://*.wikipedia.org/wiki/*", "*.wikipedia.org/w/*"],
+            "js": ["contentScript.js"]
+        }
+    ]
+}
