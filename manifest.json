@@ -9,10 +9,11 @@
         "https://*.wikipedia.org/w/*"
     ],
     "icons": { 
-        "128" : "icons/WG_transparent.png"
+        "128" : "assets/WG_transparent.png"
     },
     "action": {
-        "default_popup": "popup/popup.html"
+        "default_popup": "popup/popup.html",
+        "default_title": "HyperLinker: Wikipedia Game"
     },
     "background": {
         "service_worker": "background.js"
