@@ -12,16 +12,6 @@
         "128" : "assets/WG_transparent.png"
     },
     "action": {
-        "default_popup": "popup/popup.html",
-        "default_title": "HyperLinker: Wikipedia Game"
-    },
-    "background": {
-        "service_worker": "background.js"
-    },
-    "content_scripts": [
-        {
-            "matches": ["https://*.wikipedia.org/wiki/*", "*.wikipedia.org/w/*"],
-            "js": ["contentScript.js"]
-        }
-    ]
+        "default_popup":"index.html"
+    }
 }
