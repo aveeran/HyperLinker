@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* index.css or a similar global stylesheet */
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;      /* Number of lines to show */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
