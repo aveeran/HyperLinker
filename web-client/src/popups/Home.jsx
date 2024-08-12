@@ -11,7 +11,13 @@ function Home() {
   useEffect(() => {
     const fetchHtml = async () => {
       try {
-        const response = await fetch('https://en.wikipedia.org/api/rest_v1/feed/featured/2024/08/12');
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${year}/${month}/${day}`;
+
+        const response = await fetch(`https://en.wikipedia.org/api/rest_v1/feed/featured/${formattedDate}`);
         if(!response.ok) {
           throw new Error('Unable to retrieve information from Wikipedia');
         }
@@ -32,14 +38,20 @@ function Home() {
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
       <h5 className="text-2xl text-center mb-3">Article of the Day</h5>
-      <div className="border-black border-2 border-solid p-1.5">
+      <div className="border-black border-2 border-solid p-1.5 m-3">
       {loading ? (
         <p>Loading...</p>
       ) : error ? (
         <p>Error: {error.message}</p>
       ) : (
         <div>
-          <div dangerouslySetInnerHTML={{__html: htmlContent.displaytitle}}/>
+          <a 
+          href={htmlContent.content_urls.desktop.page} 
+          className="block"  
+          target="_blank"
+          rel="noopener noreferrer"
+          dangerouslySetInnerHTML={{__html: htmlContent.displaytitle}}
+          />
           <div className="flex items-center space-x-4">
             <div dangerouslySetInnerHTML={{__html: htmlContent.extract_html}} className="line-clamp-6 text-sm"/>
             <img src={htmlContent.thumbnail.source} className="w-32 h-32"/>
