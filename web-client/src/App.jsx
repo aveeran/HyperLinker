@@ -2,7 +2,10 @@ import Home from "./popups/home.jsx";
 import './index.css';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import SingleplayerDashboard from "./popups/SingleplayerDashboard.jsx";
-import EditCustomization from "./popups/EditCustomization.jsx";
+import SingleMode from "./popups/singleplayer_customization/SingleMode.jsx";
+import SingleTrack from "./popups/singleplayer_customization/SingleTrack.jsx";
+import SingleRestrictions from "./popups/singleplayer_customization/SingleRestrictions.jsx";
+
 
 function App() {
   return (
@@ -11,7 +14,9 @@ function App() {
       <Routes>
         <Route path ="/" element={<Home/>}/>
         <Route path ="/singleplayer_dashboard" element={<SingleplayerDashboard/>}/>
-        <Route path ="/singleplayer_dashboard/singleplayer_customization" element={<EditCustomization singleplayer={true}/>}/>
+        <Route path ="/singleplayer_dashboard/singleplayer_customization/mode" element={<SingleMode/>}/>
+        <Route path ="/singleplayer_dashboard/singleplayer_customization/track" element={<SingleTrack/>}/>
+        <Route path ="/singleplayer_dashboard/singleplayer_customization/restrictions" element={<SingleRestrictions/>}/>
       </Routes>
       </div>
     </Router>
