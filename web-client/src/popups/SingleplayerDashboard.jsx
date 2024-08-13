@@ -8,6 +8,7 @@ function SingleplayerDashboard() {
   let customizations = {};
   if(storedCustomizations) {
     customizations = JSON.parse(storedCustomizations);
+    customizations.mode = 'a'
   } else {
     customizations = {
       'mode': 'normal',
@@ -27,12 +28,8 @@ function SingleplayerDashboard() {
   }
 
   const handleCustomizationClick = () => {
-    navigate('/singleplayer_customization');
+    navigate('singleplayer_customization');
   }
-
-
-
-
   return (
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>

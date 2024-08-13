@@ -11,7 +11,7 @@ function App() {
       <Routes>
         <Route path ="/" element={<Home/>}/>
         <Route path ="/singleplayer_dashboard" element={<SingleplayerDashboard/>}/>
-        <Route path ="/singleplayer_customization" element={<EditCustomization singleplayer={true}/>}/>
+        <Route path ="/singleplayer_dashboard/singleplayer_customization" element={<EditCustomization singleplayer={true}/>}/>
       </Routes>
       </div>
     </Router>
