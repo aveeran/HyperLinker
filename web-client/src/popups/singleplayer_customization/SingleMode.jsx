@@ -35,7 +35,11 @@ function SingleMode() {
 
   const handlePathLength = (event) => {
     const value = parseInt(event.target.value, 10);
-    setPathLength(value);
+    if(value > 8) {
+      setPathLength(8);
+    } else {
+      setPathLength(value);
+    }
   };
 
   const test = () => {
@@ -102,6 +106,7 @@ function SingleMode() {
               onChange={handlePathLength}
               min="2"
               step="1"
+              max="8"
               placeholder="2"
               aria-label="Positve integer input"
             />
