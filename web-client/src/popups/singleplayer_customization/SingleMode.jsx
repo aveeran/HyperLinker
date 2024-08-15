@@ -1,57 +1,65 @@
 import React, { useState, useEffect, useRef } from "react";
+import SearchableDropdown from "../../components/SearchableDropdown";
 
 function SingleMode() {
   const [mode, setMode] = useState("normal");
-  // const [start, setStart] = useState('');
-  // const [end, setEnd] = useState('');
 
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const inputRef = useRef(null);
-  const [test, setTest] = useState(true);
+  const [startArticle, setStartArticle] = useState({});
+  const [endArticle, setEndArticle] = useState({});
 
-  useEffect(() => {
-    if (query.length > 2) {
-      // Fetch suggestions if query length is greater than 2
-      if(test) {
-          fetchSuggestions(query);
-          setTest(false);
-      }
-      setTest(true);
-    } else {
-      setSuggestions([]);
-      setIsDropdownVisible(false);
+  const [pathLength, setPathLength] = useState(2);
+  const [isPathDirected, setIsPathDirected] = useState(false);
+  const [pathArticles, setPathArticles] = useState([]);
+
+
+
+  const updateFirstArticle = (value) => {
+    setStartArticle(value);
+  };
+
+  const updateEndArticle = (value) => {
+    setEndArticle(value);
+  };
+
+  const handleModeChange = (event) => {
+    setMode(event.target.value);
+    console.log(mode);
+  };
+
+  const updatePathArticles = (value) => {
+    const newPathArticles = [
+      ...pathArticles.slice(0, value.index),
+      value,
+      ...pathArticles.splice(value.index)
+    ]
+
+    setPathArticles(newPathArticles)
+  }
+
+  const handlePathLength = (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (value > 0) {
+      const updatedPathArticles = Array.from({ length: value }, (_, index) => ({
+        title: '',
+        link: '',
+        index: index + 1
+      }));
+      
+      setPathLength(value);
+      setPathArticles(updatedPathArticles);
     }
-  }, [query]);
+  }
 
-  const fetchSuggestions = async (query) => {
-    try {
-      const response = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${query}&format=json&origin=*`
-      );
-      const data = await response.json();
-      const articles = data.query.search.map((article) => article.title);
-      setSuggestions(articles);
-      setIsDropdownVisible(true);
-    } catch (error) {
-      console.error("Error fetching suggestions:", error);
+  const test = () => {
+    console.log(startArticle);
+    console.log(endArticle);
+
+    for(let i = 0; i < pathLength -2 ; i++) {
+      console.log(pathArticles[i]);
     }
   };
 
-  const handleInputChange = (event) => {
-    setQuery(event.target.value);
-  };
 
-  const handleSuggestionClick = (suggestion) => {
-    setTest(false);
-    setQuery(suggestion);
-    setIsDropdownVisible(false);
-  };
-
-
-
-  const handleModeChange = (event) => {};
   return (
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
@@ -73,39 +81,58 @@ function SingleMode() {
           <option value="hitler">Hitler</option>
           <option value="jesus">Jesus</option>
           <option value="path">Path</option>
+          <option value="random">Random</option>
         </select>
-        <div className="relative">
-          <input
-            type="text"
-            value={query}
-            onChange={handleInputChange}
-            className="p-2 border rounded w-full"
-            placeholder="Search Wikipedia..."
-            ref={inputRef}
-          />
-          {isDropdownVisible && suggestions.length > 0 && (
-            <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded mt-1 max-h-60 overflow-y-auto">
-              {suggestions.map((suggestion, index) => (
-                <li
+        {mode === "normal" ? (
+          <div>
+            <SearchableDropdown onDataChange={updateFirstArticle} />
+            <SearchableDropdown onDataChange={updateEndArticle} />
+          </div>
+        ) : null}
+
+        {mode === "path" ? (
+          <div className="flex flex-col items-center justify-center">
+            <input 
+            className="text-center"
+            type="number"
+            value={pathLength}
+            onChange={handlePathLength}
+            min="2"
+            step="1"
+            placeholder="2"
+            aria-label="Positve integer input"/>
+
+            <SearchableDropdown onDataChange={updateFirstArticle} />
+            {
+              Array.from({ length: pathLength - 2 }, (_, index) => (
+                <SearchableDropdown
                   key={index}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  className="p-2 cursor-pointer hover:bg-gray-200"
-                >
-                  {suggestion}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                  onDataChange={updatePathArticles}
+                  index={index}
+                />
+              ))
+            }
+            <SearchableDropdown onDataChange={updateEndArticle} />
+
+
+          </div>
+        ) : null}
+       
+
+
+
+
+
       </div>
 
       <div className="flex justify-center mb-3">
-        <button className="flex bg-green-400 text-white px-4 py-2 rounded">
+        <button
+          className="flex bg-green-400 text-white px-4 py-2 rounded"
+          onClick={test}
+        >
           Start
         </button>
       </div>
-
-      
     </div>
   );
 }
