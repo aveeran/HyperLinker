@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
+import { useNavigate } from "react-router-dom";
 
 function SingleMode() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState("normal");
 
   const [startArticle, setStartArticle] = useState({});
@@ -23,6 +25,10 @@ function SingleMode() {
   const handleModeChange = (event) => {
     setMode(event.target.value);
   };
+
+  const handleBack = () => {
+    navigate(-1);
+  }
 
   const updatePathArticles = (value) => {
     if (value) {
@@ -160,11 +166,17 @@ function SingleMode() {
       ) : null}
 
       <div className="flex justify-center mb-3">
+      <button
+          className="flex bg-gray-400 text-white px-4 py-2 rounded mr-3"
+          onClick={handleBack}
+        >
+          Return
+        </button>
         <button
-          className="flex bg-green-400 text-white px-4 py-2 rounded"
+          className="flex bg-blue-400 text-white px-4 py-2 rounded"
           onClick={test}
         >
-          Start
+          Save
         </button>
       </div>
     </div>
