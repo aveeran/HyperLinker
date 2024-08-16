@@ -6,6 +6,8 @@ const keyCategory = {
     "mode",
     "start",
     "end",
+    "path",
+    "count down"
   ],
   "/singleplayer_dashboard/singleplayer_customization/track": ["track"],
   "/singleplayer_dashboard/singleplayer_customization/restrictions": [
@@ -42,27 +44,24 @@ const defaultCustomizations = {
 };
 
 function SingleplayerDashboard() {
+  //!!! we need to check if they are on the wikipedia page, if not, then setting will not be normal
+
   const navigate = useNavigate();
 
-  let storedCustomizations = sessionStorage.getItem(
+  let storedCustomizations = localStorage.getItem(
     "singleplayer-customizations"
   );
+
   let customizations = {};
   if (storedCustomizations) {
-    customizations = JSON.parse(storedCustomizations);
-    console.log("updated", customizations);
-    customizations.restrictions = [
-      "no-opening-para",
-      "no-find",
-      "no-back",
-      "no-category",
-      "dates",
-    ];
+    customizations = JSON.parse(storedCustomizations);  
   } else {
-    // customizations = defaultCustomizations;
+    customizations = defaultCustomizations;
     storedCustomizations = JSON.stringify(customizations);
-    sessionStorage.setItem("singleplayer-customizations", storedCustomizations);
+    localStorage.setItem("singleplayer-customizations", storedCustomizations);
   }
+
+  console.log('here', customizations);
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
@@ -79,7 +78,8 @@ function SingleplayerDashboard() {
       <div className="border-black border-2 border-solid p-1.5 m-3">
         <p className="text-center">Customizations</p>
         {Object.entries(customizations).map(([key, value], index) => {
-          if (key !== "path" && key !== "count down") {
+          if ((key !== "path" && key !== "count down") || (key === "path" && customizations.path["path length"] >=2) 
+          || (key === "count down" && customizations["count down"] > 0)) {
             return (
               <div key={index} className="relative group flex items-center mb-2">
                 <p className="w-[90%] whitespace-normal">
@@ -96,7 +96,9 @@ function SingleplayerDashboard() {
                       </React.Fragment>
                     ))
                   ) : (
-                    <span>{value}</span>
+                    <span>{
+                      typeof value === 'object' ? 'bruh' : value
+                      }</span>
                   )}
                 </p>
                 <button

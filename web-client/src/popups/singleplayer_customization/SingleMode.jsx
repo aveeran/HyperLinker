@@ -64,7 +64,7 @@ function SingleMode() {
     }
 
     const send = JSON.stringify(customizations);
-    sessionStorage.setItem('singleplayer-customizations', send);
+    localStorage.setItem('singleplayer-customizations', send);
     console.log(customizations);
     navigate(-1);
   };
