@@ -48,14 +48,25 @@ function SingleMode() {
     }
   };
 
-  const test = () => {
-    console.log(startArticle);
-    console.log(endArticle);
+  const handleSubmit = () => {
+    const storedCustomizations = sessionStorage.getItem('singleplayer-customizations');
+    let customizations = JSON.parse(storedCustomizations);
+    customizations.mode = mode;
 
-    console.log("here");
-    for (let i = 0; i < pathArticles.length; i++) {
-      console.log(pathArticles[i]);
+    if(mode === "path") {
+      customizations.path["path length"] = pathLength;
+      customizations.path["directed path"] = isPathDirected;
+      customizations.path.links = pathArticles;
     }
+
+    if(mode === "count down") {
+      customizations["count down"] = timer;
+    }
+
+    const send = JSON.stringify(customizations);
+    sessionStorage.setItem('singleplayer-customizations', send);
+    console.log(customizations);
+    navigate(-1);
   };
 
   return (
@@ -174,7 +185,7 @@ function SingleMode() {
         </button>
         <button
           className="flex bg-blue-400 text-white px-4 py-2 rounded"
-          onClick={test}
+          onClick={handleSubmit}
         >
           Save
         </button>
