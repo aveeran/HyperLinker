@@ -80,10 +80,6 @@ function SingleplayerDashboard() {
   }
 
   // reset();
-  console.log("Customizations in Dashboard ", customizations);
-  // customizations = defaultCustomizations;
-  // storedCustomizations = JSON.stringify(customizations);
-  // localStorage.setItem("singleplayer-customizations", storedCustomizations);
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
@@ -93,7 +89,6 @@ function SingleplayerDashboard() {
       console.log("Error");
     }
   };
-
 
   return (
     <div>
@@ -131,7 +126,6 @@ function SingleplayerDashboard() {
                                     {Array.isArray(value_three) ? (
                                       <React.Fragment>
                                         {value_three.map(article => article.title).join(", ")}
-                              
                                       </React.Fragment>
                                     ) : (
                                       value_three.toString()

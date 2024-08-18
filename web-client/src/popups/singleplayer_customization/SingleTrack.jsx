@@ -2,8 +2,16 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 
 function SingleTrack() {
+
+  let storedCustomizations = localStorage.getItem("singleplayer-customizations");
+  let customizations = {}
+  if(storedCustomizations) {
+    customizations = JSON.parse(storedCustomizations);
+  }
+
+
   const navigate = useNavigate();
-  const [track, setTrack] = useState('clicks');
+  const [track, setTrack] = useState(customizations.track[0]);
 
   const handleOptionChange = (event) => {
     setTrack(event.target.value);
@@ -11,6 +19,9 @@ function SingleTrack() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    customizations.track[0] = track;
+    storedCustomizations = JSON.stringify(customizations);
+    localStorage.setItem("singleplayer-customizations", storedCustomizations);
     handleBack();
   }
 

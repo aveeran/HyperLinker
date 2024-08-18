@@ -95,13 +95,15 @@ function SingleMode() {
 
   };
 
+  const handleTimer = (event) => {
+    const value = parseInt(event.target.value, 10);
+    setTimer(value);
+  }
+
   const handleSubmit = () => {
     const storedCustomizations = localStorage.getItem('singleplayer-customizations');
     let customizations = JSON.parse(storedCustomizations);
     customizations.mode.type = mode;
-
-    console.log("In mode ", pathArticles);
-
     customizations.start = startArticle && startArticle.suggestion ? startArticle.suggestion : startArticle;
     customizations.end = endArticle && endArticle.suggestion ? endArticle.suggestion : endArticle;
 
@@ -111,14 +113,13 @@ function SingleMode() {
       customizations.mode.path.intermediate_links = pathArticles.map(item => item && item.suggestion ? item.suggestion : item);
     } 
 
-    if(mode === "count down") {
+    if(mode === "countDown") {
       customizations.mode.countDown.timer = timer;
     }
 
-    console.log("end mode", customizations);
     const send = JSON.stringify(customizations);
     localStorage.setItem('singleplayer-customizations', send);
-    navigate(-1);
+    handleBack();
   };
 
   return (
@@ -138,7 +139,7 @@ function SingleMode() {
             Select a mode
           </option>
           <option value="normal">Normal</option>
-          <option value="count-down">Count-Down</option>
+          <option value="countDown">Count-Down</option>
           <option value="path">Path</option>
           <option value="hitler">Hitler</option>
           <option value="jesus">Jesus</option>
@@ -151,12 +152,13 @@ function SingleMode() {
           </div>
         ) : null}
 
-        {mode === "count-down" ? (
+        {mode === "countDown" ? (
           <div className="flex items-center justify-center">
             <input
               className="text-center"
               type="number"
-              value={timer || 0}
+              value={timer}
+              onChange={handleTimer}
               min="1"
               step="1"
               placeholder="1"

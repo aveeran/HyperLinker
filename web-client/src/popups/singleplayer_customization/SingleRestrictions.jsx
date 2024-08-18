@@ -3,17 +3,27 @@ import { useNavigate } from "react-router-dom";
 
 // we need to get constant values and mappings
 
+const defaultRestrictions = [
+  "no-opening-para",
+  "no-find",
+  "no-back",
+  "no-category",
+  "no-dates",
+  "no-countries",
+
+]
+
 function SingleRestrictions() {
+  let storedCustomizations = localStorage.getItem("singleplayer-customizations");
+  let customizations = {};
+  if(storedCustomizations) {
+    customizations = JSON.parse(storedCustomizations);
+  }
+
+
   const navigate = useNavigate();
-  const [availableRestrictions, setAvaiableRestrictions] = useState([
-    "no opening paragraph",
-    "no-find",
-    "no-back",
-    "no-category",
-    "no-dates",
-    "no-countries",
-  ]);
-  const [chosenRestrictions, setChosenRestrictions] = useState([]);
+  const [availableRestrictions, setAvaiableRestrictions] = useState(defaultRestrictions.filter(element => !customizations.restrictions.includes(element)));
+  const [chosenRestrictions, setChosenRestrictions] = useState(customizations.restrictions);
 
   const handleDragStart = (e, restriction, sourceWidget) => {
     e.dataTransfer.setData("tile", restriction);
@@ -44,7 +54,10 @@ function SingleRestrictions() {
   };
 
   const handleSubmit = () => {
-
+    customizations.restrictions = chosenRestrictions;
+    storedCustomizations = JSON.stringify(customizations);
+    localStorage.setItem("singleplayer-customizations", storedCustomizations);
+    handleBack();
   };
 
   return (
