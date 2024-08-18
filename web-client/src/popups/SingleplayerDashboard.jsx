@@ -36,11 +36,11 @@ const defaultCustomizations = {
     },
   },
   start: {
-    title: "test1",
+    title: "",
     link: "",
   },
   end: {
-    title: "test2",
+    title: "",
     end: "",
   },
   track: ["clicks"],
@@ -53,6 +53,8 @@ const defaultCustomizations = {
   ],
 };
 
+
+
 function SingleplayerDashboard() {
   //!!! we need to check if they are on the wikipedia page, if not, then setting will not be normal
 
@@ -62,6 +64,7 @@ function SingleplayerDashboard() {
     "singleplayer-customizations"
   );
 
+  
   let customizations = {};
   if (storedCustomizations) {
     customizations = JSON.parse(storedCustomizations);
@@ -70,10 +73,17 @@ function SingleplayerDashboard() {
     storedCustomizations = JSON.stringify(customizations);
     localStorage.setItem("singleplayer-customizations", storedCustomizations);
   }
+  
+  const reset = () => {
+    customizations = defaultCustomizations;
+    localStorage.setItem("singleplayer-customizations", JSON.stringify(customizations));
+  }
 
-  customizations = defaultCustomizations;
-  storedCustomizations = JSON.stringify(customizations);
-  localStorage.setItem("singleplayer-customizations", storedCustomizations);
+  // reset();
+  console.log("Customizations in Dashboard ", customizations);
+  // customizations = defaultCustomizations;
+  // storedCustomizations = JSON.stringify(customizations);
+  // localStorage.setItem("singleplayer-customizations", storedCustomizations);
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
@@ -83,6 +93,7 @@ function SingleplayerDashboard() {
       console.log("Error");
     }
   };
+
 
   return (
     <div>
@@ -119,7 +130,8 @@ function SingleplayerDashboard() {
                                     <strong>{key_three} </strong>
                                     {Array.isArray(value_three) ? (
                                       <React.Fragment>
-                                        {value_three.title}
+                                        {value_three.map(article => article.title).join(", ")}
+                              
                                       </React.Fragment>
                                     ) : (
                                       value_three.toString()

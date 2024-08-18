@@ -4,23 +4,28 @@ import { useNavigate } from "react-router-dom";
 
 
 // add validation to check if all required has been selected
+
 const defaultCustomizations = {
-  mode: "normal",
-  path: {
-    "path length": 0,
-    links: [],
-    "directed path": false,
+  mode: {
+    type: "path",
+    path: {
+      pathLength: 2,
+      directed: true,
+      intermediate_links: [],
+    },
+    countDown: {
+      timer: 0,
+    },
   },
-  "count down": 0,
   start: {
     title: "",
-    link: ""
+    link: "",
   },
   end: {
     title: "",
-    link: ""
+    end: "",
   },
-  track: ["clicks", "time"],
+  track: ["clicks"],
   restrictions: [
     "no-opening-para",
     "no-find",
@@ -40,17 +45,15 @@ function SingleMode() {
     customizations = defaultCustomizations;
   }
 
-
-
-  const [mode, setMode] = useState(customizations.mode);
+  const [mode, setMode] = useState(customizations.mode.type);
   
   const [startArticle, setStartArticle] = useState(customizations.start);
   const [endArticle, setEndArticle] = useState(customizations.end);
 
-  const [pathLength, setPathLength] = useState(customizations.path["path length"]);
-  const [isPathDirected, setIsPathDirected] = useState(customizations.path["directed path"]);
-  const [pathArticles, setPathArticles] = useState(customizations.path.links);
-  const [timer, setTimer] = useState(0);
+  const [pathLength, setPathLength] = useState(customizations.mode.path.pathLength);
+  const [isPathDirected, setIsPathDirected] = useState(customizations.mode.path.directed);
+  const [pathArticles, setPathArticles] = useState(customizations.mode.path.intermediate_links);
+  const [timer, setTimer] = useState(customizations.mode.countDown.timer);
 
   const updateFirstArticle = (value) => {
     setStartArticle(value);
@@ -70,11 +73,12 @@ function SingleMode() {
 
   const updatePathArticles = (value) => {
     if (value) {
-      const idx = mode === "path" ? value.index - 1 : value.index;
+      const idx = mode === "path" ? value.index : value.index;
       let temp = pathArticles;
       temp[idx] = value;
       setPathArticles(temp);
     }
+
   };
 
   const handlePathLength = (event) => {
@@ -84,26 +88,36 @@ function SingleMode() {
     } else {
       setPathLength(value);
     }
+
+    while(pathArticles.length> value - 2) {
+      pathArticles.pop();
+    }
+
   };
 
   const handleSubmit = () => {
     const storedCustomizations = localStorage.getItem('singleplayer-customizations');
     let customizations = JSON.parse(storedCustomizations);
-    customizations.mode = mode;
+    customizations.mode.type = mode;
+
+    console.log("In mode ", pathArticles);
+
+    customizations.start = startArticle && startArticle.suggestion ? startArticle.suggestion : startArticle;
+    customizations.end = endArticle && endArticle.suggestion ? endArticle.suggestion : endArticle;
 
     if(mode === "path") {
-      customizations.path["path length"] = pathLength;
-      customizations.path["directed path"] = isPathDirected;
-      customizations.path.links = pathArticles;
-    }
+      customizations.mode.path.pathLength = pathLength;
+      customizations.mode.path.directed = isPathDirected;
+      customizations.mode.path.intermediate_links = pathArticles.map(item => item && item.suggestion ? item.suggestion : item);
+    } 
 
     if(mode === "count down") {
-      customizations["count down"] = timer;
+      customizations.mode.countDown.timer = timer;
     }
 
+    console.log("end mode", customizations);
     const send = JSON.stringify(customizations);
     localStorage.setItem('singleplayer-customizations', send);
-    console.log(customizations);
     navigate(-1);
   };
 
@@ -142,7 +156,7 @@ function SingleMode() {
             <input
               className="text-center"
               type="number"
-              value={timer}
+              value={timer || 0}
               min="1"
               step="1"
               placeholder="1"
@@ -170,11 +184,11 @@ function SingleMode() {
               <SearchableDropdown
                 key={index}
                 onDataChange={updatePathArticles}
-                index={index + 1}
-                temp={pathArticles[index].suggestion}
+                index={index}
+                temp={pathArticles[index] && pathArticles[index].suggestion ? pathArticles[index].suggestion : pathArticles[index]}
               />
             ))}
-            <SearchableDropdown onDataChange={updateEndArticle} />
+            <SearchableDropdown onDataChange={updateEndArticle} temp={endArticle} />
           </div>
         ) : null}
       </div>
