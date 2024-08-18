@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react'
 
-function SearchableDropdown({ onDataChange, index=0}) {
-    const [query, setQuery] = useState("");
-    const [suggestions, setSuggestions] = useState([]);
+function SearchableDropdown({ onDataChange, index=0, temp={
+  title: "",
+  link: ""
+}}) {
+    const [query, setQuery] = useState(temp.title);
+    const [suggestions, setSuggestions] = useState(temp.title);
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
     const [test, setTest] = useState(true);
+    const [isTyping, setIsTyping] = useState(false);
+
 
     useEffect(() => {
-        if (query.length > 0) {
+        if (isTyping && query.length > 0) {
             if (test) {
                 fetchSuggestions(query);
                 setTest(false);
@@ -60,6 +65,7 @@ function SearchableDropdown({ onDataChange, index=0}) {
         }
       };
       const handleInputChange = (event) => {
+        setIsTyping(true);
         const newQuery = event.target.value;
         console.log(newQuery); 
         setQuery(newQuery); 
@@ -77,6 +83,7 @@ function SearchableDropdown({ onDataChange, index=0}) {
       
     
       const handleSuggestionClick = (suggestion) => {
+        setIsTyping(false);
         setTest(false);
         setQuery(suggestion.title);
         setIsDropdownVisible(false);

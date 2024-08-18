@@ -2,16 +2,54 @@ import React, { useState, useEffect, useRef } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
 import { useNavigate } from "react-router-dom";
 
+
+// add validation to check if all required has been selected
+const defaultCustomizations = {
+  mode: "normal",
+  path: {
+    "path length": 0,
+    links: [],
+    "directed path": false,
+  },
+  "count down": 0,
+  start: {
+    title: "",
+    link: ""
+  },
+  end: {
+    title: "",
+    link: ""
+  },
+  track: ["clicks", "time"],
+  restrictions: [
+    "no-opening-para",
+    "no-find",
+    "no-back",
+    "no-category",
+    "no-dates",
+  ],
+};
+
 function SingleMode() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState("normal");
+  let storedCustomizations = localStorage.getItem("singleplayer-customizations");
+  let customizations = {};
+  if(storedCustomizations) {
+    customizations = JSON.parse(storedCustomizations);
+  } else {
+    customizations = defaultCustomizations;
+  }
 
-  const [startArticle, setStartArticle] = useState({});
-  const [endArticle, setEndArticle] = useState({});
 
-  const [pathLength, setPathLength] = useState(2);
-  const [isPathDirected, setIsPathDirected] = useState(false);
-  const [pathArticles, setPathArticles] = useState([]);
+
+  const [mode, setMode] = useState(customizations.mode);
+  
+  const [startArticle, setStartArticle] = useState(customizations.start);
+  const [endArticle, setEndArticle] = useState(customizations.end);
+
+  const [pathLength, setPathLength] = useState(customizations.path["path length"]);
+  const [isPathDirected, setIsPathDirected] = useState(customizations.path["directed path"]);
+  const [pathArticles, setPathArticles] = useState(customizations.path.links);
   const [timer, setTimer] = useState(0);
 
   const updateFirstArticle = (value) => {
@@ -49,7 +87,7 @@ function SingleMode() {
   };
 
   const handleSubmit = () => {
-    const storedCustomizations = sessionStorage.getItem('singleplayer-customizations');
+    const storedCustomizations = localStorage.getItem('singleplayer-customizations');
     let customizations = JSON.parse(storedCustomizations);
     customizations.mode = mode;
 
@@ -94,8 +132,8 @@ function SingleMode() {
         </select>
         {mode === "normal" ? (
           <div>
-            <SearchableDropdown onDataChange={updateFirstArticle} />
-            <SearchableDropdown onDataChange={updateEndArticle} />
+            <SearchableDropdown onDataChange={updateFirstArticle} temp={startArticle} />
+            <SearchableDropdown onDataChange={updateEndArticle} temp={endArticle}/>
           </div>
         ) : null}
 
@@ -127,12 +165,13 @@ function SingleMode() {
               placeholder="2"
               aria-label="Positve integer input"
             />
-            <SearchableDropdown onDataChange={updateFirstArticle} />
+            <SearchableDropdown onDataChange={updateFirstArticle} temp={startArticle}/>
             {Array.from({ length: pathLength - 2 }, (_, index) => (
               <SearchableDropdown
                 key={index}
                 onDataChange={updatePathArticles}
                 index={index + 1}
+                temp={pathArticles[index].suggestion}
               />
             ))}
             <SearchableDropdown onDataChange={updateEndArticle} />
