@@ -1,39 +1,28 @@
-import { HashRouter as Router, Route, Routes, Link } from "react-router-dom";
 import Home from "./popups/home.jsx";
-import Customization from "./popups/Customization.jsx";
 import './index.css';
+import { HashRouter as Router, Routes, Route} from 'react-router-dom';
+import SingleplayerDashboard from "./popups/SingleplayerDashboard.jsx";
+import SingleMode from "./popups/singleplayer_customization/SingleMode.jsx";
+import SingleTrack from "./popups/singleplayer_customization/SingleTrack.jsx";
+import SingleRestrictions from "./popups/singleplayer_customization/SingleRestrictions.jsx";
+import RouteTracker from "./popups/RouterTracker.jsx";
+
 
 function App() {
+
   return (
-    <>
-      <Router>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                <ul>
-                  <li>
-                    <Link to="/">Home</Link>
-                  </li>
-                  <li>
-                    <Link to="/settings">Settings</Link>
-                  </li>
-                  <li>
-                    <Link to="/about">About</Link>
-                  </li>
-                </ul>
-                <Home />
-              </>
-            }
-          />
-          <Route path="/settings" element={<Customization />} />
-          <Route path="/about" element={<Customization />} />
-        </Routes>
-      </Router>
-      <p className="text-red-900">Bruh</p>
-      
-    </>
+    <Router>
+      <div className="w-[400px] border-black border-solid border-[3px]">
+        <RouteTracker/>
+      <Routes>
+        <Route path ="/" element={<Home/>}/>
+        <Route path ="/singleplayer_dashboard" element={<SingleplayerDashboard/>}/>
+        <Route path ="/singleplayer_dashboard/singleplayer_customization/mode" element={<SingleMode/>}/>
+        <Route path ="/singleplayer_dashboard/singleplayer_customization/track" element={<SingleTrack/>}/>
+        <Route path ="/singleplayer_dashboard/singleplayer_customization/restrictions" element={<SingleRestrictions/>}/>
+      </Routes>
+      </div>
+    </Router>
   );
 }
 
