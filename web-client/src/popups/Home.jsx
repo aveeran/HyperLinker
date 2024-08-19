@@ -33,7 +33,6 @@ function Home() {
         const text = await response.json();
         setWikiContent(text.tfa);
         setWikiLoading(false);
-        console.log(text.tfa);
       } catch (error) {
         setWikiError(error);
         setWikiLoading(false);
