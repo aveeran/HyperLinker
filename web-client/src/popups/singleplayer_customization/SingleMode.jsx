@@ -107,7 +107,7 @@ function SingleMode() {
     while (pathArticles.length > value - 2) {
       pathArticles.pop();
     }
-    setPathArticles([...pathArticles]); // Update state with new array reference
+    setPathArticles([...pathArticles]);
   };
 
   const handleTimer = (event) => {

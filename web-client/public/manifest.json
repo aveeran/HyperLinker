@@ -13,6 +13,14 @@
     },
     "action": {
         "default_popup":"index.html"
-    
-    }
+    },
+    "background" : {
+        "service_worker": "background.js"
+    },
+    "content_scripts" : [
+        {
+            "matches": ["https://*.wikipedia.org/wiki/*", "https://*.wikipedia.org/w/*"],
+            "js" : ["content.js"]
+        }
+    ]
 }

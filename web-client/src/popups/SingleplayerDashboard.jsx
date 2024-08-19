@@ -81,7 +81,6 @@ function SingleplayerDashboard() {
   };
 
   const sortedEntries = Object.entries(customizations).sort(([keyA], [keyB]) => {
-    // Define a specific order
     const order = ["mode", "start", "end", "path", "count down", "track", "restrictions"];
     return order.indexOf(keyA) - order.indexOf(keyB);
   });
@@ -95,8 +94,6 @@ function SingleplayerDashboard() {
       console.error("Error: Category not found for value:", value);
     }
   };
-
-  console.log(customizations);
 
   return (
     <div>
