@@ -1,6 +1,7 @@
 function checkForWikipedia(tabId, changeInfo, tab) {
-    if(changeInfo.status === 'complete' && tab.url.includes('wikipeida.org')) {
-        console.log("Hello, world!")
+
+    if (changeInfo.status === 'complete' && tab.url.includes('wikipedia.org')) {
+        console.log("Hello, world!");
     }
 }
 
