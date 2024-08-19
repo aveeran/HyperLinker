@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
 import { useNavigate } from "react-router-dom";
 
-
 // add validation to check if all required has been selected
 
 const defaultCustomizations = {
@@ -51,7 +50,7 @@ function SingleMode() {
   const [endArticle, setEndArticle] = useState(customizations.end);
 
   const [pathLength, setPathLength] = useState(customizations.mode.path.pathLength);
-  const [isPathDirected, setIsPathDirected] = useState(customizations.mode.path.directed);
+  const [isPathDirected, setIsPathDirected] = useState(customizations.mode.path.directed);//yooo
   const [pathArticles, setPathArticles] = useState(customizations.mode.path.intermediate_links);
   const [timer, setTimer] = useState(customizations.mode.countDown.timer);
 
@@ -98,6 +97,14 @@ function SingleMode() {
   const handleTimer = (event) => {
     const value = parseInt(event.target.value, 10);
     setTimer(value);
+  }
+
+  const handleOptionChange = (event) => {
+    if(event.target.value === 'directed') {
+      setIsPathDirected(true);
+    } else {
+      setIsPathDirected(false);
+    }
   }
 
   const handleSubmit = () => {
@@ -181,6 +188,33 @@ function SingleMode() {
               placeholder="2"
               aria-label="Positve integer input"
             />
+
+            <div className="flex flex-col mb-4">
+              <label htmlFor="directed" className="mr-4">
+                <input 
+                type="radio"
+                id="directed"
+                value="directed"
+                checked={isPathDirected}
+                onChange={handleOptionChange}
+                className="mr-2"
+                />
+                <span>Directed</span>
+              </label>
+
+              <label htmlFor="undirected">
+                <input 
+                type="radio"
+                id="undirected"
+                value="undirected"
+                checked={!isPathDirected}
+                onChange={handleOptionChange}
+                className="mr-2"
+                />
+                <span>Undirected</span>
+              </label>
+            </div>
+
             <SearchableDropdown onDataChange={updateFirstArticle} temp={startArticle}/>
             {Array.from({ length: pathLength - 2 }, (_, index) => (
               <SearchableDropdown
