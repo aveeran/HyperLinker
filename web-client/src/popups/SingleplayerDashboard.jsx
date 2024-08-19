@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const keyCategory = {
@@ -21,7 +21,10 @@ const getCategory = (value) => {
       return key;
     }
   }
+  return null; // Ensure to return null if no category is found
 };
+
+
 
 const defaultCustomizations = {
   mode: {
@@ -53,42 +56,47 @@ const defaultCustomizations = {
   ],
 };
 
-
-
 function SingleplayerDashboard() {
-  //!!! we need to check if they are on the wikipedia page, if not, then setting will not be normal
-
+  const [customizations, setCustomizations] = useState(defaultCustomizations);
   const navigate = useNavigate();
 
-  let storedCustomizations = localStorage.getItem(
-    "singleplayer-customizations"
-  );
+  useEffect(() => {
+    // Retrieve customizations from chrome.storage.local
+    chrome.storage.local.get("singleplayer-customizations", (result) => {
+      if (result["singleplayer-customizations"]) {
+        setCustomizations(result["singleplayer-customizations"]);
+      } else {
+        chrome.storage.local.set({
+          "singleplayer-customizations": defaultCustomizations,
+        });
+      }
+    });
+  }, []);
 
-  
-  let customizations = {};
-  if (storedCustomizations) {
-    customizations = JSON.parse(storedCustomizations);
-  } else {
-    customizations = defaultCustomizations;
-    storedCustomizations = JSON.stringify(customizations);
-    localStorage.setItem("singleplayer-customizations", storedCustomizations);
-  }
-  
   const reset = () => {
-    customizations = defaultCustomizations;
-    localStorage.setItem("singleplayer-customizations", JSON.stringify(customizations));
-  }
+    setCustomizations(defaultCustomizations);
+    chrome.storage.local.set({
+      "singleplayer-customizations": defaultCustomizations,
+    });
+  };
 
-  // reset();
+  const sortedEntries = Object.entries(customizations).sort(([keyA], [keyB]) => {
+    // Define a specific order
+    const order = ["mode", "start", "end", "path", "count down", "track", "restrictions"];
+    return order.indexOf(keyA) - order.indexOf(keyB);
+  });
+  
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
     if (categoryKey) {
       navigate(categoryKey);
     } else {
-      console.log("Error");
+      console.error("Error: Category not found for value:", value);
     }
   };
+
+  console.log(customizations);
 
   return (
     <div>
@@ -96,65 +104,73 @@ function SingleplayerDashboard() {
       <h2 className="text-3xl text-center mb-3">Singleplayer</h2>
       <div className="border-black border-2 border-solid p-1.5 m-3">
         <p className="text-center">Customizations</p>
-        {Object.entries(customizations).map(([key, value], index) => {
-          return (
-            <div key={key} className="relative group flex mb-2">
-              <strong className="mr-2">{key}</strong>
-              <p className="whitespace-normal">
-                {Array.isArray(value) ? (
-                  <React.Fragment>{value.join(", ")}</React.Fragment>
-                ) : null}
-              </p>
+        {sortedEntries.map(([key, value]) => (
+          <div key={key} className="relative group flex mb-2">
+            <strong className="mr-2">{key}</strong>
+            <p className="whitespace-normal">
+              {Array.isArray(value) ? (
+                <React.Fragment>{value.join(",")}</React.Fragment>
+              ) : null}
+            </p>
 
-              <div>
-                {value !== null &&
-                typeof value === "object" &&
-                !Array.isArray(value) ? (
-                  <p>{value[Object.keys(value)[0]]}</p>
-                ) : null}
+            <div>
+              {value !== null &&
+              typeof value === "object" &&
+              !Array.isArray(value) ? (
+                <p>{value.title}</p>
+              ) : null}
 
-                {value !== null && typeof value === "object" && key == "mode"
-                  ? Object.entries(value).map(
-                      ([key_two, value_two], index_two) => {
-                        return key_two === value.type ? (
-                          <div>
-                            {Object.entries(value_two).map(
-                              ([key_three, value_three], index_three) => {
-                                return (
-                                  <div key={key_three}>
-                                    <strong>{key_three} </strong>
-                                    {Array.isArray(value_three) ? (
-                                      <React.Fragment>
-                                        {value_three.map(article => article.title).join(", ")}
+              {value !== null && typeof value === "object" && key === "mode"
+                ? Object.entries(value).map(
+                    ([innerKey, innerValue], innerIndex) =>
+                      innerKey === value.type ? (
+                        <div key={innerKey}>
+                          {Object.entries(innerValue).map(
+                            ([nestedKey, nestedValue], nestedIndex) => (
+                              <div key={nestedKey}>
+                                <strong>{nestedKey}</strong>
+                                {Array.isArray(nestedValue) ? (
+                                  <React.Fragment>
+                                    {nestedValue.map((article, index) => (
+                                      <React.Fragment key={index}>
+                                        {article.title}
+                                        {index < nestedValue.length - 1
+                                          ? ", "
+                                          : ""}
                                       </React.Fragment>
-                                    ) : (
-                                      value_three.toString()
-                                    )}
-                                  </div>
-                                );
-                              }
-                            )}
-                          </div>
-                        ) : null;
-                      }
-                    )
-                  : null}
-              </div>
-
-              <button
-                className="absolute right-0 top-0 mt-0.5 mr-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-                onClick={() => handleEdit(key)}
-                key={key}
-              >
-                Edit
-              </button>
+                                    ))}
+                                  </React.Fragment>
+                                ) : (
+                                  nestedValue.toString()
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : null
+                  )
+                : null}
             </div>
-          );
-        })}
+            <button
+              className="absolute right-0 top-0 mt-0.5 mr-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={() => handleEdit(key)}
+            >
+              Edit
+            </button>
+          </div>
+        ))}
       </div>
-
       <div className="flex justify-center mb-3">
-        <button className="flex bg-green-400 text-white px-4 py-2 rounded">
+        <button
+          className="flex bg-gray-400 text-white px-4 py-2 rounded"
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </button>
+        <button
+          className="flex bg-green-400 text-white px-4 py-2 rounded"
+          onClick={() => navigate("/start")}
+        >
           Start
         </button>
       </div>

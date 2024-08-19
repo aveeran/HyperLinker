@@ -36,23 +36,41 @@ const defaultCustomizations = {
 
 function SingleMode() {
   const navigate = useNavigate();
-  let storedCustomizations = localStorage.getItem("singleplayer-customizations");
-  let customizations = {};
-  if(storedCustomizations) {
-    customizations = JSON.parse(storedCustomizations);
-  } else {
-    customizations = defaultCustomizations;
-  }
+  const [customizations, setCustomizations] = useState({});
+  const [mode, setMode] = useState("");
+  const [startArticle, setStartArticle] = useState({});
+  const [endArticle, setEndArticle] = useState({});
+  const [pathLength, setPathLength] = useState(2);
+  const [isPathDirected, setIsPathDirected] = useState(true);
+  const [pathArticles, setPathArticles] = useState([]);
+  const [timer, setTimer] = useState(0);
 
-  const [mode, setMode] = useState(customizations.mode.type);
-  
-  const [startArticle, setStartArticle] = useState(customizations.start);
-  const [endArticle, setEndArticle] = useState(customizations.end);
-
-  const [pathLength, setPathLength] = useState(customizations.mode.path.pathLength);
-  const [isPathDirected, setIsPathDirected] = useState(customizations.mode.path.directed);//yooo
-  const [pathArticles, setPathArticles] = useState(customizations.mode.path.intermediate_links);
-  const [timer, setTimer] = useState(customizations.mode.countDown.timer);
+  useEffect(() => {
+    // Retrieve customizations from chrome.storage.local
+    chrome.storage.local.get('singleplayer-customizations', (result) => {
+      if (result['singleplayer-customizations']) {
+        const storedCustomizations = result['singleplayer-customizations'];
+        setCustomizations(storedCustomizations);
+        setMode(storedCustomizations.mode.type);
+        setStartArticle(storedCustomizations.start);
+        setEndArticle(storedCustomizations.end);
+        setPathLength(storedCustomizations.mode.path.pathLength);
+        setIsPathDirected(storedCustomizations.mode.path.directed);
+        setPathArticles(storedCustomizations.mode.path.intermediate_links);
+        setTimer(storedCustomizations.mode.countDown.timer);
+      } else {
+        setCustomizations(defaultCustomizations);
+        setMode(defaultCustomizations.mode.type);
+        setStartArticle(defaultCustomizations.start);
+        setEndArticle(defaultCustomizations.end);
+        setPathLength(defaultCustomizations.mode.path.pathLength);
+        setIsPathDirected(defaultCustomizations.mode.path.directed);
+        setPathArticles(defaultCustomizations.mode.path.intermediate_links);
+        setTimer(defaultCustomizations.mode.countDown.timer);
+        chrome.storage.local.set({ 'singleplayer-customizations': defaultCustomizations });
+      }
+    });
+  }, []);
 
   const updateFirstArticle = (value) => {
     setStartArticle(value);
@@ -68,67 +86,66 @@ function SingleMode() {
 
   const handleBack = () => {
     navigate(-1);
-  }
+  };
 
   const updatePathArticles = (value) => {
     if (value) {
-      const idx = mode === "path" ? value.index : value.index;
-      let temp = pathArticles;
+      const idx = value.index;
+      let temp = [...pathArticles];
       temp[idx] = value;
       setPathArticles(temp);
     }
-
   };
 
   const handlePathLength = (event) => {
     const value = parseInt(event.target.value, 10);
-    if(value > 8) {
+    if (value > 8) {
       setPathLength(8);
     } else {
       setPathLength(value);
     }
-
-    while(pathArticles.length> value - 2) {
+    while (pathArticles.length > value - 2) {
       pathArticles.pop();
     }
-
+    setPathArticles([...pathArticles]); // Update state with new array reference
   };
 
   const handleTimer = (event) => {
     const value = parseInt(event.target.value, 10);
     setTimer(value);
-  }
-
-  const handleOptionChange = (event) => {
-    if(event.target.value === 'directed') {
-      setIsPathDirected(true);
-    } else {
-      setIsPathDirected(false);
-    }
-  }
-
-  const handleSubmit = () => {
-    const storedCustomizations = localStorage.getItem('singleplayer-customizations');
-    let customizations = JSON.parse(storedCustomizations);
-    customizations.mode.type = mode;
-    customizations.start = startArticle && startArticle.suggestion ? startArticle.suggestion : startArticle;
-    customizations.end = endArticle && endArticle.suggestion ? endArticle.suggestion : endArticle;
-
-    if(mode === "path") {
-      customizations.mode.path.pathLength = pathLength;
-      customizations.mode.path.directed = isPathDirected;
-      customizations.mode.path.intermediate_links = pathArticles.map(item => item && item.suggestion ? item.suggestion : item);
-    } 
-
-    if(mode === "countDown") {
-      customizations.mode.countDown.timer = timer;
-    }
-
-    const send = JSON.stringify(customizations);
-    localStorage.setItem('singleplayer-customizations', send);
-    handleBack();
   };
 
+  const handleOptionChange = (event) => {
+    setIsPathDirected(event.target.value === 'directed');
+  };
+
+  const handleSubmit = () => {
+    const updatedCustomizations = {
+      ...customizations,
+      mode: {
+        ...customizations.mode,
+        type: mode,
+        ...(mode === "path" && {
+          path: {
+            pathLength: pathLength,
+            directed: isPathDirected,
+            intermediate_links: pathArticles.map(item => item && item.suggestion ? item.suggestion : item),
+          },
+        }),
+        ...(mode === "countDown" && {
+          countDown: {
+            timer: timer,
+          },
+        }),
+      },
+      start: startArticle && startArticle.suggestion ? startArticle.suggestion : startArticle,
+      end: endArticle && endArticle.suggestion ? endArticle.suggestion : endArticle,
+    };
+    
+    chrome.storage.local.set({ 'singleplayer-customizations': updatedCustomizations });
+    handleBack();
+  };
+  
   return (
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>

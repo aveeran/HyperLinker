@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // we need to get constant values and mappings
@@ -14,16 +14,22 @@ const defaultRestrictions = [
 ]
 
 function SingleRestrictions() {
-  let storedCustomizations = localStorage.getItem("singleplayer-customizations");
-  let customizations = {};
-  if(storedCustomizations) {
-    customizations = JSON.parse(storedCustomizations);
-  }
-
-
   const navigate = useNavigate();
-  const [availableRestrictions, setAvaiableRestrictions] = useState(defaultRestrictions.filter(element => !customizations.restrictions.includes(element)));
-  const [chosenRestrictions, setChosenRestrictions] = useState(customizations.restrictions);
+  const [availableRestrictions, setAvailableRestrictions] = useState([]);
+  const [chosenRestrictions, setChosenRestrictions] = useState([]);
+
+  useEffect(() => {
+    // Retrieve customizations from chrome.storage.local
+    chrome.storage.local.get('singleplayer-customizations', (result) => {
+      let customizations = {};
+      if (result['singleplayer-customizations']) {
+        customizations = result['singleplayer-customizations'];
+      }
+
+      setAvailableRestrictions(defaultRestrictions.filter(element => !customizations.restrictions.includes(element)));
+      setChosenRestrictions(customizations.restrictions || []);
+    });
+  }, []);
 
   const handleDragStart = (e, restriction, sourceWidget) => {
     e.dataTransfer.setData("tile", restriction);
@@ -37,11 +43,11 @@ function SingleRestrictions() {
     e.preventDefault();
 
     if (sourceBox === "available" && destinationWidget === "chosen") {
-      setAvaiableRestrictions(availableRestrictions.filter((t) => t !== tile));
+      setAvailableRestrictions(availableRestrictions.filter((t) => t !== tile));
       setChosenRestrictions([...chosenRestrictions, tile]);
     } else if (sourceBox === "chosen" && destinationWidget === "available") {
       setChosenRestrictions(chosenRestrictions.filter((t) => t !== tile));
-      setAvaiableRestrictions([...availableRestrictions, tile]);
+      setAvailableRestrictions([...availableRestrictions, tile]);
     }
   };
 
@@ -54,10 +60,12 @@ function SingleRestrictions() {
   };
 
   const handleSubmit = () => {
-    customizations.restrictions = chosenRestrictions;
-    storedCustomizations = JSON.stringify(customizations);
-    localStorage.setItem("singleplayer-customizations", storedCustomizations);
-    handleBack();
+    chrome.storage.local.get('singleplayer-customizations', (result) => {
+      let customizations = result['singleplayer-customizations'] || {};
+      customizations.restrictions = chosenRestrictions;
+      chrome.storage.local.set({ 'singleplayer-customizations': customizations });
+      handleBack();
+    });
   };
 
   return (

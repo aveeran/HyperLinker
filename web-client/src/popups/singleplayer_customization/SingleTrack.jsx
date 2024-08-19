@@ -1,17 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 
 function SingleTrack() {
-
-  let storedCustomizations = localStorage.getItem("singleplayer-customizations");
-  let customizations = {}
-  if(storedCustomizations) {
-    customizations = JSON.parse(storedCustomizations);
-  }
-
-
   const navigate = useNavigate();
-  const [track, setTrack] = useState(customizations.track[0]);
+  const [track, setTrack] = useState('clicks');
+
+  useEffect(() => {
+    // Retrieve customizations from chrome.storage.local
+    chrome.storage.local.get('singleplayer-customizations', (result) => {
+      let customizations = {};
+      if (result['singleplayer-customizations']) {
+        customizations = result['singleplayer-customizations'];
+        setTrack(customizations.track[0] || 'clicks');
+      }
+    });
+  }, []);
 
   const handleOptionChange = (event) => {
     setTrack(event.target.value);
@@ -19,10 +22,12 @@ function SingleTrack() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    customizations.track[0] = track;
-    storedCustomizations = JSON.stringify(customizations);
-    localStorage.setItem("singleplayer-customizations", storedCustomizations);
-    handleBack();
+    chrome.storage.local.get('singleplayer-customizations', (result) => {
+      let customizations = result['singleplayer-customizations'] || {};
+      customizations.track[0] = track;
+      chrome.storage.local.set({ 'singleplayer-customizations': customizations });
+      handleBack();
+    });
   }
 
   const handleBack = () => {
