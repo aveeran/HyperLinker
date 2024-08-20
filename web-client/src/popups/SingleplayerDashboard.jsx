@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 const keyCategory = {
@@ -23,8 +23,6 @@ const getCategory = (value) => {
   }
   return null; // Ensure to return null if no category is found
 };
-
-
 
 const defaultCustomizations = {
   mode: {
@@ -60,22 +58,45 @@ function SingleplayerDashboard() {
   const [customizations, setCustomizations] = useState(defaultCustomizations);
   const navigate = useNavigate();
 
+  // Determine if we are in a Chrome extension environment
+  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
+
+  // Define storage mechanism using useMemo to prevent unnecessary re-renders
+  const storage = useMemo(() => {
+    if (isChromeExtension) {
+      return chrome.storage.local;
+    } else {
+      return {
+        get: (key, callback) => {
+          const value = localStorage.getItem(key);
+          callback({ [key]: JSON.parse(value) });
+        },
+        set: (obj, callback) => {
+          const key = Object.keys(obj)[0];
+          const value = obj[key];
+          localStorage.setItem(key, JSON.stringify(value));
+          callback && callback();
+        }
+      };
+    }
+  }, [isChromeExtension]);
+
   useEffect(() => {
-    // Retrieve customizations from chrome.storage.local
-    chrome.storage.local.get("singleplayer-customizations", (result) => {
+    // Retrieve customizations from storage
+    storage.get("singleplayer-customizations", (result) => {
       if (result["singleplayer-customizations"]) {
         setCustomizations(result["singleplayer-customizations"]);
       } else {
-        chrome.storage.local.set({
+        storage.set({
           "singleplayer-customizations": defaultCustomizations,
         });
       }
     });
-  }, []);
+  }, [storage]);
 
   const reset = () => {
     setCustomizations(defaultCustomizations);
-    chrome.storage.local.set({
+    storage.set({
       "singleplayer-customizations": defaultCustomizations,
     });
   };
@@ -84,7 +105,6 @@ function SingleplayerDashboard() {
     const order = ["mode", "start", "end", "path", "count down", "track", "restrictions"];
     return order.indexOf(keyA) - order.indexOf(keyB);
   });
-  
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
@@ -96,8 +116,12 @@ function SingleplayerDashboard() {
   };
 
   const test = () => {
-    chrome.runtime.sendMessage({action: "forwardToContent", data: "Hello Content script!"});
-  }
+    if (isChromeExtension) {
+      chrome.runtime.sendMessage({action: "forwardToContent", data: "Hello Content script!"});
+    } else {
+      console.log("Message would be sent to content script");
+    }
+  };
 
   return (
     <div>

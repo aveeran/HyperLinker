@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-// we need to get constant values and mappings
-
+// Default restrictions
 const defaultRestrictions = [
   "no-opening-para",
   "no-find",
@@ -10,26 +9,51 @@ const defaultRestrictions = [
   "no-category",
   "no-dates",
   "no-countries",
-
-]
+];
 
 function SingleRestrictions() {
   const navigate = useNavigate();
   const [availableRestrictions, setAvailableRestrictions] = useState([]);
   const [chosenRestrictions, setChosenRestrictions] = useState([]);
 
+  // Determine if we are in a Chrome extension environment
+  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
+
+  // Define storage mechanism using useMemo
+  const storage = useMemo(() => {
+    if (isChromeExtension) {
+      return chrome.storage.local;
+    } else {
+      return {
+        get: (key, callback) => {
+          const value = localStorage.getItem(key);
+          callback({ [key]: JSON.parse(value) });
+        },
+        set: (obj, callback) => {
+          const key = Object.keys(obj)[0];
+          const value = obj[key];
+          localStorage.setItem(key, JSON.stringify(value));
+          callback && callback();
+        }
+      };
+    }
+  }, [isChromeExtension]);
+
+  // Load customizations when the component mounts
   useEffect(() => {
-    // Retrieve customizations from chrome.storage.local
-    chrome.storage.local.get('singleplayer-customizations', (result) => {
+    storage.get('singleplayer-customizations', (result) => {
       let customizations = {};
       if (result['singleplayer-customizations']) {
         customizations = result['singleplayer-customizations'];
       }
-
-      setAvailableRestrictions(defaultRestrictions.filter(element => !customizations.restrictions.includes(element)));
+      setAvailableRestrictions(
+        defaultRestrictions.filter(
+          (element) => !customizations.restrictions.includes(element)
+        )
+      );
       setChosenRestrictions(customizations.restrictions || []);
     });
-  }, []);
+  }, [storage]);
 
   const handleDragStart = (e, restriction, sourceWidget) => {
     e.dataTransfer.setData("tile", restriction);
@@ -60,22 +84,20 @@ function SingleRestrictions() {
   };
 
   const handleSubmit = () => {
-    chrome.storage.local.get('singleplayer-customizations', (result) => {
+    storage.get('singleplayer-customizations', (result) => {
       let customizations = result['singleplayer-customizations'] || {};
       customizations.restrictions = chosenRestrictions;
-      chrome.storage.local.set({ 'singleplayer-customizations': customizations });
+      storage.set({ 'singleplayer-customizations': customizations });
       handleBack();
     });
   };
 
   return (
     <div>
-       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h2 className="text-3xl text-center mb-3">
-        Singleplayer - Customization
-      </h2>
+      <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
+      <h2 className="text-3xl text-center mb-3">Singleplayer - Customization</h2>
       <div className="flex flex-col items-center">
-      <p className="text-center mb-3">Restrictions</p>
+        <p className="text-center mb-3">Restrictions</p>
 
         <div className="flex gap-8 m-3">
           <div
@@ -119,10 +141,17 @@ function SingleRestrictions() {
           </div>
         </div>
         <div className="flex justify-center mb-3">
-          <button className="bg-gray-500 text-white py-2 px-4 rounded mr-3" onClick={handleBack}>
+          <button
+            className="bg-gray-500 text-white py-2 px-4 rounded mr-3"
+            onClick={handleBack}
+          >
             Return
           </button>
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded" onClick={handleSubmit}>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white py-2 px-4 rounded"
+            onClick={handleSubmit}
+          >
             Submit
           </button>
         </div>
