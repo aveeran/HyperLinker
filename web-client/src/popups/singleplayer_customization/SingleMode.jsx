@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
 import { useNavigate } from "react-router-dom";
 
-// add validation to check if all required has been selected
-
+// Default customizations data
 const defaultCustomizations = {
   mode: {
     type: "path",
@@ -45,11 +44,38 @@ function SingleMode() {
   const [pathArticles, setPathArticles] = useState([]);
   const [timer, setTimer] = useState(0);
 
+  // Determine if we are in a Chrome extension environment
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
+
+  // Define storage mechanism using useMemo
+  const storage = useMemo(() => {
+    if (isChromeExtension) {
+      return chrome.storage.local;
+    } else {
+      return {
+        get: (key, callback) => {
+          const value = localStorage.getItem(key);
+          callback({ [key]: JSON.parse(value) });
+        },
+        set: (obj, callback) => {
+          const key = Object.keys(obj)[0];
+          const value = obj[key];
+          localStorage.setItem(key, JSON.stringify(value));
+          callback && callback();
+        },
+      };
+    }
+  }, [isChromeExtension]);
+
+  // Load customizations when the component mounts
   useEffect(() => {
-    // Retrieve customizations from chrome.storage.local
-    chrome.storage.local.get('singleplayer-customizations', (result) => {
-      if (result['singleplayer-customizations']) {
-        const storedCustomizations = result['singleplayer-customizations'];
+    storage.get("singleplayer-customizations", (result) => {
+      if (result["singleplayer-customizations"]) {
+        const storedCustomizations = result["singleplayer-customizations"];
         setCustomizations(storedCustomizations);
         setMode(storedCustomizations.mode.type);
         setStartArticle(storedCustomizations.start);
@@ -67,26 +93,16 @@ function SingleMode() {
         setIsPathDirected(defaultCustomizations.mode.path.directed);
         setPathArticles(defaultCustomizations.mode.path.intermediate_links);
         setTimer(defaultCustomizations.mode.countDown.timer);
-        chrome.storage.local.set({ 'singleplayer-customizations': defaultCustomizations });
+        storage.set({ "singleplayer-customizations": defaultCustomizations });
       }
     });
-  }, []);
+  }, [storage]);
 
-  const updateFirstArticle = (value) => {
-    setStartArticle(value);
-  };
-
-  const updateEndArticle = (value) => {
-    setEndArticle(value);
-  };
-
-  const handleModeChange = (event) => {
-    setMode(event.target.value);
-  };
-
-  const handleBack = () => {
-    navigate(-1);
-  };
+  // Handle changes and submissions
+  const updateFirstArticle = (value) => setStartArticle(value);
+  const updateEndArticle = (value) => setEndArticle(value);
+  const handleModeChange = (event) => setMode(event.target.value);
+  const handleBack = () => navigate(-1);
 
   const updatePathArticles = (value) => {
     if (value) {
@@ -116,7 +132,7 @@ function SingleMode() {
   };
 
   const handleOptionChange = (event) => {
-    setIsPathDirected(event.target.value === 'directed');
+    setIsPathDirected(event.target.checked);
   };
 
   const handleSubmit = () => {
@@ -129,7 +145,9 @@ function SingleMode() {
           path: {
             pathLength: pathLength,
             directed: isPathDirected,
-            intermediate_links: pathArticles.map(item => item && item.suggestion ? item.suggestion : item),
+            intermediate_links: pathArticles.map((item) =>
+              item && item.suggestion ? item.suggestion : item
+            ),
           },
         }),
         ...(mode === "countDown" && {
@@ -138,22 +156,32 @@ function SingleMode() {
           },
         }),
       },
-      start: startArticle && startArticle.suggestion ? startArticle.suggestion : startArticle,
-      end: endArticle && endArticle.suggestion ? endArticle.suggestion : endArticle,
+      start:
+        startArticle && startArticle.suggestion
+          ? startArticle.suggestion
+          : startArticle,
+      end:
+        endArticle && endArticle.suggestion
+          ? endArticle.suggestion
+          : endArticle,
     };
-    
-    chrome.storage.local.set({ 'singleplayer-customizations': updatedCustomizations });
+
+    storage.set({ "singleplayer-customizations": updatedCustomizations });
     handleBack();
   };
-  
+
   return (
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
       <h2 className="text-3xl text-center mb-3">
         Singleplayer - Customization
       </h2>
-      <div className="border-black border-2 border-solid p-1.5 m-3">
-        <p className="text-center mb-3">Mode</p>
+      <hr />
+      <div className=" p-1.5 m-3">
+        <p className="text-center mb-3">
+          {" "}
+          <strong>Mode</strong>
+        </p>
         <select
           value={mode}
           onChange={handleModeChange}
@@ -170,131 +198,190 @@ function SingleMode() {
           <option value="random">Random</option>
         </select>
         {mode === "normal" ? (
-          <div>
-            <SearchableDropdown onDataChange={updateFirstArticle} temp={startArticle} />
-            <SearchableDropdown onDataChange={updateEndArticle} temp={endArticle}/>
+          <div className="flex flex-col border-gray border-2 border-solid p-2 mb-2">
+            <div className="flex mb-2 items-center">
+              <p className="w-[15%]">Start</p>
+              <div className="ml-5">
+                <SearchableDropdown
+                  onDataChange={updateFirstArticle}
+                  temp={startArticle}
+                />
+              </div>
+            </div>
+            <div className="flex mb-2 items-center">
+              <p className="w-[15%]">End</p>
+              <div className="ml-5">
+                <SearchableDropdown
+                  onDataChange={updateEndArticle}
+                  temp={endArticle}
+                />
+              </div>
+            </div>
           </div>
         ) : null}
 
         {mode === "countDown" ? (
-          <div className="flex items-center justify-center">
-            <input
-              className="text-center"
-              type="number"
-              value={timer}
-              onChange={handleTimer}
-              min="1"
-              step="1"
-              placeholder="1"
-              aria-label="Count-down timer"
-            />
-            <p>s</p>
+          <div className="items-center justify-center m-2">
+            <div className="flex items-center justify-center mr-2 mb-2 w-auto">
+              <input
+                className="flex text-center border rounded p-2 mr-2 max-w-[50%]"
+                type="number"
+                value={timer}
+                onChange={handleTimer}
+                min="1"
+                step="1"
+                placeholder="1"
+                aria-label="Count-down timer"
+              />
+              <span>seconds</span>
+            </div>
+
+            <div className="flex flex-col border-gray border-2 border-solid p-2 mb-2">
+              <div className="flex mb-2 items-center">
+                <p className="w-[15%]">Start</p>
+                <div className="ml-5">
+                  <SearchableDropdown
+                    onDataChange={updateFirstArticle}
+                    temp={startArticle}
+                  />
+                </div>
+              </div>
+              <div className="flex mb-2 items-center">
+                <p className="w-[15%]">End</p>
+                <div className="ml-5">
+                  <SearchableDropdown
+                    onDataChange={updateEndArticle}
+                    temp={endArticle}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         ) : null}
 
         {mode === "path" ? (
           <div className="flex flex-col items-center justify-center">
-            <input
-              className="text-center"
-              type="number"
-              value={pathLength}
-              onChange={handlePathLength}
-              min="2"
-              step="1"
-              max="8"
-              placeholder="2"
-              aria-label="Positve integer input"
-            />
+            <div className="flex items-center justify-center">
+              <span className="mr-2">Path Length</span>
+              <input
+                className="text-center border rounded p-2"
+                type="number"
+                value={pathLength}
+                onChange={handlePathLength}
+                min="2"
+                step="1"
+                max="8"
+                placeholder="2"
+                aria-label="Positive integer input"
+              />
+            </div>
 
-            <div className="flex flex-col mb-4">
-              <label htmlFor="directed" className="mr-4">
-                <input 
-                type="radio"
-                id="directed"
-                value="directed"
-                checked={isPathDirected}
-                onChange={handleOptionChange}
-                className="mr-2"
+            <div className="flex items-center justify-center p-2">
+              <label htmlFor="directed" className="">
+                <input
+                  type="checkbox"
+                  id="directed"
+                  value="directed"
+                  checked={isPathDirected}
+                  onChange={handleOptionChange}
+                  className="mr-2"
                 />
-                <span>Directed</span>
-              </label>
-
-              <label htmlFor="undirected">
-                <input 
-                type="radio"
-                id="undirected"
-                value="undirected"
-                checked={!isPathDirected}
-                onChange={handleOptionChange}
-                className="mr-2"
-                />
-                <span>Undirected</span>
+                <span>Directed Path</span>
               </label>
             </div>
 
-            <SearchableDropdown onDataChange={updateFirstArticle} temp={startArticle}/>
-            {Array.from({ length: pathLength - 2 }, (_, index) => (
-              <SearchableDropdown
-                key={index}
-                onDataChange={updatePathArticles}
-                index={index}
-                temp={pathArticles[index] && pathArticles[index].suggestion ? pathArticles[index].suggestion : pathArticles[index]}
-              />
-            ))}
-            <SearchableDropdown onDataChange={updateEndArticle} temp={endArticle} />
+            <div className="items-center justify-center mb-2 border-gray border-2 border-solid p-2">
+              <p className="text-center mb-2">Path Links</p>
+
+              <div className="flex flex-col">
+                <div className="flex mb-2 items-center">
+                  <p className="w-[15%]">Start </p>
+                  <div className="ml-5">
+                    <SearchableDropdown
+                      onDataChange={updateFirstArticle}
+                      temp={startArticle}
+                      className=""
+                    />
+                  </div>
+                </div>
+
+                {Array.from({ length: pathLength - 2 }, (_, index) => (
+                  <div key={index} className="flex mb-2 items-center">
+                    <p className="w-[15%]">{index + 2}</p>
+                    <div className="ml-5">
+                      <SearchableDropdown
+                        key={index}
+                        onDataChange={updatePathArticles}
+                        index={index}
+                        temp={
+                          pathArticles[index] && pathArticles[index].suggestion
+                            ? pathArticles[index].suggestion
+                            : pathArticles[index]
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+                <div className="flex mb-2 items-center">
+                  <p className="w-[15%]">End</p>
+                  <div className="ml-5">
+                    <SearchableDropdown
+                      onDataChange={updateEndArticle}
+                      temp={endArticle}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : null}
-      </div>
 
-      {mode === "hitler" ? (
-        <div className="flex flex-col items-center justify-center">
-          <SearchableDropdown onDataChange={updateFirstArticle} />
-          <div className="relative">
-            <input
-              type="text"
-              value={"Hitler"}
-              readOnly
-              className="p-2 border rounded w-full"
-              placeholder="Search Wikipedia..."
-            />
+        {mode === "hitler" ? (
+          <div className="flex flex-col items-center justify-center">
+            <SearchableDropdown onDataChange={updateFirstArticle} />
+            <div className="relative">
+              <input
+                type="text"
+                value={"Hitler"}
+                readOnly
+                className="p-2 border rounded w-full"
+                placeholder="Search Wikipedia..."
+              />
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {mode === "jesus" ? (
-        <div className="flex flex-col items-center justify-center">
-          <SearchableDropdown onDataChange={updateFirstArticle} />
-          <div className="relative">
-            <input
-              type="text"
-              value={"Jesus"}
-              readOnly
-              className="p-2 border rounded w-full"
-              placeholder="Search Wikipedia..."
-            />
+        {mode === "jesus" ? (
+          <div className="flex flex-col items-center justify-center">
+            <SearchableDropdown onDataChange={updateFirstArticle} />
+            <div className="relative">
+              <input
+                type="text"
+                value={"Jesus"}
+                readOnly
+                className="p-2 border rounded w-full"
+                placeholder="Search Wikipedia..."
+              />
+            </div>
           </div>
+        ) : null}
+
+        {mode === "random" ? <div></div> : null}
+
+        <div className="flex justify-center mb-3">
+          <button
+            className="flex bg-gray-400 text-white px-4 py-2 rounded mr-3"
+            onClick={handleBack}
+          >
+            Return
+          </button>
+          <button
+            className="flex bg-blue-400 text-white px-4 py-2 rounded"
+            onClick={handleSubmit}
+          >
+            Save
+          </button>
         </div>
-      ) : null}
-
-      {mode === "random" ? (
-        <div>
-
-        </div>
-      ) : null}
-
-      <div className="flex justify-center mb-3">
-      <button
-          className="flex bg-gray-400 text-white px-4 py-2 rounded mr-3"
-          onClick={handleBack}
-        >
-          Return
-        </button>
-        <button
-          className="flex bg-blue-400 text-white px-4 py-2 rounded"
-          onClick={handleSubmit}
-        >
-          Save
-        </button>
       </div>
     </div>
   );
