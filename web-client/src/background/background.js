@@ -9,9 +9,9 @@ chrome.tabs.onUpdated.addListener(checkForWikipedia);
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if(message.action === "forwardToContent") {
+    if(message.action === "start_singleplayer") {
         chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, {action: "contentMessage", data: message.data});
+            chrome.tabs.sendMessage(tabs[0].id, {action: "start_singleplayer", data: message.data});
         });
     }
 });

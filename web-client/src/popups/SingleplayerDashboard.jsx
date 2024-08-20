@@ -115,9 +115,10 @@ function SingleplayerDashboard() {
     }
   };
 
-  const test = () => {
+  const handleSubmit = () => {
     if (isChromeExtension) {
-      chrome.runtime.sendMessage({action: "forwardToContent", data: "Hello Content script!"});
+      chrome.runtime.sendMessage({action: "start_singleplayer", data: customizations});
+      // navigate('/singleplayer');
     } else {
       console.log("Message would be sent to content script");
     }
@@ -195,7 +196,7 @@ function SingleplayerDashboard() {
         </button>
         <button
           className="flex bg-green-400 text-white px-4 py-2 rounded"
-          onClick={test}
+          onClick={handleSubmit}
         >
           Start
         </button>
