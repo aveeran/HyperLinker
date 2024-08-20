@@ -96,6 +96,7 @@ function SingleRestrictions() {
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
       <h2 className="text-3xl text-center mb-3">Singleplayer - Customization</h2>
+      <hr className="m-5"/>
       <div className="flex flex-col items-center">
         <p className="text-center mb-3">Restrictions</p>
 
@@ -105,12 +106,12 @@ function SingleRestrictions() {
             onDrop={(e) => handleDrop(e, "available")}
             onDragOver={handleDragOver}
           >
-            <h2 className="text-center mb-4">Box A</h2>
+            <h2 className="text-center mb-4">Available</h2>
             <div className="flex flex-col gap-2">
               {availableRestrictions.map((tile) => (
                 <div
                   key={tile}
-                  className="bg-blue-200 p-2 text-center rounded shadow-md cursor-pointer"
+                  className="bg-gray-200 p-2 text-center rounded shadow-md cursor-pointer"
                   draggable
                   onDragStart={(e) => handleDragStart(e, tile, "available")}
                 >
@@ -125,12 +126,12 @@ function SingleRestrictions() {
             onDrop={(e) => handleDrop(e, "chosen")}
             onDragOver={handleDragOver}
           >
-            <h2 className="text-center mb-4">Box B</h2>
+            <h2 className="text-center mb-4">Chosen</h2>
             <div className="flex flex-col gap-2">
               {chosenRestrictions.map((tile) => (
                 <div
                   key={tile}
-                  className="bg-green-200 p-2 text-center rounded shadow-md cursor-pointer"
+                  className="bg-blue-200 p-2 text-center rounded shadow-md cursor-pointer"
                   draggable
                   onDragStart={(e) => handleDragStart(e, tile, "chosen")}
                 >
