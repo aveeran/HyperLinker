@@ -95,6 +95,10 @@ function SingleplayerDashboard() {
     }
   };
 
+  const test = () => {
+    chrome.runtime.sendMessage({action: "forwardToContent", data: "Hello Content script!"});
+  }
+
   return (
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
@@ -166,7 +170,7 @@ function SingleplayerDashboard() {
         </button>
         <button
           className="flex bg-green-400 text-white px-4 py-2 rounded"
-          onClick={() => navigate("/start")}
+          onClick={test}
         >
           Start
         </button>
