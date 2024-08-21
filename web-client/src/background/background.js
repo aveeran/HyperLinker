@@ -5,7 +5,6 @@ function checkForWikipedia(tabId, changeInfo, tab) {
 
 chrome.tabs.onUpdated.addListener(checkForWikipedia);
 
-
 let counter = 0
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if(message.action === "start_singleplayer") {
@@ -15,8 +14,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
     }
     if(message.action === "wikipedia_click") {
-        counter++;
-        chrome.runtime.sendMessage({action: 'wikipedia_click', data: counter})
+        chrome.storage.local.get('clickCount', (result) => {
+            let clicks = 0;
+            if(result.clickCount !== undefined) {
+                clicks = result.clickCount;
+            }
+            clicks++;
+            chrome.storage.local.set({'clickCount' : clicks});
+        })
     }
 });
 

@@ -1,25 +1,65 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 function GameTracker({ track }) {
   const [clickCount, setClickCount] = useState(0);
+  const [time, setTime] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  let timerInterval = useRef(null);
 
   useEffect(() => {
     if (track === "clicks") {
-      const handleMessage = (message) => {
-        if (message.action === "wikipedia_click") {
-          setClickCount(message.data);
+      chrome.storage.local.get("clickCount", (result) => {
+        setClickCount(result.clickCount || 0);
+      });
+
+      const handleStorageChange = (changes, area) => {
+        if (area === "local" && changes.clickCount) {
+          setClickCount(changes.clickCount.newValue);
         }
       };
 
-      // SO WE NEED TO TRACK A CURRENT GAME STATE
-
-      chrome.runtime.onMessage.addListener(handleMessage);
+      chrome.storage.onChanged.addListener(handleStorageChange);
 
       return () => {
-        chrome.runtime.onMessage.removeListener(handleMessage);
+        chrome.storage.onChanged.removeListener(handleStorageChange);
       };
     }
   }, [track]);
+
+  useEffect(() => {
+
+    if (track === "time" && timerRunning) {
+      timerInterval.current = setInterval(() => {
+        setTime((prevTime) => prevTime + 1);
+      }, 1000);
+    }
+
+    return () => {
+      clearInterval(timerInterval);
+    };
+  }, [track, timerRunning]);
+
+  const startTimer = () => {
+    setTimerRunning(true);
+  }
+
+  const stopTimer = () => {
+    setTimerRunning(false);
+    clearInterval(timerInterval.current);
+  }
+
+  function parseTime(seconds) {
+    const hours = Math.floor(seconds / 3600); 
+    const minutes = Math.floor((seconds % 3600) / 60); 
+    const remainingSeconds = seconds % 60; 
+
+    const formattedHours = hours > 0 ? `${String(hours).padStart(2, '0')}:` : '';
+    const formattedMinutes = `${String(minutes).padStart(2, '0')}:`;
+    const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+  
+    return `${formattedHours}${formattedMinutes}${formattedSeconds}`;
+  }
+  
 
   return (
     <div>
@@ -31,7 +71,14 @@ function GameTracker({ track }) {
         </div>
       ) : null}
 
-      {track === "time" ? <div></div> : null}
+      {track === "time" ? (
+        <div>
+          <p>
+            <span className="m-2">{track}:</span>
+            {parseTime(time)}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
