@@ -4,6 +4,7 @@ import WikiArticle from "../components/WikiArticle.jsx";
 import { getFormattedDate } from "../utils/utils.js";
 import SingleplayerDashboard from "./SingleplayerDashboard.jsx";
 import GameTracker from "../components/GameTracker.jsx";
+import PathProgress from "../components/PathProgress.jsx";
 
 function Home() {
   const [wikiContent, setWikiContent] = useState("");
@@ -44,7 +45,6 @@ function Home() {
 
   return (
     <div>
-      <GameTracker track={'time'}/>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
       <h5 className="text-2xl text-center mb-3">Article of the Day</h5>
       <div className="border-black border-2 border-solid p-1.5 m-3">

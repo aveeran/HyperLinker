@@ -82,7 +82,6 @@ function SingleplayerDashboard() {
   }, [isChromeExtension]);
 
   useEffect(() => {
-    // Retrieve customizations from storage
     storage.get("singleplayer-customizations", (result) => {
       if (result["singleplayer-customizations"]) {
         setCustomizations(result["singleplayer-customizations"]);
@@ -118,10 +117,10 @@ function SingleplayerDashboard() {
   const handleSubmit = () => {
     if (isChromeExtension) {
       chrome.runtime.sendMessage({action: "start_singleplayer", data: customizations});
-      navigate('/singleplayer');
     } else {
       console.log("Message would be sent to content script");
     }
+    navigate('/singleplayer');
   };
 
   return (
