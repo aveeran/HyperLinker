@@ -118,7 +118,7 @@ function SingleplayerDashboard() {
   const handleSubmit = () => {
     if (isChromeExtension) {
       chrome.runtime.sendMessage({action: "start_singleplayer", data: customizations});
-      // navigate('/singleplayer');
+      navigate('/singleplayer');
     } else {
       console.log("Message would be sent to content script");
     }

@@ -3,7 +3,7 @@
     "version": "0.0.0.1",
     "manifest_version": 3,
     "description": "An extension to play the Wikipedia Game with customizations",
-    "permissions": ["declarativeContent", "tabs", "storage"],
+    "permissions": ["declarativeContent", "tabs", "storage", "activeTab"],
     "host_permissions": [
         "https://*.wikipedia.org/wiki/*",
         "https://*.wikipedia.org/w/*"
