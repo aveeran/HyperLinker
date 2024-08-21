@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
+//when and where should we render edge_history/node_history?
 function PathProgress({ start, end, path, visited = [], edge_history = [], node_history = [] }) {
-  visited.push(start); // Add the start step to visited
+  visited.push(start); // MAINTAIN VISITED ELSEWHERE (PERSISTENT)
   const steps = [start, ...path, end];
 
   const [hoveredNode, setHoveredNode] = useState(null);
@@ -31,12 +32,12 @@ function PathProgress({ start, end, path, visited = [], edge_history = [], node_
 
   const handleClickNode = (index) => {
     setActiveNode(prevActiveNode => (prevActiveNode === index ? null : index));
-    setActiveLink(null); // Clear link history when clicking on a node
+    setActiveLink(null); 
   };
 
   const handleClickLink = (index) => {
     setActiveLink(prevActiveLink => (prevActiveLink === index ? null : index));
-    setActiveNode(null); // Clear node history when clicking on a link
+    setActiveNode(null); 
   };
 
   return (
@@ -75,7 +76,7 @@ function PathProgress({ start, end, path, visited = [], edge_history = [], node_
       {(hoveredNode !== null || activeNode !== null || hoveredLink !== null || activeLink !== null) && (
         <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
           {(activeNode !== null || hoveredNode !== null) && (
-            <div>
+            <div className="mt-4 p-2 border border-red-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">Node History for {steps[activeNode ?? hoveredNode]?.title}</h3>
               <ul>
                 {node_history[activeNode ?? hoveredNode]?.map((entry, i) => (
@@ -88,7 +89,7 @@ function PathProgress({ start, end, path, visited = [], edge_history = [], node_
           )}
 
           {(activeLink !== null || hoveredLink !== null) && (
-            <div>
+            <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">Edge History for Link between {steps[hoveredLink]?.title} and {steps[hoveredLink + 1]?.title}</h3>
               <ul>
                 {edge_history[activeLink ?? hoveredLink]?.map((entry, i) => (
