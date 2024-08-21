@@ -58,10 +58,8 @@ function SingleplayerDashboard() {
   const [customizations, setCustomizations] = useState(defaultCustomizations);
   const navigate = useNavigate();
 
-  // Determine if we are in a Chrome extension environment
   const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
 
-  // Define storage mechanism using useMemo to prevent unnecessary re-renders
   const storage = useMemo(() => {
     if (isChromeExtension) {
       return chrome.storage.local;

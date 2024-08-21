@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 
 function GameTracker({ track }) {
   const [clickCount, setClickCount] = useState(0);
@@ -6,8 +6,14 @@ function GameTracker({ track }) {
   const [timerRunning, setTimerRunning] = useState(false);
   let timerInterval = useRef(null);
 
+  const isChromeExtension = useMemo(
+    () => 
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  )
+
   useEffect(() => {
-    if (track === "clicks") {
+    if (isChromeExtension && track === "clicks") {
       chrome.storage.local.get("clickCount", (result) => {
         setClickCount(result.clickCount || 0);
       });
@@ -24,20 +30,27 @@ function GameTracker({ track }) {
         chrome.storage.onChanged.removeListener(handleStorageChange);
       };
     }
-  }, [track]);
+  }, [track, isChromeExtension]);
 
   useEffect(() => {
+    if(isChromeExtension && track === "time") {
+      chrome.storage.local.get("elapsedTime", (result) => {
+        setTime(result.elapsedtime || 0);
+      });
 
-    if (track === "time" && timerRunning) {
-      timerInterval.current = setInterval(() => {
-        setTime((prevTime) => prevTime + 1);
-      }, 1000);
+      const handleStorageChange = (changes, area) => {
+        if(area === "local" && changes.elapsedTime) {
+          setTime(changes.elapsedTime.newValue);
+        }
+      };
+
+      chrome.storage.onChanged.addListener(handleStorageChange);
+
+      return () => {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      }
     }
-
-    return () => {
-      clearInterval(timerInterval);
-    };
-  }, [track, timerRunning]);
+  }, [track, isChromeExtension])
 
   const startTimer = () => {
     setTimerRunning(true);
