@@ -6,6 +6,7 @@ let singleplayerGame = {
   path: [],
   nodeHistory: [],
   edgeHistory: [],
+  currentNode: 0
 };
 
 let visitedPage = null;
@@ -30,24 +31,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         singleplayerGame.singleplayerCustomizations.end.link,
       ];
 
+      console.log('path length', singleplayerGame.path.length)
       singleplayerGame.nodeHistory = Array.from(
         { length: singleplayerGame.path.length },
+        () => ({clicks: 0, elapsedTime: 0})
+      );
+
+      singleplayerGame.edgeHistory = Array.from(
+        { length: singleplayerGame.path.length - 2 },
         () => []
       );
+
       chrome.storage.local.set({ "singleplayer-game": singleplayerGame });
 
-      if (singleplayerGame.singleplayerCustomizations.track === "time") {
+      // if (singleplayerGame.singleplayerCustomizations.track === "time") {
+      //   timerInterval = setInterval(() => {
+      //     if (singleplayerGame.playing) {
+      //       const elapsedTime = Math.floor(
+      //         (Date.now() - singleplayerGame.startTime) / 1000
+      //       );
+      //       chrome.storage.local.set({ elapsedTime: elapsedTime });
+      //     }
+      //   }, 1000);
+      // }
+
+      if(singleplayerGame.playing) {
         timerInterval = setInterval(() => {
-          if (singleplayerGame.playing) {
-            const elapsedTime = Math.floor(
-              (Date.now() - singleplayerGame.startTime) / 1000
-            );
-            // chrome.storage.local.get("singleplayer-game", (result) => {
-            //   result["singleplayer-game"].track = elapsedTime;
-            //   chrome.storage.local.set("singleplayer-game", result["singleplayer-game"])
-            // })
-            chrome.storage.local.set({ elapsedTime: elapsedTime });
-          }
+          const elapsedTime = Math.floor(
+            (Date.now() - singleplayerGame.startTime) / 1000
+          );
+          chrome.storage.local.set({elapsedTime : elapsedTime});
         }, 1000);
       }
 
@@ -59,20 +72,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
   }
 
-  if (message.action === "wikipedia_click") { // HOW SHOULD WE ADDRESS WIKIPEDIA CLICK?
-    if (singleplayerGame.playing) { // THE CONCERN IS HERE***
+  if (message.action === "wikipedia_click") {
+    console.log(message);
+    if (singleplayerGame.playing) { 
       chrome.storage.local.get(["clickCount", "pageVisited"], (result) => {
         let clicks = result.clickCount || 0;
         clicks++;
-        // gameData.clickCount = clicks;
-
-        //   let pagesVisited = result.pageVisited || '';
-        //   pagesVisited.push(message.page);
-        //   gameData.pagesVisited = pagesVisited;
-
         chrome.storage.local.set({
           clickCount: clicks,
-          pageVisited: message.page,
+          pageVisited: message.page
+
         });
       });
     }

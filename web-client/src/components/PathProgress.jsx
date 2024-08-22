@@ -27,40 +27,92 @@ function PathProgress() {
         setPathArticles(customizations.mode.path.intermediate_links || []);
       });
 
-      chrome.storage.local.get(["gameData"], (result) => {
-        const storedGameData = result["gameData"];
+      chrome.storage.local.get(["singleplayer-game"], (result) => {
+        const storedGameData = result["singleplayer-game"];
         setGameData(storedGameData);
         setEdgeHistory(storedGameData.edgeHistory);
         setNodeHistory(storedGameData.nodeHistory);
         setCurrentNode(storedGameData.currentNode);
       });
-    
-    
+
       function handleStorageChanges(changes, areaName) {
         if (areaName === "local" && changes["pageVisited"]) {
-          console.log("page visit updated: ", changes["pageVisited"].newValue);
-          let tempArr = [...nodeHistory];
-          if(currentNode >=0) {
-            let temp = tempArr[currentNode] || [];
-            temp.push(changes["pageVisited"].newValue);
-            tempArr[currentNode] = temp;
-            setNodeHistory(tempArr);
-            
-            const updatedGameData = {
-              ...gameData,
-              nodeHistory: tempArr
-            }
-            setGameData(updatedGameData);
-            console.log("updated: ", updatedGameData);
-            chrome.storage.local.set({"gameData": updatedGameData}, () => {
-              console.log("updated game data");
-            })
-          } 
+          //FIRST CHECK IF WE ARE MOVING ON!!!
 
+          const pageUrl = changes["pageVisited"].newValue;
+          const searchTitle = pageUrl.split("/").pop();
+          fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.title) {
+                const pageTitle = data.title;
+                console.log("Page title:", pageTitle);
+
+                let updatedEdgeHistory = [...edgeHistory];
+                let currentEdgeHistory = updatedEdgeHistory[currentNode] || [];
+                currentEdgeHistory.push({ url: pageUrl, title: pageTitle });
+                updatedEdgeHistory[currentNode] = currentEdgeHistory;
+
+                setEdgeHistory(updatedEdgeHistory);
+
+                let updatedNodeHistory = [...nodeHistory];
+                let currentNodeHistory = updatedNodeHistory[currentNode] || {
+                  clicks: 0,
+                  elapsedTime: 20
+                };
+                currentNodeHistory.clicks++;
+                updatedNodeHistory[currentNode] = currentNodeHistory;
+                setNodeHistory(updatedNodeHistory);
+
+                const updatedGameData = {
+                  ...gameData,
+                  edgeHistory: updatedEdgeHistory,
+                  nodeHistory: updatedNodeHistory,
+                };
+                setGameData(updatedGameData);
+
+                // update the links clicked at this node
+
+                chrome.storage.local.set(
+                  { "singleplayer-game": updatedGameData },
+                  () => {
+                    
+                  }
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching page title:", error);
+            });
         }
 
-        if(areaName==="local" && changes["gameData"]) {
-          const storedGameData = changes["gameData"].newValue;
+        if (areaName === "local" && changes["elapsedTime"]) {
+          let updatedNodeHistory = [...nodeHistory];
+          let currentNodeHistory = updatedNodeHistory[currentNode] || {
+            clicks: 0,
+          };
+          currentNodeHistory.elapsedTime = changes["elapsedTime"].newValue;
+          updatedNodeHistory[currentNode] = currentNodeHistory;
+          setNodeHistory(updatedNodeHistory);
+
+          const updatedGameData = {
+            ...gameData,
+            nodeHistory: updatedNodeHistory,
+          };
+          setGameData(updatedGameData);
+
+
+          chrome.storage.local.set(
+            { "singleplayer-game": updatedGameData },
+            () => {
+            }
+          );
+        }
+
+        if (areaName === "local" && changes["singleplayer-game"]) {
+          const storedGameData = changes["singleplayer-game"].newValue;
           setGameData(storedGameData);
           setEdgeHistory(storedGameData.edgeHistory);
           setNodeHistory(storedGameData.nodeHistory);
@@ -82,11 +134,8 @@ function PathProgress() {
       setEndArticle(customizations.end || {});
       setPathArticles(customizations.mode.path.intermediate_links || []);
     }
-  }, [isChromeExtension]);
+  }, [isChromeExtension, currentNode, gameData, nodeHistory, edgeHistory]);
 
-
-
-  // visited.push(startArticle); // MAINTAIN VISITED ELSEWHERE (PERSISTENT)
   const steps = [startArticle, ...pathArticles, endArticle];
 
   const handleMouseEnterNode = (index) => {
@@ -150,7 +199,7 @@ function PathProgress() {
                   visited.includes(steps[index + 1])
                     ? "bg-green-500"
                     : "bg-gray-300"
-                }`}
+                } ${activeLink === index ? "border-2 border-green-400" : ""}`}
                 style={{ margin: "0 0.5rem" }}
                 onMouseEnter={() => handleMouseEnterLink(index)}
                 onMouseLeave={handleMouseLeaveLink}
@@ -172,20 +221,17 @@ function PathProgress() {
                 Node History for {steps[activeNode ?? hoveredNode]?.title}
               </h3>
               <ul>
-                {nodeHistory[activeNode ?? hoveredNode]?.map((entry, i) => (
+                {Object.entries(nodeHistory[activeNode ?? hoveredNode] || {clicks: 0, elapsedTime: 0}).map(([key, value], i) => (
                   <li key={i} className="text-sm text-gray-700">
-                    {
-                    
-                    entry
-                    
-                    }
-                  </li>
+                  {key}: {value}
+                </li>
                 ))}
+                {/* {console.log("here it is", nodeHistory[activeNode ?? hoveredNode])} */}
               </ul>
             </div>
           )}
 
-          {/* {(activeLink !== null || hoveredLink !== null) && (
+          {(activeLink !== null || hoveredLink !== null) && (
             <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">
                 Edge History for Link between {steps[hoveredLink]?.title} and{" "}
@@ -194,12 +240,18 @@ function PathProgress() {
               <ul>
                 {edgeHistory[activeLink ?? hoveredLink]?.map((entry, i) => (
                   <li key={i} className="text-sm text-gray-700">
-                    {entry.join(" → ")}
+                    <a
+                      href={entry.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {entry.title}
+                    </a>
                   </li>
                 ))}
               </ul>
             </div>
-          )} */}
+          )}
         </div>
       )}
     </div>

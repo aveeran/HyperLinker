@@ -58,7 +58,7 @@ function Singleplayer() {
   return (
     <div>
       <button onClick={() => navigate(-1)}>quit</button>
-      <GameTracker track={"clicks"}/>
+      <GameTracker track={"time"}/>
       <PathProgress />
     </div>
   );
