@@ -4,6 +4,7 @@ let singleplayerGame = {
   startTime: 0,
   tracking: 0,
   path: [],
+  visitedPath: [],
   nodeHistory: [],
   edgeHistory: [],
   currentNode: 0
@@ -24,14 +25,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       singleplayerGame.startTime = Date.now();
 
       singleplayerGame.path = [
-        singleplayerGame.singleplayerCustomizations.start.link,
-        ...(singleplayerGame.singleplayerCustomizations.mode?.path?.intermediate_links.map(
-          (article) => article.link
+        singleplayerGame.singleplayerCustomizations.start,
+        ...((singleplayerGame.singleplayerCustomizations.mode?.path?.intermediate_links
         ) || []),
-        singleplayerGame.singleplayerCustomizations.end.link,
+        singleplayerGame.singleplayerCustomizations.end,
       ];
 
-      console.log('path length', singleplayerGame.path.length)
       singleplayerGame.nodeHistory = Array.from(
         { length: singleplayerGame.path.length },
         () => ({clicks: 0, elapsedTime: 0})
@@ -41,6 +40,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         { length: singleplayerGame.path.length - 2 },
         () => []
       );
+
+      singleplayerGame.visitedPath = [singleplayerGame.singleplayerCustomizations.start.link];
 
       chrome.storage.local.set({ "singleplayer-game": singleplayerGame });
 

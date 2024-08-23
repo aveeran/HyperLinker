@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 //when and where should we render edge_history/node_history?
 function PathProgress() {
@@ -14,6 +14,7 @@ function PathProgress() {
   const [nodeHistory, setNodeHistory] = useState([]);
   const [currentNode, setCurrentNode] = useState(0);
   const [gameData, setGameData] = useState({});
+  const [path, setPath] = useState([]);
 
   const isChromeExtension =
     typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
@@ -33,13 +34,26 @@ function PathProgress() {
         setEdgeHistory(storedGameData.edgeHistory);
         setNodeHistory(storedGameData.nodeHistory);
         setCurrentNode(storedGameData.currentNode);
+        setPath(storedGameData.path);
+        setVisited(storedGameData.visitedPath);
       });
 
       function handleStorageChanges(changes, areaName) {
         if (areaName === "local" && changes["pageVisited"]) {
-          //FIRST CHECK IF WE ARE MOVING ON!!!
-
           const pageUrl = changes["pageVisited"].newValue;
+          const nextPage = currentNode + 1 < path.length ? path[currentNode + 1].link : endArticle.link;
+          const updatedVisited = [...visited];
+          let updatedCurrNode = currentNode;
+          if(pageUrl === nextPage) {
+            updatedCurrNode++;
+            setCurrentNode(prev => {(prev + 1)});
+            
+            updatedVisited.push(pageUrl);
+            setVisited(updatedVisited);
+            console.log("Reached, ", updatedCurrNode);
+          }
+          console.log(updatedCurrNode, pageUrl, nextPage, updatedVisited);
+
           const searchTitle = pageUrl.split("/").pop();
           fetch(
             `https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`
@@ -48,28 +62,29 @@ function PathProgress() {
             .then((data) => {
               if (data.title) {
                 const pageTitle = data.title;
-                console.log("Page title:", pageTitle);
 
                 let updatedEdgeHistory = [...edgeHistory];
-                let currentEdgeHistory = updatedEdgeHistory[currentNode] || [];
+                let currentEdgeHistory = updatedEdgeHistory[updatedCurrNode] || [];
                 currentEdgeHistory.push({ url: pageUrl, title: pageTitle });
-                updatedEdgeHistory[currentNode] = currentEdgeHistory;
+                updatedEdgeHistory[updatedCurrNode] = currentEdgeHistory;
 
                 setEdgeHistory(updatedEdgeHistory);
 
                 let updatedNodeHistory = [...nodeHistory];
-                let currentNodeHistory = updatedNodeHistory[currentNode] || {
+                let currentNodeHistory = updatedNodeHistory[updatedCurrNode] || {
                   clicks: 0,
-                  elapsedTime: 20
+                  elapsedTime: 0
                 };
                 currentNodeHistory.clicks++;
-                updatedNodeHistory[currentNode] = currentNodeHistory;
+                updatedNodeHistory[updatedCurrNode] = currentNodeHistory;
                 setNodeHistory(updatedNodeHistory);
 
                 const updatedGameData = {
                   ...gameData,
                   edgeHistory: updatedEdgeHistory,
                   nodeHistory: updatedNodeHistory,
+                  currentNode: updatedCurrNode,
+                  visitedPath: updatedVisited
                 };
                 setGameData(updatedGameData);
 
@@ -93,7 +108,9 @@ function PathProgress() {
           let currentNodeHistory = updatedNodeHistory[currentNode] || {
             clicks: 0,
           };
-          currentNodeHistory.elapsedTime = changes["elapsedTime"].newValue;
+          const time = changes["elapsedTime"].newValue;
+          currentNodeHistory.elapsedTime = currentNode > 0 ? time - updatedNodeHistory.slice(0, currentNode).reduce((total, node) => total + (node.elapsedTime || 0), 0): time;
+
           updatedNodeHistory[currentNode] = currentNodeHistory;
           setNodeHistory(updatedNodeHistory);
 
@@ -117,6 +134,7 @@ function PathProgress() {
           setEdgeHistory(storedGameData.edgeHistory);
           setNodeHistory(storedGameData.nodeHistory);
           setCurrentNode(storedGameData.currentNode);
+          setVisited(storedGameData.visitedPath);
         }
       }
 
@@ -134,9 +152,7 @@ function PathProgress() {
       setEndArticle(customizations.end || {});
       setPathArticles(customizations.mode.path.intermediate_links || []);
     }
-  }, [isChromeExtension, currentNode, gameData, nodeHistory, edgeHistory]);
-
-  const steps = [startArticle, ...pathArticles, endArticle];
+  }, [isChromeExtension, currentNode, gameData, nodeHistory, edgeHistory, endArticle.link, path, visited]);
 
   const handleMouseEnterNode = (index) => {
     setHoveredNode(index);
@@ -175,11 +191,11 @@ function PathProgress() {
   return (
     <div className="flex flex-col items-center">
       <div className="flex items-center w-full p-2">
-        {steps.map((step, index) => (
+        {path.map((step, index) => (
           <React.Fragment key={index}>
             <div
               className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
-                visited.includes(step)
+                visited.includes(step.link)
                   ? "bg-blue-500 text-white"
                   : "bg-white border-gray-300"
               } ${activeNode === index ? "border-orange-400" : ""}`}
@@ -192,11 +208,11 @@ function PathProgress() {
                 {step.title}
               </p>
             </div>
-            {index < steps.length - 1 && (
+            {index < path.length - 1 && (
               <div
                 className={`h-2 flex-1 ${
-                  visited.includes(steps[index]) &&
-                  visited.includes(steps[index + 1])
+                  visited.includes(path[index].link) &&
+                  visited.includes(path[index + 1].link)
                     ? "bg-green-500"
                     : "bg-gray-300"
                 } ${activeLink === index ? "border-2 border-green-400" : ""}`}
@@ -218,15 +234,16 @@ function PathProgress() {
           {(activeNode !== null || hoveredNode !== null) && (
             <div className="mt-4 p-2 border border-red-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">
-                Node History for {steps[activeNode ?? hoveredNode]?.title}
+                Node History for {path[activeNode ?? hoveredNode]?.title}
               </h3>
               <ul>
-                {Object.entries(nodeHistory[activeNode ?? hoveredNode] || {clicks: 0, elapsedTime: 0}).map(([key, value], i) => (
+                {
+                  currentNode >= (activeNode ?? hoveredNode) ? (
+                Object.entries(nodeHistory[activeNode ?? hoveredNode] || {clicks: 0, elapsedTime: 0}).map(([key, value], i) => (
                   <li key={i} className="text-sm text-gray-700">
                   {key}: {value}
                 </li>
-                ))}
-                {/* {console.log("here it is", nodeHistory[activeNode ?? hoveredNode])} */}
+                ))) : <p className="text-sm text-gray-700">No history to show</p>}
               </ul>
             </div>
           )}
@@ -234,8 +251,8 @@ function PathProgress() {
           {(activeLink !== null || hoveredLink !== null) && (
             <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">
-                Edge History for Link between {steps[hoveredLink]?.title} and{" "}
-                {steps[hoveredLink + 1]?.title}
+                Edge History for Link between {path[hoveredLink]?.title} and{" "}
+                {path[hoveredLink + 1]?.title}
               </h3>
               <ul>
                 {edgeHistory[activeLink ?? hoveredLink]?.map((entry, i) => (
