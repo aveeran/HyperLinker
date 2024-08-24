@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 
-//when and where should we render edge_history/node_history?
 function PathProgress() {
-  const [startArticle, setStartArticle] = useState({});
-  const [endArticle, setEndArticle] = useState({}); // DESIGN CHANGE: WE REMOVE START, END AND JUST USE PATH?
-  const [pathArticles, setPathArticles] = useState([]);
+  const [endArticle, setEndArticle] = useState({});
   const [hoveredNode, setHoveredNode] = useState(null);
   const [hoveredLink, setHoveredLink] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
@@ -21,13 +18,6 @@ function PathProgress() {
 
   useEffect(() => {
     if (isChromeExtension) {
-      chrome.storage.local.get(["singleplayer-customizations"], (result) => {
-        const customizations = result["singleplayer-customizations"];
-        setStartArticle(customizations.start || {});
-        setEndArticle(customizations.end || {});
-        setPathArticles(customizations.mode.path.intermediate_links || []);
-      });
-
       chrome.storage.local.get(["singleplayer-game"], (result) => {
         const storedGameData = result["singleplayer-game"];
         setGameData(storedGameData);
@@ -35,24 +25,30 @@ function PathProgress() {
         setNodeHistory(storedGameData.nodeHistory);
         setCurrentNode(storedGameData.currentNode);
         setPath(storedGameData.path);
+        setEndArticle(storedGameData.singleplayerCustomizations.end);
         setVisited(storedGameData.visitedPath);
       });
+
+      // WE HAVE TO MOVE THIS FROM PATHPROGRESS.JSX TO BACKGROUND.JS??? BECAUSE OTHERWISE THE EXTENSION ALWAYS NEEDS TO BE OPEN
 
       function handleStorageChanges(changes, areaName) {
         if (areaName === "local" && changes["pageVisited"]) {
           const pageUrl = changes["pageVisited"].newValue;
-          const nextPage = currentNode + 1 < path.length ? path[currentNode + 1].link : endArticle.link;
+          const nextPage =
+          currentNode + 1 < path.length
+          ? path[currentNode + 1].link
+          : endArticle.link;
           const updatedVisited = [...visited];
           let updatedCurrNode = currentNode;
-          if(pageUrl === nextPage) {
+          if (pageUrl === nextPage) {
             updatedCurrNode++;
-            setCurrentNode(prev => {(prev + 1)});
-            
+            setCurrentNode((prev) => {
+              prev + 1;
+            });
+
             updatedVisited.push(pageUrl);
             setVisited(updatedVisited);
-            console.log("Reached, ", updatedCurrNode);
           }
-          console.log(updatedCurrNode, pageUrl, nextPage, updatedVisited);
 
           const searchTitle = pageUrl.split("/").pop();
           fetch(
@@ -64,16 +60,19 @@ function PathProgress() {
                 const pageTitle = data.title;
 
                 let updatedEdgeHistory = [...edgeHistory];
-                let currentEdgeHistory = updatedEdgeHistory[updatedCurrNode] || [];
+                let currentEdgeHistory =
+                  updatedEdgeHistory[updatedCurrNode] || [];
                 currentEdgeHistory.push({ url: pageUrl, title: pageTitle });
                 updatedEdgeHistory[updatedCurrNode] = currentEdgeHistory;
 
                 setEdgeHistory(updatedEdgeHistory);
 
                 let updatedNodeHistory = [...nodeHistory];
-                let currentNodeHistory = updatedNodeHistory[updatedCurrNode] || {
+                let currentNodeHistory = updatedNodeHistory[
+                  updatedCurrNode
+                ] || {
                   clicks: 0,
-                  elapsedTime: 0
+                  elapsedTime: 0,
                 };
                 currentNodeHistory.clicks++;
                 updatedNodeHistory[updatedCurrNode] = currentNodeHistory;
@@ -84,17 +83,13 @@ function PathProgress() {
                   edgeHistory: updatedEdgeHistory,
                   nodeHistory: updatedNodeHistory,
                   currentNode: updatedCurrNode,
-                  visitedPath: updatedVisited
+                  visitedPath: updatedVisited,
                 };
                 setGameData(updatedGameData);
 
-                // update the links clicked at this node
-
                 chrome.storage.local.set(
                   { "singleplayer-game": updatedGameData },
-                  () => {
-                    
-                  }
+                  () => {}
                 );
               }
             })
@@ -109,7 +104,13 @@ function PathProgress() {
             clicks: 0,
           };
           const time = changes["elapsedTime"].newValue;
-          currentNodeHistory.elapsedTime = currentNode > 0 ? time - updatedNodeHistory.slice(0, currentNode).reduce((total, node) => total + (node.elapsedTime || 0), 0): time;
+          currentNodeHistory.elapsedTime =
+            currentNode > 0
+              ? time -
+                updatedNodeHistory
+                  .slice(0, currentNode) // MAKE THIS MORE EFFICIENT?
+                  .reduce((total, node) => total + (node.elapsedTime || 0), 0)
+              : time;
 
           updatedNodeHistory[currentNode] = currentNodeHistory;
           setNodeHistory(updatedNodeHistory);
@@ -120,11 +121,9 @@ function PathProgress() {
           };
           setGameData(updatedGameData);
 
-
           chrome.storage.local.set(
             { "singleplayer-game": updatedGameData },
-            () => {
-            }
+            () => {}
           );
         }
 
@@ -142,17 +141,17 @@ function PathProgress() {
       return () => {
         chrome.storage.onChanged.removeListener(handleStorageChanges);
       };
-    } else {
-      const storedCustomizations = localStorage.getItem(
-        "singleplayer-customizations"
-      );
-      const customizations = JSON.parse(storedCustomizations);
-      console.log(customizations);
-      setStartArticle(customizations.start || {});
-      setEndArticle(customizations.end || {});
-      setPathArticles(customizations.mode.path.intermediate_links || []);
-    }
-  }, [isChromeExtension, currentNode, gameData, nodeHistory, edgeHistory, endArticle.link, path, visited]);
+    } 
+  }, [
+    isChromeExtension,
+    currentNode,
+    gameData,
+    nodeHistory,
+    edgeHistory,
+    endArticle.link,
+    path,
+    visited,
+  ]);
 
   const handleMouseEnterNode = (index) => {
     setHoveredNode(index);
@@ -237,13 +236,20 @@ function PathProgress() {
                 Node History for {path[activeNode ?? hoveredNode]?.title}
               </h3>
               <ul>
-                {
-                  currentNode >= (activeNode ?? hoveredNode) ? (
-                Object.entries(nodeHistory[activeNode ?? hoveredNode] || {clicks: 0, elapsedTime: 0}).map(([key, value], i) => (
-                  <li key={i} className="text-sm text-gray-700">
-                  {key}: {value}
-                </li>
-                ))) : <p className="text-sm text-gray-700">No history to show</p>}
+                {currentNode >= (activeNode ?? hoveredNode) ? (
+                  Object.entries(
+                    nodeHistory[activeNode ?? hoveredNode] || {
+                      clicks: 0,
+                      elapsedTime: 0,
+                    }
+                  ).map(([key, value], i) => (
+                    <li key={i} className="text-sm text-gray-700">
+                      {key}: {value}
+                    </li>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-700">No history to show</p>
+                )}
               </ul>
             </div>
           )}
