@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 
 function PathProgress() {
+  const [isDirected, setIsDirected] = useState(false);
   const [endArticle, setEndArticle] = useState({});
   const [hoveredNode, setHoveredNode] = useState(null);
   const [hoveredLink, setHoveredLink] = useState(null);
@@ -12,6 +13,7 @@ function PathProgress() {
   const [currentNode, setCurrentNode] = useState(0);
   const [gameData, setGameData] = useState({});
   const [path, setPath] = useState([]);
+  const [freePath, setFreePath] = useState([]);
 
   const isChromeExtension =
     typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
@@ -20,84 +22,18 @@ function PathProgress() {
     if (isChromeExtension) {
       chrome.storage.local.get(["singleplayer-game"], (result) => {
         const storedGameData = result["singleplayer-game"];
-        setGameData(storedGameData);
-        setEdgeHistory(storedGameData.edgeHistory);
-        setNodeHistory(storedGameData.nodeHistory);
-        setCurrentNode(storedGameData.currentNode);
-        setPath(storedGameData.path);
-        setEndArticle(storedGameData.singleplayerCustomizations.end);
-        setVisited(storedGameData.visitedPath);
+        setGameData(storedGameData || {});
+        setIsDirected(storedGameData.singleplayerCustomizations.mode.path.directed || true);
+        setEdgeHistory(storedGameData.edgeHistory || []);
+        setNodeHistory(storedGameData.nodeHistory || []);
+        setCurrentNode(storedGameData.currentNode || 0);
+        setPath(storedGameData.path || []);
+        setFreePath(storedGameData.freePath || []);
+        setEndArticle(storedGameData.singleplayerCustomizations.end || {});
+        setVisited(storedGameData.visitedPath || []);
       });
 
-      // WE HAVE TO MOVE THIS FROM PATHPROGRESS.JSX TO BACKGROUND.JS??? BECAUSE OTHERWISE THE EXTENSION ALWAYS NEEDS TO BE OPEN
-
       function handleStorageChanges(changes, areaName) {
-        if (areaName === "local" && changes["pageVisited"]) {
-          const pageUrl = changes["pageVisited"].newValue;
-          const nextPage =
-          currentNode + 1 < path.length
-          ? path[currentNode + 1].link
-          : endArticle.link;
-          const updatedVisited = [...visited];
-          let updatedCurrNode = currentNode;
-          if (pageUrl === nextPage) {
-            updatedCurrNode++;
-            setCurrentNode((prev) => {
-              prev + 1;
-            });
-
-            updatedVisited.push(pageUrl);
-            setVisited(updatedVisited);
-          }
-
-          const searchTitle = pageUrl.split("/").pop();
-          fetch(
-            `https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`
-          )
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.title) {
-                const pageTitle = data.title;
-
-                let updatedEdgeHistory = [...edgeHistory];
-                let currentEdgeHistory =
-                  updatedEdgeHistory[updatedCurrNode] || [];
-                currentEdgeHistory.push({ url: pageUrl, title: pageTitle });
-                updatedEdgeHistory[updatedCurrNode] = currentEdgeHistory;
-
-                setEdgeHistory(updatedEdgeHistory);
-
-                let updatedNodeHistory = [...nodeHistory];
-                let currentNodeHistory = updatedNodeHistory[
-                  updatedCurrNode
-                ] || {
-                  clicks: 0,
-                  elapsedTime: 0,
-                };
-                currentNodeHistory.clicks++;
-                updatedNodeHistory[updatedCurrNode] = currentNodeHistory;
-                setNodeHistory(updatedNodeHistory);
-
-                const updatedGameData = {
-                  ...gameData,
-                  edgeHistory: updatedEdgeHistory,
-                  nodeHistory: updatedNodeHistory,
-                  currentNode: updatedCurrNode,
-                  visitedPath: updatedVisited,
-                };
-                setGameData(updatedGameData);
-
-                chrome.storage.local.set(
-                  { "singleplayer-game": updatedGameData },
-                  () => {}
-                );
-              }
-            })
-            .catch((error) => {
-              console.error("Error fetching page title:", error);
-            });
-        }
-
         if (areaName === "local" && changes["elapsedTime"]) {
           let updatedNodeHistory = [...nodeHistory];
           let currentNodeHistory = updatedNodeHistory[currentNode] || {
@@ -130,10 +66,13 @@ function PathProgress() {
         if (areaName === "local" && changes["singleplayer-game"]) {
           const storedGameData = changes["singleplayer-game"].newValue;
           setGameData(storedGameData);
+          setIsDirected(storedGameData.singleplayerCustomizations.mode.path.directed);
           setEdgeHistory(storedGameData.edgeHistory);
           setNodeHistory(storedGameData.nodeHistory);
           setCurrentNode(storedGameData.currentNode);
           setVisited(storedGameData.visitedPath);
+          setPath(storedGameData.path);
+          setFreePath(storedGameData.freePath);
         }
       }
 
@@ -190,7 +129,7 @@ function PathProgress() {
   return (
     <div className="flex flex-col items-center">
       <div className="flex items-center w-full p-2">
-        {path.map((step, index) => (
+        {isDirected ? (path.map((step, index) => (
           <React.Fragment key={index}>
             <div
               className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
@@ -222,7 +161,40 @@ function PathProgress() {
               ></div>
             )}
           </React.Fragment>
-        ))}
+        ))) : null}
+        {!isDirected ? (freePath.map((step, index) => (
+          <React.Fragment key={index}>
+            <div
+              className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
+                visited.includes(step.link)
+                  ? "bg-blue-500 text-white"
+                  : "bg-white border-gray-300"
+              } ${activeNode === index ? "border-orange-400" : ""}`}
+              onMouseEnter={() => handleMouseEnterNode(index)}
+              onMouseLeave={handleMouseLeaveNode}
+              onClick={() => handleClickNode(index)}
+              title={step.title}
+            >
+              <p className="truncate text-sm" aria-label={step.title}>
+                {step.title}
+              </p>
+            </div>
+            {index < path.length - 1 && (
+              <div
+                className={`h-2 flex-1 ${
+                  visited.includes(path[index].link) &&
+                  visited.includes(path[index + 1].link)
+                    ? "bg-green-500"
+                    : "bg-gray-300"
+                } ${activeLink === index ? "border-2 border-green-400" : ""}`}
+                style={{ margin: "0 0.5rem" }}
+                onMouseEnter={() => handleMouseEnterLink(index)}
+                onMouseLeave={handleMouseLeaveLink}
+                onClick={() => handleClickLink(index)}
+              ></div>
+            )}
+          </React.Fragment>
+        ))) : null}
       </div>
 
       {(hoveredNode !== null ||
