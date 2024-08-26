@@ -1,5 +1,37 @@
 import React, { useState, useEffect, useMemo } from "react";
 
+const defaultGame = {
+  singleplayerCustomizations: {
+    mode: {
+      type: "",
+      path: {
+        pathLength: 0,
+        directed: false,
+        intermediate_links: [],
+      },
+      countDown: {
+        timer: 0
+      },
+    },
+    start: {
+      title: "",
+      end:"",
+    },
+    track:[],
+    restrictions:[]
+  },
+  playing: false,
+  startTime: 0,
+  tracking: 0,
+  path: [],
+  freePath: [],
+  visitedPath: [],
+  nodeHistory: [],
+  edgeHistory: [],
+  currentNode: 0,
+};
+
+
 function PathProgress() {
   const [isDirected, setIsDirected] = useState(false);
   const [endArticle, setEndArticle] = useState({});
@@ -21,15 +53,15 @@ function PathProgress() {
   useEffect(() => {
     if (isChromeExtension) {
       chrome.storage.local.get(["singleplayer-game"], (result) => {
-        const storedGameData = result["singleplayer-game"];
-        setGameData(storedGameData || {});
-        setIsDirected(storedGameData.singleplayerCustomizations.mode.path.directed || true);
+        const storedGameData = result["singleplayer-game"] || {};
+        setGameData(storedGameData || defaultGame);
+        setIsDirected(storedGameData.singleplayerCustomizations?.mode?.path?.directed || true);
         setEdgeHistory(storedGameData.edgeHistory || []);
         setNodeHistory(storedGameData.nodeHistory || []);
         setCurrentNode(storedGameData.currentNode || 0);
         setPath(storedGameData.path || []);
         setFreePath(storedGameData.freePath || []);
-        setEndArticle(storedGameData.singleplayerCustomizations.end || {});
+        setEndArticle(storedGameData.singleplayerCustomizations?.end || {});
         setVisited(storedGameData.visitedPath || []);
       });
 
@@ -134,9 +166,9 @@ function PathProgress() {
             <div
               className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
                 visited.includes(step.link)
-                  ? "bg-blue-500 text-white"
+                  ? "bg-blue-500 text-white border-green-400"
                   : "bg-white border-gray-300"
-              } ${activeNode === index ? "border-orange-400" : ""}`}
+              } ${activeNode === index ? "border-yellow-400" : ""}`}
               onMouseEnter={() => handleMouseEnterNode(index)}
               onMouseLeave={handleMouseLeaveNode}
               onClick={() => handleClickNode(index)}
@@ -203,7 +235,7 @@ function PathProgress() {
         activeLink !== null) && (
         <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
           {(activeNode !== null || hoveredNode !== null) && (
-            <div className="mt-4 p-2 border border-red-300 bg-white rounded shadow-lg m-2">
+            <div className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${activeNode !== null ? "bg-yellow-400" : "bg-red-400"}`}>
               <h3 className="font-bold">
                 Node History for {path[activeNode ?? hoveredNode]?.title}
               </h3>

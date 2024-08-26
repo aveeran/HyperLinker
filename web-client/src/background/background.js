@@ -1,5 +1,66 @@
 let singleplayerGame = {
-  singleplayerCustomizations: {},
+  singleplayerCustomizations: {
+    mode: {
+      type: "",
+      path: {
+        pathLength: 0,
+        directed: false,
+        intermediate_links: [],
+      },
+      countDown: {
+        timer: 0,
+      },
+    },
+    start: {
+      title: "",
+      link: "",
+    },
+    end: {
+      title: "",
+      end: "",
+    },
+    track: [],
+    restrictions: [
+      
+    ],
+  },
+  playing: false,
+  startTime: 0,
+  tracking: 0,
+  path: [],
+  freePath: [],
+  visitedPath: [],
+  nodeHistory: [],
+  edgeHistory: [],
+  currentNode: 0,
+};
+
+const defaultGame = {
+  singleplayerCustomizations: {
+    mode: {
+      type: "",
+      path: {
+        pathLength: 0,
+        directed: false,
+        intermediate_links: [],
+      },
+      countDown: {
+        timer: 0,
+      },
+    },
+    start: {
+      title: "",
+      link: "",
+    },
+    end: {
+      title: "",
+      end: "",
+    },
+    track: [],
+    restrictions: [
+      
+    ],
+  },
   playing: false,
   startTime: 0,
   tracking: 0,
@@ -14,12 +75,27 @@ let singleplayerGame = {
 let visitedPage = null;
 
 let timerInterval;
+let isTimerRunning = false;
 
 chrome.storage.local.clear();
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "local" && changes["singleplayer-game"]) {
-    singleplayerGame = changes["singleplayer-game"].newValue;
+    const updatedSingleplayerGame = changes["singleplayer-game"].newValue;
+    if(singleplayerGame.playing != updatedSingleplayerGame.playing){
+      if(updatedSingleplayerGame.playing) {
+        if(!isTimerRunning) {
+          timerInterval = setInterval(() => {
+            const elapsedTime = Math.floor((Date.now() - updatedSingleplayerGame.startTime) / 1000);
+            chrome.storage.local.set({ elapsedTime: elapsedTime });
+          }, 1000);
+          isTimerRunning = true;
+        }
+      }
+    }
+
+
+    singleplayerGame = updatedSingleplayerGame;
   }
 });
 
@@ -27,7 +103,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "start_singleplayer") {
     const { start, end } = message.data;
     chrome.tabs.create({ url: start.link }, (newTab) => {
-      singleplayerGame.singleplayerCustomizations = message.data;
+      if(!singleplayerGame || !singleplayerGame.singleplayerCustomizations || !singleplayerGame.playing 
+        || !singleplayerGame.startTime || !singleplayerGame.path || !singleplayerGame.freePath || 
+        singleplayerGame.nodeHistory || !singleplayerGame.edgeHistory || !singleplayerGame.visitedPath
+      ) {
+        singleplayerGame = defaultGame;
+      }
+      singleplayerGame.singleplayerCustomizations = message.data || {};
       singleplayerGame.playing = true;
       singleplayerGame.startTime = Date.now();
 
@@ -38,14 +120,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         singleplayerGame.singleplayerCustomizations.end,
       ];
 
-      if(!singleplayerGame.singleplayerCustomizations.mode.path.directed) {
+      if (!singleplayerGame.singleplayerCustomizations.mode.path.directed) {
         singleplayerGame.freePath = Array.from(
-          {length: singleplayerGame.path.length },
-          () => ({title: "???", link:"www.wikipedia.org"})
+          { length: singleplayerGame.path.length },
+          () => ({ title: "???", link: "www.wikipedia.org" })
         );
 
-        singleplayerGame.freePath[0] = singleplayerGame.singleplayerCustomizations.start;
-        singleplayerGame.freePath[singleplayerGame.path.length - 1] = singleplayerGame.singleplayerCustomizations.end;
+        singleplayerGame.freePath[0] =
+          singleplayerGame.singleplayerCustomizations.start;
+        singleplayerGame.freePath[singleplayerGame.path.length - 1] =
+          singleplayerGame.singleplayerCustomizations.end;
       }
 
       singleplayerGame.nodeHistory = Array.from(
@@ -84,7 +168,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const pageUrl = message.page;
         const currentNode = singleplayerGame.currentNode;
         const nextPage = singleplayerGame.path[currentNode + 1]; // FOR DIRECTED/NORMAL; need to address undirected now
-        
+
         const searchTitle = pageUrl.split("/").pop();
         fetch(
           `https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`
@@ -94,35 +178,46 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (data.title) {
               const pageTitle = data.title;
               let currentEdgeHistory =
-                singleplayerGame.edgeHistory[currentNode] ||
-                [];
+                singleplayerGame.edgeHistory[currentNode] || [];
               currentEdgeHistory.push({ url: pageUrl, title: pageTitle });
-              singleplayerGame.edgeHistory[currentNode] =
-                currentEdgeHistory;
+              singleplayerGame.edgeHistory[currentNode] = currentEdgeHistory;
 
               let currentNodeHistory = singleplayerGame.nodeHistory[
                 currentNode
-              ] || { clicks: 0, elapsedTime: 0 }; 
+              ] || { clicks: 0, elapsedTime: 0 };
               currentNodeHistory.clicks++;
-              singleplayerGame.nodeHistory[currentNode] =
-                currentNodeHistory;
+              singleplayerGame.nodeHistory[currentNode] = currentNodeHistory;
             }
 
-            if(singleplayerGame.singleplayerCustomizations.mode.path.directed) {
+            if (
+              singleplayerGame.singleplayerCustomizations.mode.path.directed
+            ) {
               if (pageUrl === nextPage.link) {
                 singleplayerGame.currentNode++;
                 singleplayerGame.visitedPath.push(pageUrl);
               }
             } else {
-              console.log("undirected", singleplayerGame.path, singleplayerGame.visitedPath, pageUrl);
-              if(singleplayerGame.path.map(article=>article.link).includes(pageUrl) && !singleplayerGame.visitedPath.includes(pageUrl)) {
+              console.log(
+                "undirected",
+                singleplayerGame.path,
+                singleplayerGame.visitedPath,
+                pageUrl
+              );
+              if (
+                singleplayerGame.path
+                  .map((article) => article.link)
+                  .includes(pageUrl) &&
+                !singleplayerGame.visitedPath.includes(pageUrl)
+              ) {
                 console.log("Should be here!");
                 singleplayerGame.currentNode++;
-                singleplayerGame.freePath[singleplayerGame.currentNode] = {title: data.title, link: pageUrl};
+                singleplayerGame.freePath[singleplayerGame.currentNode] = {
+                  title: data.title,
+                  link: pageUrl,
+                };
                 singleplayerGame.visitedPath.push(pageUrl);
               }
             }
-            console.log(singleplayerGame);
             chrome.storage.local.set({ "singleplayer-game": singleplayerGame });
           })
           .catch((error) => {
@@ -134,12 +229,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "quit_singleplayer") {
     singleplayerGame.playing = false;
-    clearInterval(timerInterval); // Stop the timer
-    // chrome.storage.local.set({
-    //   clickCount: gameData.clickCount,
-    //   pagesVisited: gameData.pagesVisited,
-    //   elapsedTime: gameData.elapsedTime,
-    //   playing: false,
-    // });
+    clearInterval(timerInterval); 
+    const updatedSingleplayerGame = {
+      ...singleplayerGame,
+      playing: false,
+      startTime:0,
+      tracking:0,
+      path: [],
+      freePath: [],
+      visitedPath:[],
+      nodeHistory:[],
+      edgeHistory:[],
+      currentNode:0
+    }
+    chrome.storage.local.set({"singleplayer-game":updatedSingleplayerGame})
   }
 });

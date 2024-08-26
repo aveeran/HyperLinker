@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 
-function GameTracker({ track }) {
+function GameTracker({ track, countDown }) {
   const [clickCount, setClickCount] = useState(0);
   const [time, setTime] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -13,7 +13,7 @@ function GameTracker({ track }) {
   )
 
   useEffect(() => {
-    if (isChromeExtension && track === "clicks") {
+    if (isChromeExtension && (track === "clicks" || countDown !== -1)) {
       chrome.storage.local.get("clickCount", (result) => {
         setClickCount(result.clickCount || 0);
       });
@@ -30,12 +30,12 @@ function GameTracker({ track }) {
         chrome.storage.onChanged.removeListener(handleStorageChange);
       };
     }
-  }, [track, isChromeExtension]);
+  }, [track, isChromeExtension, countDown]);
 
   useEffect(() => {
     if(isChromeExtension && track === "time") {
       chrome.storage.local.get("elapsedTime", (result) => {
-        setTime(result.elapsedtime || 0);
+        setTime(result.elapsedTime || 0);
       });
 
       const handleStorageChange = (changes, area) => {
@@ -89,6 +89,15 @@ function GameTracker({ track }) {
           <p>
             <span className="m-2">{track}:</span>
             {parseTime(time)}
+          </p>
+        </div>
+      ) : null}
+
+      {countDown !== -1 ? (
+        <div>
+          <p>
+            <span>Count down: </span>
+            {parseTime(countDown-time)}
           </p>
         </div>
       ) : null}
