@@ -24,79 +24,11 @@ const getCategory = (value) => {
   return null; // Ensure to return null if no category is found
 };
 
-const defaultCustomizations = {
-  mode: {
-    type: "path",
-    path: {
-      pathLength: 2,
-      directed: true,
-      intermediate_links: [],
-    },
-    countDown: {
-      timer: 0,
-    },
-  },
-  start: {
-    title: "",
-    link: "",
-  },
-  end: {
-    title: "",
-    end: "",
-  },
-  track: ["clicks"],
-  restrictions: [
-    "no-opening-para",
-    "no-find",
-    "no-back",
-    "no-category",
-    "no-dates",
-  ],
-};
 
 function SingleplayerDashboard() {
-  const [customizations, setCustomizations] = useState(defaultCustomizations);
+  const [customizations, setCustomizations] = useState({});
   const navigate = useNavigate();
 
-  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
-
-  const storage = useMemo(() => {
-    if (isChromeExtension) {
-      return chrome.storage.local;
-    } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
-        }
-      };
-    }
-  }, [isChromeExtension]);
-
-  useEffect(() => {
-    storage.get("singleplayer-customizations", (result) => {
-      if (result["singleplayer-customizations"]) {
-        setCustomizations(result["singleplayer-customizations"]);
-      } else {
-        storage.set({
-          "singleplayer-customizations": defaultCustomizations,
-        });
-      }
-    });
-  }, [storage]);
-
-  const reset = () => {
-    setCustomizations(defaultCustomizations);
-    storage.set({
-      "singleplayer-customizations": defaultCustomizations,
-    });
-  };
 
   const sortedEntries = Object.entries(customizations).sort(([keyA], [keyB]) => {
     const order = ["mode", "start", "end", "path", "count down", "track", "restrictions"];
@@ -113,11 +45,7 @@ function SingleplayerDashboard() {
   };
 
   const handleSubmit = () => {
-    if (isChromeExtension) {
-      chrome.runtime.sendMessage({action: "start_singleplayer", data: customizations});
-    } else {
-      console.log("Message would be sent to content script");
-    }
+   
     navigate('/singleplayer');
   };
 

@@ -16,44 +16,6 @@ function SingleRestrictions() {
   const [availableRestrictions, setAvailableRestrictions] = useState([]);
   const [chosenRestrictions, setChosenRestrictions] = useState([]);
 
-  // Determine if we are in a Chrome extension environment
-  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
-
-  // Define storage mechanism using useMemo
-  const storage = useMemo(() => {
-    if (isChromeExtension) {
-      return chrome.storage.local;
-    } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
-        }
-      };
-    }
-  }, [isChromeExtension]);
-
-  // Load customizations when the component mounts
-  useEffect(() => {
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = {};
-      if (result['singleplayer-customizations']) {
-        customizations = result['singleplayer-customizations'];
-      }
-      setAvailableRestrictions(
-        defaultRestrictions.filter(
-          (element) => !customizations.restrictions.includes(element)
-        )
-      );
-      setChosenRestrictions(customizations.restrictions || []);
-    });
-  }, [storage]);
 
   const handleDragStart = (e, restriction, sourceWidget) => {
     e.dataTransfer.setData("tile", restriction);
@@ -84,12 +46,7 @@ function SingleRestrictions() {
   };
 
   const handleSubmit = () => {
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = result['singleplayer-customizations'] || {};
-      customizations.restrictions = chosenRestrictions;
-      storage.set({ 'singleplayer-customizations': customizations });
-      handleBack();
-    });
+ 
   };
 
   return (

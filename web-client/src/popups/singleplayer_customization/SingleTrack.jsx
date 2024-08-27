@@ -5,39 +5,6 @@ function SingleTrack() {
   const navigate = useNavigate();
   const [track, setTrack] = useState('clicks');
 
-  // Determine if we are in a Chrome extension environment
-  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
-
-  // Define storage mechanism using useMemo
-  const storage = useMemo(() => {
-    if (isChromeExtension) {
-      return chrome.storage.local;
-    } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
-        }
-      };
-    }
-  }, [isChromeExtension]);
-
-  // Load customizations when the component mounts
-  useEffect(() => {
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = {};
-      if (result['singleplayer-customizations']) {
-        customizations = result['singleplayer-customizations'];
-        setTrack(customizations.track[0] || 'clicks');
-      }
-    });
-  }, [storage]);
 
   const handleOptionChange = (event) => {
     setTrack(event.target.value);
@@ -45,12 +12,7 @@ function SingleTrack() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = result['singleplayer-customizations'] || {};
-      customizations.track = [track];
-      storage.set({ 'singleplayer-customizations': customizations });
-      handleBack();
-    });
+    
   }
 
   const handleBack = () => {
