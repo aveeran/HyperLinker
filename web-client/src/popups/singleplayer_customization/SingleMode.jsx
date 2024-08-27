@@ -1,41 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
 import { useNavigate } from "react-router-dom";
-
-// Default customizations data
-const defaultCustomizations = {
-  mode: {
-    type: "path",
-    path: {
-      pathLength: 2,
-      directed: true,
-      intermediate_links: [],
-    },
-    countDown: {
-      timer: 0,
-    },
-  },
-  start: {
-    title: "",
-    link: "",
-  },
-  end: {
-    title: "",
-    end: "",
-  },
-  track: ["clicks"],
-  restrictions: [
-    "no-opening-para",
-    "no-find",
-    "no-back",
-    "no-category",
-    "no-dates",
-  ],
-};
+import { defaultSingleplayerCustomizations } from "@utils/utils";
 
 function SingleMode() {
   const navigate = useNavigate();
-  const [customizations, setCustomizations] = useState({});
+  const [customizations, setCustomizations] = useState(
+    defaultSingleplayerCustomizations
+  );
   const [mode, setMode] = useState("");
   const [startArticle, setStartArticle] = useState({});
   const [endArticle, setEndArticle] = useState({});
@@ -48,6 +20,30 @@ function SingleMode() {
   const updateEndArticle = (value) => setEndArticle(value);
   const handleModeChange = (event) => setMode(event.target.value);
   const handleBack = () => navigate(-1);
+
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
+
+  useEffect(() => {
+    if (isChromeExtension) {
+      chrome.storage.local.get("singleplayer-customizations", (result) => {
+        const storedCustomizations = result["singleplayer-customizations"];
+        if(storedCustomizations) {
+          setCustomizations(storedCustomizations);
+          setMode(storedCustomizations.mode.type);
+          setStartArticle(storedCustomizations.start);
+          setEndArticle(storedCustomizations.end);
+          setPathLength(storedCustomizations.mode.path.pathLength);
+          setIsPathDirected(storedCustomizations.mode.path.directed);
+          setPathArticles(storedCustomizations.mode.path.intermediate_links);
+          setTimer(storedCustomizations.mode["count-down"].timer);
+        }
+      });
+    }
+  }, [isChromeExtension]);
 
   const updatePathArticles = (value) => {
     if (value) {
@@ -81,7 +77,40 @@ function SingleMode() {
   };
 
   const handleSubmit = () => {
-   
+    const updatedCustomizations = {
+      ...customizations,
+      mode: {
+        ...customizations.mode,
+        type: mode,
+        ...(mode === "path" && {
+          path: {
+            pathLength: pathLength,
+            directed: isPathDirected,
+            intermediate_links: pathArticles.map((item) =>
+              item && item.suggestion ? item.suggestion : item
+            ),
+          },
+        }),
+        ...(mode === "count-down" && {
+          "count-down": {
+            timer: timer,
+          },
+        }),
+      },
+      start:
+        startArticle && startArticle.suggestion
+          ? startArticle.suggestion
+          : startArticle,
+      end:
+        endArticle && endArticle.suggestion
+          ? endArticle.suggestion
+          : endArticle,
+    };
+
+    chrome.storage.local.set({
+      "singleplayer-customizations": updatedCustomizations,
+    });
+
     handleBack();
   };
 
@@ -106,7 +135,7 @@ function SingleMode() {
             Select a mode
           </option>
           <option value="normal">Normal</option>
-          <option value="countDown">Count-Down</option>
+          <option value="count-down">Count-Down</option>
           <option value="path">Path</option>
           <option value="hitler">Hitler</option>
           <option value="jesus">Jesus</option>
@@ -135,7 +164,7 @@ function SingleMode() {
           </div>
         ) : null}
 
-        {mode === "countDown" ? (
+        {mode === "count-down" ? (
           <div className="items-center justify-center m-2">
             <div className="flex items-center justify-center mr-2 mb-2 w-auto">
               <input

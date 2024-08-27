@@ -14,14 +14,14 @@ function App() {
   return (
     <Router>
       <div className="w-[400px] border-black border-solid border-[3px]">
-        <RouteTracker/>
+        {/* <RouteTracker/> */}
       <Routes>
         <Route path ="/" element={<Home/>}/>
         <Route path ="/singleplayer_dashboard" element={<SingleplayerDashboard/>}/>
         <Route path ="/singleplayer_dashboard/singleplayer_customization/mode" element={<SingleMode/>}/>
         <Route path ="/singleplayer_dashboard/singleplayer_customization/track" element={<SingleTrack/>}/>
         <Route path ="/singleplayer_dashboard/singleplayer_customization/restrictions" element={<SingleRestrictions/>}/>
-        <Route path="/singleplayer" element={<Singleplayer/>}/>
+        {/* <Route path="/singleplayer" element={<Singleplayer/>}/> */}
       </Routes>
       </div>
     </Router>

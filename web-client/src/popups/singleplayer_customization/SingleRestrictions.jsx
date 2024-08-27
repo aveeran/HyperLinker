@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { defaultSingleplayerCustomizations } from "@utils/utils";
 
-// Default restrictions
 const defaultRestrictions = [
   "no-opening-para",
   "no-find",
@@ -13,9 +13,35 @@ const defaultRestrictions = [
 
 function SingleRestrictions() {
   const navigate = useNavigate();
-  const [availableRestrictions, setAvailableRestrictions] = useState([]);
+  const [customizations, setCustomizations] = useState(
+    defaultSingleplayerCustomizations
+  );
+  const [availableRestrictions, setAvailableRestrictions] =
+    useState(defaultRestrictions);
   const [chosenRestrictions, setChosenRestrictions] = useState([]);
 
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
+
+  useEffect(() => {
+    if (isChromeExtension) {
+      chrome.storage.local.get("singleplayer-customizations", (result) => {
+        const storedCustomizations = result["singleplayer-customizations"];
+        if (storedCustomizations) {
+          setCustomizations(storedCustomizations);
+          setAvailableRestrictions(
+            defaultRestrictions.filter(
+              (element) => !storedCustomizations.restrictions.includes(element)
+            )
+          );
+          setChosenRestrictions(storedCustomizations.restrictions);
+        }
+      });
+    }
+  }, [isChromeExtension]);
 
   const handleDragStart = (e, restriction, sourceWidget) => {
     e.dataTransfer.setData("tile", restriction);
@@ -46,14 +72,24 @@ function SingleRestrictions() {
   };
 
   const handleSubmit = () => {
- 
+    const updatedCustomizations = {
+      ...customizations,
+      restrictions: chosenRestrictions,
+    };
+
+    chrome.storage.local.set({
+      "singleplayer-customizations": updatedCustomizations,
+    });
+    handleBack();
   };
 
   return (
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h2 className="text-3xl text-center mb-3">Singleplayer - Customization</h2>
-      <hr className="m-5"/>
+      <h2 className="text-3xl text-center mb-3">
+        Singleplayer - Customization
+      </h2>
+      <hr className="m-5" />
       <div className="flex flex-col items-center">
         <p className="text-center mb-3">Restrictions</p>
 

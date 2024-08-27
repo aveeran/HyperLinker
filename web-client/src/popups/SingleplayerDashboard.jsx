@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { defaultSingleplayerCustomizations } from "@utils/utils";
 
 const keyCategory = {
   "/singleplayer_dashboard/singleplayer_customization/mode": [
@@ -24,16 +25,46 @@ const getCategory = (value) => {
   return null; // Ensure to return null if no category is found
 };
 
-
 function SingleplayerDashboard() {
-  const [customizations, setCustomizations] = useState({});
+  const [customizations, setCustomizations] = useState(
+    defaultSingleplayerCustomizations
+  );
   const navigate = useNavigate();
 
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
 
-  const sortedEntries = Object.entries(customizations).sort(([keyA], [keyB]) => {
-    const order = ["mode", "start", "end", "path", "count down", "track", "restrictions"];
-    return order.indexOf(keyA) - order.indexOf(keyB);
+  useEffect(() => {
+    chrome.storage.local.get("singleplayer-customizations", (result) => {
+      const storedCustomizations = result["singleplayer-customizations"];
+      if (storedCustomizations) {
+        setCustomizations(storedCustomizations);
+      }
+    });
   });
+
+  const reset = () => {
+    setCustomizations(defaultSingleplayerCustomizations);
+    chrome.storage.local.set({ "singleplayer-customizations": customizations });
+  };
+
+  const sortedEntries = Object.entries(customizations).sort(
+    ([keyA], [keyB]) => {
+      const order = [
+        "mode",
+        "start",
+        "end",
+        "path",
+        "count down",
+        "track",
+        "restrictions",
+      ];
+      return order.indexOf(keyA) - order.indexOf(keyB);
+    }
+  );
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
@@ -45,8 +76,7 @@ function SingleplayerDashboard() {
   };
 
   const handleSubmit = () => {
-   
-    navigate('/singleplayer');
+    navigate("/singleplayer");
   };
 
   return (
@@ -55,7 +85,7 @@ function SingleplayerDashboard() {
       <h2 className="text-3xl text-center mb-3">Singleplayer</h2>
       <div className="border-black border-2 border-solid p-1.5 m-3">
         <p className="text-center">Customizations</p>
-        <hr className="m-5"/>
+        <hr className="m-5" />
         {sortedEntries.map(([key, value]) => (
           <div key={key} className="relative group flex mb-2">
             <strong className="mr-2">{key}</strong>
