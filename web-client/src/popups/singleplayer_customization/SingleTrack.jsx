@@ -23,7 +23,7 @@ function SingleTrack() {
         setTrack(storedCustomizations.track[0]);
       }
     });
-  });
+  }, [isChromeExtension]);
 
   const handleOptionChange = (event) => {
     setTrack(event.target.value);
@@ -33,12 +33,13 @@ function SingleTrack() {
     event.preventDefault();
     const updatedCustomiztions = {
       ...customizations,
-      track: track,
+      track: [track],
     };
 
     chrome.storage.local.set({
       "singleplayer-customizations": updatedCustomiztions,
     });
+    handleBack();
   };
 
   const handleBack = () => {

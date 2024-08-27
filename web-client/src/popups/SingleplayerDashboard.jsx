@@ -22,7 +22,7 @@ const getCategory = (value) => {
       return key;
     }
   }
-  return null; // Ensure to return null if no category is found
+  return null; 
 };
 
 function SingleplayerDashboard() {
@@ -76,6 +76,7 @@ function SingleplayerDashboard() {
   };
 
   const handleSubmit = () => {
+    chrome.runtime.sendMessage({action:"start_singleplayer"})
     navigate("/singleplayer");
   };
 

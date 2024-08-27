@@ -54,3 +54,11 @@ export function getFormattedDate() {
       pauseGap: 0
     }
   }
+
+  // should we have consts here for common storage like "singleplayer-customizations", "singleplayer-game-properties", "singleplayer-game-information"
+
+  // export const isChromeExtension = useMemo(
+  //   () =>
+  //     typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+  //   []
+  // );
