@@ -10,4 +10,4 @@ document.addEventListener('click', (event) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
-}
+})

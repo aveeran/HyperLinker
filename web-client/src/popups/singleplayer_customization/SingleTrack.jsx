@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { defaultSingleplayerCustomizations } from "@utils/utils";
+import * as utils from "@utils/utils";
 
 function SingleTrack() {
   const navigate = useNavigate();
   const [customizations, setCustomizations] = useState(
-    defaultSingleplayerCustomizations
+    utils.defaultSingleplayerCustomizations
   );
   const [track, setTrack] = useState("clicks");
 
@@ -16,8 +16,8 @@ function SingleTrack() {
   );
 
   useEffect(() => {
-    chrome.storage.local.get("singleplayer-customizations", (result) => {
-      const storedCustomizations = result["singleplayer-customizations"];
+    chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+      const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
       if (storedCustomizations) {
         setCustomizations(storedCustomizations);
         setTrack(storedCustomizations.track[0]);
@@ -37,7 +37,7 @@ function SingleTrack() {
     };
 
     chrome.storage.local.set({
-      "singleplayer-customizations": updatedCustomiztions,
+      [utils.SINGLEPLAYER_CUSTOMIZATIONS]: updatedCustomiztions,
     });
     handleBack();
   };

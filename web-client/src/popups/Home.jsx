@@ -68,6 +68,10 @@ function Home() {
         <button className="bg-blue-400 text-white px-4 py-2 rounded">
           Multiplayer
         </button>
+        <button className="bg-red-400 text-white px-4 py-2 rounded"
+        onClick={() => {chrome.runtime.sendMessage({action: "reset"})}}>
+          Reset
+        </button>
       </div>
     </div>
   );

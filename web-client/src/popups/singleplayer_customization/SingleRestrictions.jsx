@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { defaultSingleplayerCustomizations } from "@utils/utils";
+import * as utils from "@utils/utils";
 
 const defaultRestrictions = [
   "no-opening-para",
@@ -14,7 +14,7 @@ const defaultRestrictions = [
 function SingleRestrictions() {
   const navigate = useNavigate();
   const [customizations, setCustomizations] = useState(
-    defaultSingleplayerCustomizations
+    utils.defaultSingleplayerCustomizations
   );
   const [availableRestrictions, setAvailableRestrictions] =
     useState(defaultRestrictions);
@@ -28,8 +28,8 @@ function SingleRestrictions() {
 
   useEffect(() => {
     if (isChromeExtension) {
-      chrome.storage.local.get("singleplayer-customizations", (result) => {
-        const storedCustomizations = result["singleplayer-customizations"];
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
         if (storedCustomizations) {
           setCustomizations(storedCustomizations);
           setAvailableRestrictions(
@@ -78,7 +78,7 @@ function SingleRestrictions() {
     };
 
     chrome.storage.local.set({
-      "singleplayer-customizations": updatedCustomizations,
+      [utils.SINGLEPLAYER_CUSTOMIZATIONS]: updatedCustomizations,
     });
     handleBack();
   };

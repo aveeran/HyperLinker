@@ -56,6 +56,22 @@ export function getFormattedDate() {
     }
   }
 
+  // actions
+  export const START_SINGLEPLAYER = "start_singleplayer";
+  export const PAUSE_SINGLEPLAYER = "pause_singleplayer";
+  export const UNPAUSE_SINGLEPLAYER = "unpause_singleplayer";
+  export const QUIT_SINGLEPLAYER = "quit_singleplayer";
+  export const WIKIPEDIA_CLICK = "wikipedia_click";
+  export const SINGLEPLAYER_WIN = "singleplayer_win";
+
+  // data
+  export const SINGLEPLAYER_CUSTOMIZATIONS = "singleplayer-customizations";
+  export const SINGLEPLAYER_GAME_PROPERTIES = "singleplayer-game-properties";
+  export const SINGLEPLAYER_GAME_INFORMATION = "singleplayer-game-information";
+  export const SINGLEPLAYER_GAME_WIN = "singleplayer-game-win";
+  export const ELAPSED_TIME = "elapsed-time";
+  export const CLICK_COUNT = "click-count";
+
   // should we have consts here for common storage like "singleplayer-customizations", "singleplayer-game-properties", "singleplayer-game-information"
 
   // export const isChromeExtension = useMemo(

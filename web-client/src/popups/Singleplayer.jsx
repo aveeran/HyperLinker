@@ -2,6 +2,7 @@ import GameTracker from "../components/GameTracker.jsx";
 import PathProgress from "../components/PathProgress.jsx";
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import * as utils from "@utils/utils.js";
 
 function Singleplayer() {
   const [track, setTrack] = useState("time");
@@ -18,15 +19,21 @@ function Singleplayer() {
 
   useEffect(() => {
     if(isChromeExtension) {
-      chrome.storage.local.get(["singleplayer-customizations", "singleplayer-game-win"], (results) => {
-        const storedCustomizations = results["singleplayer-customizations"];
-        const storedWin = results["singleplayer-game-win"];
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS, 
+        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION], (results) => {
+        const storedCustomizations = results[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+        const storedWin = results[utils.SINGLEPLAYER_GAME_WIN];
+        const storedGameInformation = results[utils.SINGLEPLAYER_GAME_INFORMATION];
+
         if(storedCustomizations) {
           setTrack(storedCustomizations.track[0])
-
           if(storedCustomizations.mode.type === "count-down") {
             setCountDown(storedCustomizations.mode["count-down"].timer)
           }
+        }
+
+        if(storedGameInformation) {
+          setPaused(storedGameInformation.status.paused);
         }
 
         if(storedWin) {
@@ -40,8 +47,8 @@ function Singleplayer() {
   useEffect(() => {
     if(isChromeExtension) {
       const handleWinChanges = (changes, areaName) => {
-        if(areaName === "local" && changes["singleplayer-game-win"]) {
-          const win = changes["singleplayer-game-win"].newValue;
+        if(areaName === "local" && changes[utils.SINGLEPLAYER_GAME_WIN]) {
+          const win = changes[utils.SINGLEPLAYER_GAME_WIN].newValue;
           if(win) {
             console.log("win received");
             navigate('/singleplayer-end')
@@ -59,16 +66,18 @@ function Singleplayer() {
 
   const handleQuit = () => {
     if(isChromeExtension) {
-      chrome.runtime.sendMessage({ action: "quit_singleplayer"})
+      chrome.runtime.sendMessage({ action: utils.QUIT_SINGLEPLAYER})
     }
     navigate(-1);
   }
 
   const handleTogglePause = () => {
     if(paused) {
-      chrome.runtime.sendMessage({ action : "unpause_singleplayer"});
+      console.log("sending unpaused");
+      chrome.runtime.sendMessage({ action : utils.UNPAUSE_SINGLEPLAYER});
     } else {
-      chrome.runtime.sendMessage({ action: "pause_singleplayer"});
+      console.log("sending paused");
+      chrome.runtime.sendMessage({ action: utils.PAUSE_SINGLEPLAYER});
     }
     setPaused(!paused);
   }

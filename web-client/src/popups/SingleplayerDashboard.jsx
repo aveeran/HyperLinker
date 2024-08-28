@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { defaultSingleplayerCustomizations } from "@utils/utils";
+import * as utils from "@utils/utils";
 
 const keyCategory = {
   "/singleplayer_dashboard/singleplayer_customization/mode": [
@@ -27,7 +27,7 @@ const getCategory = (value) => {
 
 function SingleplayerDashboard() {
   const [customizations, setCustomizations] = useState(
-    defaultSingleplayerCustomizations
+    utils.defaultSingleplayerCustomizations
   );
   const navigate = useNavigate();
 
@@ -38,8 +38,8 @@ function SingleplayerDashboard() {
   );
 
   useEffect(() => {
-    chrome.storage.local.get("singleplayer-customizations", (result) => {
-      const storedCustomizations = result["singleplayer-customizations"];
+    chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+      const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
       if (storedCustomizations) {
         setCustomizations(storedCustomizations);
       }
@@ -47,8 +47,8 @@ function SingleplayerDashboard() {
   });
 
   const reset = () => {
-    setCustomizations(defaultSingleplayerCustomizations);
-    chrome.storage.local.set({ "singleplayer-customizations": customizations });
+    setCustomizations(utils.defaultSingleplayerCustomizations);
+    chrome.storage.local.set({ [utils.SINGLEPLAYER_CUSTOMIZATIONS ]: customizations });
   };
 
   const sortedEntries = Object.entries(customizations).sort(
@@ -76,7 +76,7 @@ function SingleplayerDashboard() {
   };
 
   const handleSubmit = () => {
-    chrome.runtime.sendMessage({action:"start_singleplayer"})
+    chrome.runtime.sendMessage({action: utils.START_SINGLEPLAYER})
     navigate("/singleplayer");
   };
 

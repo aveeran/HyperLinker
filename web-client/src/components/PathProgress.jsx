@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  defaultGameInformation,
-  defaultGameProperties,
-  defaultSingleplayerCustomizations,
-} from "@utils/utils";
+import * as utils from "@utils/utils";
 
 function PathProgress() {
+  const [isPath, setIsPath] = useState(false);
   const [isDirected, setIsDirected] = useState(false);
   const [endArticle, setEndArticle] = useState({});
   const [hoveredNode, setHoveredNode] = useState(null);
@@ -22,16 +19,27 @@ function PathProgress() {
   const isChromeExtension =
     typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
 
-
   useEffect(() => {
-    if(isChromeExtension) {
-      chrome.storage.local.get(["singleplayer-game-information", "singleplayer-game-properties", "singleplayer-customizations"],
+    if (isChromeExtension) {
+      chrome.storage.local.get(
+        [
+          utils.SINGLEPLAYER_GAME_INFORMATION,
+          utils.SINGLEPLAYER_GAME_PROPERTIES,
+          utils.SINGLEPLAYER_CUSTOMIZATIONS,
+        ],
         (result) => {
-          const storedGameInformation = result["singleplayer-game-information"] || defaultGameInformation;
-          const storedGameProperties = result["singleplayer-game-properties"] || defaultGameProperties;
-          const storedCustomizations = result["singleplayer-customizations"] || defaultSingleplayerCustomizations;
+          const storedGameInformation =
+            result[utils.SINGLEPLAYER_GAME_INFORMATION] ||
+            utils.defaultGameInformation;
+          const storedGameProperties =
+            result[utils.SINGLEPLAYER_GAME_PROPERTIES] ||
+            utils.defaultGameProperties;
+          const storedCustomizations =
+            result[utils.SINGLEPLAYER_CUSTOMIZATIONS] ||
+            utils.defaultSingleplayerCustomizations;
 
           setPath(storedGameProperties.path);
+          setIsPath(storedCustomizations.mode.type === "path");
 
           setEdgeHistory(storedGameInformation.edgeHistory);
           setNodeHistory(storedGameInformation.nodeHistory);
@@ -45,9 +53,13 @@ function PathProgress() {
       );
 
       function handleTimeChanges(changes, areaName) {
-        if(areaName === "local") {
-          if(changes["singleplayer-game-information"] && changes["singleplayer-game-information"].newValue) {
-            const storedGameInformation = changes["singleplayer-game-information"].newValue;
+        if (areaName === "local") {
+          if (
+            changes[utils.SINGLEPLAYER_GAME_INFORMATION] &&
+            changes[utils.SINGLEPLAYER_GAME_INFORMATION].newValue
+          ) {
+            const storedGameInformation =
+              changes[utils.SINGLEPLAYER_GAME_INFORMATION].newValue;
             setEdgeHistory(storedGameInformation.edgeHistory);
             setNodeHistory(storedGameInformation.nodeHistory);
             setCurrentNode(storedGameInformation.currentNode);
@@ -58,10 +70,9 @@ function PathProgress() {
       chrome.storage.onChanged.addListener(handleTimeChanges);
       return () => {
         chrome.storage.onChanged.removeListener(handleTimeChanges);
-      }
+      };
     }
-  })
-
+  });
 
   const handleMouseEnterNode = (index) => {
     setHoveredNode(index);
@@ -100,7 +111,7 @@ function PathProgress() {
   return (
     <div className="flex flex-col items-center">
       <div className="flex items-center w-full p-2">
-        {isDirected
+        {isDirected || !isPath
           ? path.map((step, index) => (
               <React.Fragment key={index}>
                 <div
@@ -137,7 +148,7 @@ function PathProgress() {
               </React.Fragment>
             ))
           : null}
-        {!isDirected
+        {!isDirected && isPath
           ? freePath.map((step, index) => (
               <React.Fragment key={index}>
                 <div
@@ -188,7 +199,10 @@ function PathProgress() {
               }`}
             >
               <h3 className="font-bold">
-                Node History for {isDirected ? path[activeNode ?? hoveredNode]?.title : freePath[activeNode ?? hoveredNode]?.title}
+                Node History for{" "}
+                {!isDirected && isPath
+                  ? freePath[activeNode ?? hoveredNode]?.title
+                  : path[activeNode ?? hoveredNode]?.title}
               </h3>
               <ul>
                 {currentNode >= (activeNode ?? hoveredNode) ? (
@@ -212,8 +226,14 @@ function PathProgress() {
           {(activeLink !== null || hoveredLink !== null) && (
             <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">
-                Edge History for Link between {isDirected? path[hoveredLink]?.title : freePath[hoveredLink]?.title} and{" "} 
-                {isDirected ? path[hoveredLink + 1]?.title : freePath[hoveredLink + 1]?.title}
+                Edge History for Link between{" "}
+                {!isDirected && isPath
+                  ? freePath[hoveredLink]?.title
+                  : path[hoveredLink]?.title}{" "}
+                and{" "}
+                {!isDirected && isPath
+                  ? freePath[hoveredLink + 1]?.title
+                  : path[hoveredLink + 1]?.title}
               </h3>
               <ul>
                 {edgeHistory[activeLink ?? hoveredLink]?.map((entry, i) => (
@@ -237,3 +257,5 @@ function PathProgress() {
 }
 
 export default PathProgress;
+
+//TODO: fix path, fix unpause

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import { CLICK_COUNT, ELAPSED_TIME } from "@utils/utils";
 
 function GameTracker({ track="clicks", countDown=-1 }) {
   const [clickCount, setClickCount] = useState(0);
@@ -15,14 +16,14 @@ function GameTracker({ track="clicks", countDown=-1 }) {
   //the useEffects have to be separated because of the addListeners
   useEffect(() => {
     if(isChromeExtension && (track === "clicks")) {
-      chrome.storage.local.get("clickCount", (result) => {
-        const storedClicks = result["clickCount"] || 0;
+      chrome.storage.local.get([CLICK_COUNT], (result) => {
+        const storedClicks = result[CLICK_COUNT] || 0;
         setClickCount(storedClicks)
       });
 
       const handleClickChange = (changes, area) => {
-        if(area === "local" && changes["clickCount"]) {
-          const storedClicks = changes["clickCount"].newValue || 0;
+        if(area === "local" && changes[CLICK_COUNT]) {
+          const storedClicks = changes[CLICK_COUNT].newValue || 0;
           setClickCount(storedClicks);
         }
       }
@@ -36,15 +37,14 @@ function GameTracker({ track="clicks", countDown=-1 }) {
 
   useEffect(() => {
     if (isChromeExtension && (track === "time" || countDown !== -1)) {
-      chrome.storage.local.get("elapsedTime", (result) => {
-        console.log("updating time");
-        const storedTime = result["elapsedTime"] || 0;
+      chrome.storage.local.get([ELAPSED_TIME], (result) => {
+        const storedTime = result[ELAPSED_TIME] || 0;
         setTime(storedTime);
       })
 
       const handleTimeChange = (changes, area) => {
-        if(area === "local" && changes["elapsedTime"]) {
-          const storedTime = changes["elapsedTime"].newValue || 0;
+        if(area === "local" && changes[ELAPSED_TIME]) {
+          const storedTime = changes[ELAPSED_TIME].newValue || 0;
           setTime(storedTime);
         }
       }
