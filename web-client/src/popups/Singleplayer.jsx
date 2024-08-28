@@ -1,4 +1,5 @@
 import GameTracker from "../components/GameTracker.jsx";
+import PathProgress from "../components/PathProgress.jsx";
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -35,7 +36,7 @@ function Singleplayer() {
   return (
     <div className="p-2">
       <GameTracker track={track} countDown={countDown} />
-      {/* <PathProgress /> */}
+      <PathProgress />
       {/* <div className="flex items-center justify-center border-2 rounded-md p-2">
         <button
           className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2"

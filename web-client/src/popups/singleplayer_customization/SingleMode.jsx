@@ -30,7 +30,7 @@ function SingleMode() {
   useEffect(() => {
     if (isChromeExtension) {
       chrome.storage.local.get("singleplayer-customizations", (result) => {
-        const storedCustomizations = result["singleplayer-customizations"];
+        const storedCustomizations = result["singleplayer-customizations"] || defaultSingleplayerCustomizations;
         if(storedCustomizations) {
           setCustomizations(storedCustomizations);
           setMode(storedCustomizations.mode.type);

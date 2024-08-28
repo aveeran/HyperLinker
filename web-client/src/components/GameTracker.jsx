@@ -12,6 +12,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
     []
   );
 
+  //the useEffects have to be separated because of the addListeners
   useEffect(() => {
     if(isChromeExtension && (track === "clicks")) {
       chrome.storage.local.get("clickCount", (result) => {
@@ -31,8 +32,12 @@ function GameTracker({ track="clicks", countDown=-1 }) {
       }
     }
 
+  }, [isChromeExtension, track])
+
+  useEffect(() => {
     if (isChromeExtension && (track === "time" || countDown !== -1)) {
       chrome.storage.local.get("elapsedTime", (result) => {
+        console.log("updating time");
         const storedTime = result["elapsedTime"] || 0;
         setTime(storedTime);
       })
@@ -48,7 +53,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
         chrome.storage.onChanged.removeListener(handleTimeChange);
       }
     }
-  }, [isChromeExtension, track, countDown])
+  }, [isChromeExtension, countDown, track])
 
   const startTimer = () => {
     setTimerRunning(true);
