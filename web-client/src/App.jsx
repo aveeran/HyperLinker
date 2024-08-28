@@ -13,10 +13,12 @@ import SingleplayerGameStat from "./popups/SingleplayerGameStat.jsx";
 function App() {
 
   return (
+  
     <Router>
       <div className="w-[400px] border-black border-solid border-[3px]">
-        <RouteTracker/>
-      <Routes>
+        <Singleplayer/>
+        {/* <RouteTracker/> */}
+      {/* <Routes>
         <Route path ="/" element={<Home/>}/>
         <Route path ="/singleplayer_dashboard" element={<SingleplayerDashboard/>}/>
         <Route path ="/singleplayer_dashboard/singleplayer_customization/mode" element={<SingleMode/>}/>
@@ -25,6 +27,7 @@ function App() {
         <Route path="/singleplayer" element={<Singleplayer/>}/>
         <Route path="/singleplayer-end" element={<SingleplayerGameStat/>}/>
       </Routes>
+
       </div>
     </Router>
   );

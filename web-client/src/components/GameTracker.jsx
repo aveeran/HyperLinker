@@ -19,6 +19,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
       chrome.storage.local.get([CLICK_COUNT], (result) => {
         const storedClicks = result[CLICK_COUNT] || 0;
         setClickCount(storedClicks)
+
       });
 
       const handleClickChange = (changes, area) => {
@@ -32,6 +33,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
         chrome.storage.onChanged.removeListener(handleClickChange);
       }
     }
+
 
   }, [isChromeExtension, track])
 
@@ -101,6 +103,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
           <p>
             <span>Count down: </span>
             {parseTime(countDown - time)}
+
           </p>
         </div>
       ) : null}

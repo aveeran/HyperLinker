@@ -1,11 +1,13 @@
 import GameTracker from "../components/GameTracker.jsx";
 import PathProgress from "../components/PathProgress.jsx";
+
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as utils from "@utils/utils.js";
 
 function Singleplayer() {
   const [track, setTrack] = useState("time");
+
   const [countDown, setCountDown] = useState(-1);
   const [paused, setPaused] = useState(false);
   const [pause, setPause] = useState(true);
@@ -82,6 +84,7 @@ function Singleplayer() {
     setPaused(!paused);
   }
 
+
   return (
     <div className="p-2">
       <GameTracker track={track} countDown={countDown} />
@@ -90,6 +93,7 @@ function Singleplayer() {
         <button
           className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2"
           onClick={handleQuit}
+
         >
           Quit
         </button>

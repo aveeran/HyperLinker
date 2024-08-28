@@ -1,6 +1,38 @@
 import React, { useState, useEffect, useMemo } from "react";
 import * as utils from "@utils/utils";
 
+const defaultGame = {
+  singleplayerCustomizations: {
+    mode: {
+      type: "",
+      path: {
+        pathLength: 0,
+        directed: false,
+        intermediate_links: [],
+      },
+      countDown: {
+        timer: 0
+      },
+    },
+    start: {
+      title: "",
+      end:"",
+    },
+    track:[],
+    restrictions:[]
+  },
+  playing: false,
+  startTime: 0,
+  tracking: 0,
+  path: [],
+  freePath: [],
+  visitedPath: [],
+  nodeHistory: [],
+  edgeHistory: [],
+  currentNode: 0,
+};
+
+
 function PathProgress() {
   const [isPath, setIsPath] = useState(false);
   const [isDirected, setIsDirected] = useState(false);
@@ -37,6 +69,7 @@ function PathProgress() {
           const storedCustomizations =
             result[utils.SINGLEPLAYER_CUSTOMIZATIONS] ||
             utils.defaultSingleplayerCustomizations;
+
 
           setPath(storedGameProperties.path);
           setIsPath(storedCustomizations.mode.type === "path");
@@ -185,6 +218,7 @@ function PathProgress() {
               </React.Fragment>
             ))
           : null}
+
       </div>
 
       {(hoveredNode !== null ||
@@ -198,6 +232,7 @@ function PathProgress() {
                 activeNode !== null ? "border-yellow-400" : "border-red-400"
               }`}
             >
+
               <h3 className="font-bold">
                 Node History for{" "}
                 {!isDirected && isPath
