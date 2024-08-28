@@ -18,8 +18,9 @@ function Singleplayer() {
 
   useEffect(() => {
     if(isChromeExtension) {
-      chrome.storage.local.get("singleplayer-customizations", (results) => {
+      chrome.storage.local.get(["singleplayer-customizations", "singleplayer-game-win"], (results) => {
         const storedCustomizations = results["singleplayer-customizations"];
+        const storedWin = results["singleplayer-game-win"];
         if(storedCustomizations) {
           setTrack(storedCustomizations.track[0])
 
@@ -27,20 +28,59 @@ function Singleplayer() {
             setCountDown(storedCustomizations.mode["count-down"].timer)
           }
         }
-      })
+
+        if(storedWin) {
+          navigate('/singleplayer-end')
+        }
+
+      });
     }
-  }, [isChromeExtension])
+  }, [isChromeExtension, navigate]);
 
+  useEffect(() => {
+    if(isChromeExtension) {
+      const handleWinChanges = (changes, areaName) => {
+        if(areaName === "local" && changes["singleplayer-game-win"]) {
+          const win = changes["singleplayer-game-win"].newValue;
+          if(win) {
+            console.log("win received");
+            navigate('/singleplayer-end')
+          }
+        }
+      }
 
+      chrome.storage.onChanged.addListener(handleWinChanges);
+
+      return () => {
+        chrome.storage.onChanged.removeListener(handleWinChanges);
+      }
+    }
+  }, [isChromeExtension, navigate])
+
+  const handleQuit = () => {
+    if(isChromeExtension) {
+      chrome.runtime.sendMessage({ action: "quit_singleplayer"})
+    }
+    navigate(-1);
+  }
+
+  const handleTogglePause = () => {
+    if(paused) {
+      chrome.runtime.sendMessage({ action : "unpause_singleplayer"});
+    } else {
+      chrome.runtime.sendMessage({ action: "pause_singleplayer"});
+    }
+    setPaused(!paused);
+  }
 
   return (
     <div className="p-2">
       <GameTracker track={track} countDown={countDown} />
       <PathProgress />
-      {/* <div className="flex items-center justify-center border-2 rounded-md p-2">
+      <div className="flex items-center justify-center border-2 rounded-md p-2">
         <button
           className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2"
-          onClick={handleQuit()}
+          onClick={handleQuit}
         >
           Quit
         </button>
@@ -55,7 +95,7 @@ function Singleplayer() {
             {paused ? "Unpause" : "Pause"}
           </button>
         ) : null}
-      </div> */}
+      </div>
     </div>
   );
 }

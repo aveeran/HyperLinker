@@ -51,7 +51,8 @@ export function getFormattedDate() {
       playing: false,
       paused: false,
       pauseStart: 0,
-      pauseGap: 0
+      pauseGap: 0,
+      win: false, 
     }
   }
 

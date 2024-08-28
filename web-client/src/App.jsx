@@ -7,6 +7,7 @@ import SingleTrack from "./popups/singleplayer_customization/SingleTrack.jsx";
 import SingleRestrictions from "./popups/singleplayer_customization/SingleRestrictions.jsx";
 import RouteTracker from "./popups/RouterTracker.jsx";
 import Singleplayer from "./popups/Singleplayer.jsx";
+import SingleplayerGameStat from "./popups/SingleplayerGameStat.jsx";
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Route path ="/singleplayer_dashboard/singleplayer_customization/track" element={<SingleTrack/>}/>
         <Route path ="/singleplayer_dashboard/singleplayer_customization/restrictions" element={<SingleRestrictions/>}/>
         <Route path="/singleplayer" element={<Singleplayer/>}/>
+        <Route path="/singleplayer-end" element={<SingleplayerGameStat/>}/>
       </Routes>
       </div>
     </Router>
