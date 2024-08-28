@@ -1,41 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown";
 import { useNavigate } from "react-router-dom";
-
-// Default customizations data
-const defaultCustomizations = {
-  mode: {
-    type: "path",
-    path: {
-      pathLength: 2,
-      directed: true,
-      intermediate_links: [],
-    },
-    countDown: {
-      timer: 0,
-    },
-  },
-  start: {
-    title: "",
-    link: "",
-  },
-  end: {
-    title: "",
-    end: "",
-  },
-  track: ["clicks"],
-  restrictions: [
-    "no-opening-para",
-    "no-find",
-    "no-back",
-    "no-category",
-    "no-dates",
-  ],
-};
+import * as utils from "@utils/utils";
 
 function SingleMode() {
   const navigate = useNavigate();
-  const [customizations, setCustomizations] = useState({});
+  const [customizations, setCustomizations] = useState(
+    utils.defaultSingleplayerCustomizations
+  );
   const [mode, setMode] = useState("");
   const [startArticle, setStartArticle] = useState({});
   const [endArticle, setEndArticle] = useState({});
@@ -44,65 +16,34 @@ function SingleMode() {
   const [pathArticles, setPathArticles] = useState([]);
   const [timer, setTimer] = useState(0);
 
-  // Determine if we are in a Chrome extension environment
+  const updateFirstArticle = (value) => setStartArticle(value);
+  const updateEndArticle = (value) => setEndArticle(value);
+  const handleModeChange = (event) => setMode(event.target.value);
+  const handleBack = () => navigate(-1);
+
   const isChromeExtension = useMemo(
     () =>
       typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
     []
   );
 
-  // Define storage mechanism using useMemo
-  const storage = useMemo(() => {
+  useEffect(() => {
     if (isChromeExtension) {
-      return chrome.storage.local;
-    } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
-        },
-      };
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS] || utils.defaultSingleplayerCustomizations;
+        if(storedCustomizations) {
+          setCustomizations(storedCustomizations);
+          setMode(storedCustomizations.mode.type);
+          setStartArticle(storedCustomizations.start);
+          setEndArticle(storedCustomizations.end);
+          setPathLength(storedCustomizations.mode.path.pathLength);
+          setIsPathDirected(storedCustomizations.mode.path.directed);
+          setPathArticles(storedCustomizations.mode.path.intermediate_links);
+          setTimer(storedCustomizations.mode["count-down"].timer);
+        }
+      });
     }
   }, [isChromeExtension]);
-
-  // Load customizations when the component mounts
-  useEffect(() => {
-    storage.get("singleplayer-customizations", (result) => {
-      if (result["singleplayer-customizations"]) {
-        const storedCustomizations = result["singleplayer-customizations"];
-        setCustomizations(storedCustomizations);
-        setMode(storedCustomizations.mode.type);
-        setStartArticle(storedCustomizations.start);
-        setEndArticle(storedCustomizations.end);
-        setPathLength(storedCustomizations.mode.path.pathLength);
-        setIsPathDirected(storedCustomizations.mode.path.directed);
-        setPathArticles(storedCustomizations.mode.path.intermediate_links);
-        setTimer(storedCustomizations.mode.countDown.timer);
-      } else {
-        setCustomizations(defaultCustomizations);
-        setMode(defaultCustomizations.mode.type);
-        setStartArticle(defaultCustomizations.start);
-        setEndArticle(defaultCustomizations.end);
-        setPathLength(defaultCustomizations.mode.path.pathLength);
-        setIsPathDirected(defaultCustomizations.mode.path.directed);
-        setPathArticles(defaultCustomizations.mode.path.intermediate_links);
-        setTimer(defaultCustomizations.mode.countDown.timer);
-        storage.set({ "singleplayer-customizations": defaultCustomizations });
-      }
-    });
-  }, [storage]);
-
-  // Handle changes and submissions
-  const updateFirstArticle = (value) => setStartArticle(value);
-  const updateEndArticle = (value) => setEndArticle(value);
-  const handleModeChange = (event) => setMode(event.target.value);
-  const handleBack = () => navigate(-1);
 
   const updatePathArticles = (value) => {
     if (value) {
@@ -150,8 +91,8 @@ function SingleMode() {
             ),
           },
         }),
-        ...(mode === "countDown" && {
-          countDown: {
+        ...(mode === "count-down" && {
+          "count-down": {
             timer: timer,
           },
         }),
@@ -166,7 +107,10 @@ function SingleMode() {
           : endArticle,
     };
 
-    storage.set({ "singleplayer-customizations": updatedCustomizations });
+    chrome.storage.local.set({
+      [utils.SINGLEPLAYER_CUSTOMIZATIONS]: updatedCustomizations,
+    });
+
     handleBack();
   };
 
@@ -191,7 +135,7 @@ function SingleMode() {
             Select a mode
           </option>
           <option value="normal">Normal</option>
-          <option value="countDown">Count-Down</option>
+          <option value="count-down">Count-Down</option>
           <option value="path">Path</option>
           <option value="hitler">Hitler</option>
           <option value="jesus">Jesus</option>
@@ -220,7 +164,7 @@ function SingleMode() {
           </div>
         ) : null}
 
-        {mode === "countDown" ? (
+        {mode === "count-down" ? (
           <div className="items-center justify-center m-2">
             <div className="flex items-center justify-center mr-2 mb-2 w-auto">
               <input

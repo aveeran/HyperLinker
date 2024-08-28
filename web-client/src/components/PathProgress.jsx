@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import * as utils from "@utils/utils";
 
 const defaultGame = {
   singleplayerCustomizations: {
@@ -33,6 +34,7 @@ const defaultGame = {
 
 
 function PathProgress() {
+  const [isPath, setIsPath] = useState(false);
   const [isDirected, setIsDirected] = useState(false);
   const [endArticle, setEndArticle] = useState({});
   const [hoveredNode, setHoveredNode] = useState(null);
@@ -43,7 +45,6 @@ function PathProgress() {
   const [edgeHistory, setEdgeHistory] = useState([]);
   const [nodeHistory, setNodeHistory] = useState([]);
   const [currentNode, setCurrentNode] = useState(0);
-  const [gameData, setGameData] = useState({});
   const [path, setPath] = useState([]);
   const [freePath, setFreePath] = useState([]);
 
@@ -52,77 +53,59 @@ function PathProgress() {
 
   useEffect(() => {
     if (isChromeExtension) {
-      chrome.storage.local.get(["singleplayer-game"], (result) => {
-        const storedGameData = result["singleplayer-game"] || {};
-        setGameData(storedGameData || defaultGame);
-        setIsDirected(storedGameData.singleplayerCustomizations?.mode?.path?.directed || true);
-        setEdgeHistory(storedGameData.edgeHistory || []);
-        setNodeHistory(storedGameData.nodeHistory || []);
-        setCurrentNode(storedGameData.currentNode || 0);
-        setPath(storedGameData.path || []);
-        setFreePath(storedGameData.freePath || []);
-        setEndArticle(storedGameData.singleplayerCustomizations?.end || {});
-        setVisited(storedGameData.visitedPath || []);
-      });
+      chrome.storage.local.get(
+        [
+          utils.SINGLEPLAYER_GAME_INFORMATION,
+          utils.SINGLEPLAYER_GAME_PROPERTIES,
+          utils.SINGLEPLAYER_CUSTOMIZATIONS,
+        ],
+        (result) => {
+          const storedGameInformation =
+            result[utils.SINGLEPLAYER_GAME_INFORMATION] ||
+            utils.defaultGameInformation;
+          const storedGameProperties =
+            result[utils.SINGLEPLAYER_GAME_PROPERTIES] ||
+            utils.defaultGameProperties;
+          const storedCustomizations =
+            result[utils.SINGLEPLAYER_CUSTOMIZATIONS] ||
+            utils.defaultSingleplayerCustomizations;
 
-      function handleStorageChanges(changes, areaName) {
-        if (areaName === "local" && changes["elapsedTime"]) {
-          let updatedNodeHistory = [...nodeHistory];
-          let currentNodeHistory = updatedNodeHistory[currentNode] || {
-            clicks: 0,
-          };
-          const time = changes["elapsedTime"].newValue;
-          currentNodeHistory.elapsedTime =
-            currentNode > 0
-              ? time -
-                updatedNodeHistory
-                  .slice(0, currentNode) // MAKE THIS MORE EFFICIENT?
-                  .reduce((total, node) => total + (node.elapsedTime || 0), 0)
-              : time;
 
-          updatedNodeHistory[currentNode] = currentNodeHistory;
-          setNodeHistory(updatedNodeHistory);
+          setPath(storedGameProperties.path);
+          setIsPath(storedCustomizations.mode.type === "path");
 
-          const updatedGameData = {
-            ...gameData,
-            nodeHistory: updatedNodeHistory,
-          };
-          setGameData(updatedGameData);
+          setEdgeHistory(storedGameInformation.edgeHistory);
+          setNodeHistory(storedGameInformation.nodeHistory);
+          setCurrentNode(storedGameInformation.currentNode);
+          setFreePath(storedGameInformation.freePath);
+          setVisited(storedGameInformation.visitedPath);
 
-          chrome.storage.local.set(
-            { "singleplayer-game": updatedGameData },
-            () => {}
-          );
+          setEndArticle(storedCustomizations.end);
+          setIsDirected(storedCustomizations.mode.path.directed);
         }
+      );
 
-        if (areaName === "local" && changes["singleplayer-game"]) {
-          const storedGameData = changes["singleplayer-game"].newValue;
-          setGameData(storedGameData);
-          setIsDirected(storedGameData.singleplayerCustomizations.mode.path.directed);
-          setEdgeHistory(storedGameData.edgeHistory);
-          setNodeHistory(storedGameData.nodeHistory);
-          setCurrentNode(storedGameData.currentNode);
-          setVisited(storedGameData.visitedPath);
-          setPath(storedGameData.path);
-          setFreePath(storedGameData.freePath);
+      function handleTimeChanges(changes, areaName) {
+        if (areaName === "local") {
+          if (
+            changes[utils.SINGLEPLAYER_GAME_INFORMATION] &&
+            changes[utils.SINGLEPLAYER_GAME_INFORMATION].newValue
+          ) {
+            const storedGameInformation =
+              changes[utils.SINGLEPLAYER_GAME_INFORMATION].newValue;
+            setEdgeHistory(storedGameInformation.edgeHistory);
+            setNodeHistory(storedGameInformation.nodeHistory);
+            setCurrentNode(storedGameInformation.currentNode);
+          }
         }
       }
 
-      chrome.storage.onChanged.addListener(handleStorageChanges);
+      chrome.storage.onChanged.addListener(handleTimeChanges);
       return () => {
-        chrome.storage.onChanged.removeListener(handleStorageChanges);
+        chrome.storage.onChanged.removeListener(handleTimeChanges);
       };
-    } 
-  }, [
-    isChromeExtension,
-    currentNode,
-    gameData,
-    nodeHistory,
-    edgeHistory,
-    endArticle.link,
-    path,
-    visited,
-  ]);
+    }
+  });
 
   const handleMouseEnterNode = (index) => {
     setHoveredNode(index);
@@ -161,72 +144,81 @@ function PathProgress() {
   return (
     <div className="flex flex-col items-center">
       <div className="flex items-center w-full p-2">
-        {isDirected ? (path.map((step, index) => (
-          <React.Fragment key={index}>
-            <div
-              className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
-                visited.includes(step.link)
-                  ? "bg-blue-500 text-white border-green-400"
-                  : "bg-white border-gray-300"
-              } ${activeNode === index ? "border-yellow-400" : ""}`}
-              onMouseEnter={() => handleMouseEnterNode(index)}
-              onMouseLeave={handleMouseLeaveNode}
-              onClick={() => handleClickNode(index)}
-              title={step.title}
-            >
-              <p className="truncate text-sm" aria-label={step.title}>
-                {step.title}
-              </p>
-            </div>
-            {index < path.length - 1 && (
-              <div
-                className={`h-2 flex-1 ${
-                  visited.includes(path[index].link) &&
-                  visited.includes(path[index + 1].link)
-                    ? "bg-green-500"
-                    : "bg-gray-300"
-                } ${activeLink === index ? "border-2 border-green-400" : ""}`}
-                style={{ margin: "0 0.5rem" }}
-                onMouseEnter={() => handleMouseEnterLink(index)}
-                onMouseLeave={handleMouseLeaveLink}
-                onClick={() => handleClickLink(index)}
-              ></div>
-            )}
-          </React.Fragment>
-        ))) : null}
-        {!isDirected ? (freePath.map((step, index) => (
-          <React.Fragment key={index}>
-            <div
-              className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
-                visited.includes(step.link)
-                  ? "bg-blue-500 text-white"
-                  : "bg-white border-gray-300"
-              } ${activeNode === index ? "border-orange-400" : ""}`}
-              onMouseEnter={() => handleMouseEnterNode(index)}
-              onMouseLeave={handleMouseLeaveNode}
-              onClick={() => handleClickNode(index)}
-              title={step.title}
-            >
-              <p className="truncate text-sm" aria-label={step.title}>
-                {step.title}
-              </p>
-            </div>
-            {index < path.length - 1 && (
-              <div
-                className={`h-2 flex-1 ${
-                  visited.includes(path[index].link) &&
-                  visited.includes(path[index + 1].link)
-                    ? "bg-green-500"
-                    : "bg-gray-300"
-                } ${activeLink === index ? "border-2 border-green-400" : ""}`}
-                style={{ margin: "0 0.5rem" }}
-                onMouseEnter={() => handleMouseEnterLink(index)}
-                onMouseLeave={handleMouseLeaveLink}
-                onClick={() => handleClickLink(index)}
-              ></div>
-            )}
-          </React.Fragment>
-        ))) : null}
+        {isDirected || !isPath
+          ? path.map((step, index) => (
+              <React.Fragment key={index}>
+                <div
+                  className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
+                    visited.includes(step.link)
+                      ? "bg-blue-500 text-white border-green-400"
+                      : "bg-white border-gray-300"
+                  } ${activeNode === index ? "border-yellow-400" : ""}`}
+                  onMouseEnter={() => handleMouseEnterNode(index)}
+                  onMouseLeave={handleMouseLeaveNode}
+                  onClick={() => handleClickNode(index)}
+                  title={step.title}
+                >
+                  <p className="truncate text-sm" aria-label={step.title}>
+                    {step.title}
+                  </p>
+                </div>
+                {index < path.length - 1 && (
+                  <div
+                    className={`h-2 flex-1 ${
+                      visited.includes(path[index].link) &&
+                      visited.includes(path[index + 1].link)
+                        ? "bg-green-500"
+                        : "bg-gray-300"
+                    } ${
+                      activeLink === index ? "border-2 border-green-400" : ""
+                    }`}
+                    style={{ margin: "0 0.5rem" }}
+                    onMouseEnter={() => handleMouseEnterLink(index)}
+                    onMouseLeave={handleMouseLeaveLink}
+                    onClick={() => handleClickLink(index)}
+                  ></div>
+                )}
+              </React.Fragment>
+            ))
+          : null}
+        {!isDirected && isPath
+          ? freePath.map((step, index) => (
+              <React.Fragment key={index}>
+                <div
+                  className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
+                    visited.includes(step.link)
+                      ? "bg-blue-500 text-white"
+                      : "bg-white border-gray-300"
+                  } ${activeNode === index ? "border-orange-400" : ""}`}
+                  onMouseEnter={() => handleMouseEnterNode(index)}
+                  onMouseLeave={handleMouseLeaveNode}
+                  onClick={() => handleClickNode(index)}
+                  title={step.title}
+                >
+                  <p className="truncate text-sm" aria-label={step.title}>
+                    {step.title}
+                  </p>
+                </div>
+                {index < path.length - 1 && (
+                  <div
+                    className={`h-2 flex-1 ${
+                      visited.includes(freePath[index].link) &&
+                      visited.includes(freePath[index + 1].link)
+                        ? "bg-green-500"
+                        : "bg-gray-300"
+                    } ${
+                      activeLink === index ? "border-2 border-green-400" : ""
+                    }`}
+                    style={{ margin: "0 0.5rem" }}
+                    onMouseEnter={() => handleMouseEnterLink(index)}
+                    onMouseLeave={handleMouseLeaveLink}
+                    onClick={() => handleClickLink(index)}
+                  ></div>
+                )}
+              </React.Fragment>
+            ))
+          : null}
+
       </div>
 
       {(hoveredNode !== null ||
@@ -235,9 +227,17 @@ function PathProgress() {
         activeLink !== null) && (
         <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
           {(activeNode !== null || hoveredNode !== null) && (
-            <div className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${activeNode !== null ? "bg-yellow-400" : "bg-red-400"}`}>
+            <div
+              className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
+                activeNode !== null ? "border-yellow-400" : "border-red-400"
+              }`}
+            >
+
               <h3 className="font-bold">
-                Node History for {path[activeNode ?? hoveredNode]?.title}
+                Node History for{" "}
+                {!isDirected && isPath
+                  ? freePath[activeNode ?? hoveredNode]?.title
+                  : path[activeNode ?? hoveredNode]?.title}
               </h3>
               <ul>
                 {currentNode >= (activeNode ?? hoveredNode) ? (
@@ -261,8 +261,14 @@ function PathProgress() {
           {(activeLink !== null || hoveredLink !== null) && (
             <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">
-                Edge History for Link between {path[hoveredLink]?.title} and{" "}
-                {path[hoveredLink + 1]?.title}
+                Edge History for Link between{" "}
+                {!isDirected && isPath
+                  ? freePath[hoveredLink]?.title
+                  : path[hoveredLink]?.title}{" "}
+                and{" "}
+                {!isDirected && isPath
+                  ? freePath[hoveredLink + 1]?.title
+                  : path[hoveredLink + 1]?.title}
               </h3>
               <ul>
                 {edgeHistory[activeLink ?? hoveredLink]?.map((entry, i) => (
@@ -286,3 +292,5 @@ function PathProgress() {
 }
 
 export default PathProgress;
+
+//TODO: fix path, fix unpause

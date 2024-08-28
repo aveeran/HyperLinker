@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import * as utils from "@utils/utils";
 
 const keyCategory = {
   "/singleplayer_dashboard/singleplayer_customization/mode": [
@@ -21,87 +22,49 @@ const getCategory = (value) => {
       return key;
     }
   }
-  return null; // Ensure to return null if no category is found
-};
-
-const defaultCustomizations = {
-  mode: {
-    type: "path",
-    path: {
-      pathLength: 2,
-      directed: true,
-      intermediate_links: [],
-    },
-    countDown: {
-      timer: 0,
-    },
-  },
-  start: {
-    title: "",
-    link: "",
-  },
-  end: {
-    title: "",
-    end: "",
-  },
-  track: ["clicks"],
-  restrictions: [
-    "no-opening-para",
-    "no-find",
-    "no-back",
-    "no-category",
-    "no-dates",
-  ],
+  return null; 
 };
 
 function SingleplayerDashboard() {
-  const [customizations, setCustomizations] = useState(defaultCustomizations);
+  const [customizations, setCustomizations] = useState(
+    utils.defaultSingleplayerCustomizations
+  );
   const navigate = useNavigate();
 
-  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
-
-  const storage = useMemo(() => {
-    if (isChromeExtension) {
-      return chrome.storage.local;
-    } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
-        }
-      };
-    }
-  }, [isChromeExtension]);
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
 
   useEffect(() => {
-    storage.get("singleplayer-customizations", (result) => {
-      if (result["singleplayer-customizations"]) {
-        setCustomizations(result["singleplayer-customizations"]);
-      } else {
-        storage.set({
-          "singleplayer-customizations": defaultCustomizations,
-        });
+    chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+      const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+      if (storedCustomizations) {
+        setCustomizations(storedCustomizations);
       }
     });
-  }, [storage]);
+  });
 
   const reset = () => {
-    setCustomizations(defaultCustomizations);
-    storage.set({
-      "singleplayer-customizations": defaultCustomizations,
-    });
+    setCustomizations(utils.defaultSingleplayerCustomizations);
+    chrome.storage.local.set({ [utils.SINGLEPLAYER_CUSTOMIZATIONS ]: customizations });
   };
 
-  const sortedEntries = Object.entries(customizations).sort(([keyA], [keyB]) => {
-    const order = ["mode", "start", "end", "path", "count down", "track", "restrictions"];
-    return order.indexOf(keyA) - order.indexOf(keyB);
-  });
+  const sortedEntries = Object.entries(customizations).sort(
+    ([keyA], [keyB]) => {
+      const order = [
+        "mode",
+        "start",
+        "end",
+        "path",
+        "count down",
+        "track",
+        "restrictions",
+      ];
+      return order.indexOf(keyA) - order.indexOf(keyB);
+    }
+  );
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
@@ -113,12 +76,8 @@ function SingleplayerDashboard() {
   };
 
   const handleSubmit = () => {
-    if (isChromeExtension) {
-      chrome.runtime.sendMessage({action: "start_singleplayer", data: customizations});
-    } else {
-      console.log("Message would be sent to content script");
-    }
-    navigate('/singleplayer');
+    chrome.runtime.sendMessage({action: utils.START_SINGLEPLAYER})
+    navigate("/singleplayer");
   };
 
   return (
@@ -127,7 +86,7 @@ function SingleplayerDashboard() {
       <h2 className="text-3xl text-center mb-3">Singleplayer</h2>
       <div className="border-black border-2 border-solid p-1.5 m-3">
         <p className="text-center">Customizations</p>
-        <hr className="m-5"/>
+        <hr className="m-5" />
         {sortedEntries.map(([key, value]) => (
           <div key={key} className="relative group flex mb-2">
             <strong className="mr-2">{key}</strong>

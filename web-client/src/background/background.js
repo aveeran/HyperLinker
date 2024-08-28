@@ -1,247 +1,358 @@
-let singleplayerGame = {
-  singleplayerCustomizations: {
-    mode: {
-      type: "",
-      path: {
-        pathLength: 0,
-        directed: false,
-        intermediate_links: [],
-      },
-      countDown: {
-        timer: 0,
-      },
-    },
-    start: {
-      title: "",
-      link: "",
-    },
-    end: {
-      title: "",
-      end: "",
-    },
-    track: [],
-    restrictions: [
-      
-    ],
-  },
-  playing: false,
-  startTime: 0,
-  tracking: 0,
-  path: [],
-  freePath: [],
-  visitedPath: [],
-  nodeHistory: [],
-  edgeHistory: [],
-  currentNode: 0,
-};
-
-const defaultGame = {
-  singleplayerCustomizations: {
-    mode: {
-      type: "",
-      path: {
-        pathLength: 0,
-        directed: false,
-        intermediate_links: [],
-      },
-      countDown: {
-        timer: 0,
-      },
-    },
-    start: {
-      title: "",
-      link: "",
-    },
-    end: {
-      title: "",
-      end: "",
-    },
-    track: [],
-    restrictions: [
-      
-    ],
-  },
-  playing: false,
-  startTime: 0,
-  tracking: 0,
-  path: [],
-  freePath: [],
-  visitedPath: [],
-  nodeHistory: [],
-  edgeHistory: [],
-  currentNode: 0,
-};
-
-let visitedPage = null;
+import * as utils from "@utils/utils.js";
+let singleplayerCustomizations = utils.defaultSingleplayerCustomizations;
+let singleplayerGameProperties = utils.defaultGameProperties;
+let singleplayerGameInformation = utils.defaultGameInformation;
 
 let timerInterval;
-let isTimerRunning = false;
-
-chrome.storage.local.clear();
+let isTimerRunning;
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === "local" && changes["singleplayer-game"]) {
-    const updatedSingleplayerGame = changes["singleplayer-game"].newValue;
-    if(singleplayerGame.playing != updatedSingleplayerGame.playing){
-      if(updatedSingleplayerGame.playing) {
-        if(!isTimerRunning) {
+  if (areaName == "local") {
+    // may have to restrucutre in the future
+    const customizationsChange = changes[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+    const gamePropertyChanges = changes[utils.SINGLEPLAYER_GAME_PROPERTIES];
+    const gameInformationChanges = changes[utils.SINGLEPLAYER_GAME_INFORMATION];
+    const elapsedTimeChanges = changes[utils.ELAPSED_TIME];
+
+    if (customizationsChange && customizationsChange.newValue != null) {
+      singleplayerCustomizations = customizationsChange.newValue;
+    }
+
+    if (gamePropertyChanges && gamePropertyChanges.newValue != null) {
+      singleplayerGameProperties = gamePropertyChanges.newValue;
+    }
+
+    if (gameInformationChanges && gameInformationChanges.newValue != null) {
+      singleplayerGameInformation = gameInformationChanges.newValue;
+    }
+
+    if (elapsedTimeChanges && elapsedTimeChanges.newValue != null) {
+      handleTimeUpdate(elapsedTimeChanges);
+    }
+  }
+});
+
+function handleTimeUpdate(elapsedTimeChanges) {
+  let currentNode = singleplayerGameInformation.currentNode;
+  let nodeHistory = singleplayerGameInformation.nodeHistory;
+  const updatedTime = elapsedTimeChanges.newValue;
+
+  let currentNodeHistory = nodeHistory[currentNode];
+  currentNodeHistory.elapsedTime =
+    currentNode > 0
+      ? updatedTime -
+        nodeHistory
+          .slice(0, currentNode)
+          .reduce((total, node) => total + (node.elapsedTime || 0), 0)
+      : updatedTime;
+
+  nodeHistory[currentNode] = currentNodeHistory;
+
+  const updatedGameInformation = {
+    ...singleplayerGameInformation,
+    nodeHistory: nodeHistory,
+  };
+
+  chrome.storage.local.set({
+    [utils.SINGLEPLAYER_GAME_INFORMATION]: updatedGameInformation,
+  });
+}
+
+chrome.runtime.onMessage.addListener((message, sender, response) => {
+  if (message.action === utils.START_SINGLEPLAYER) {
+    // SHOULD WE MAKE THESE CONSTANTS??
+    startSingleplayer();
+  }
+
+  if (message.action === utils.PAUSE_SINGLEPLAYER) {
+    console.log("received paused");
+    pauseSingleplayer();
+  }
+
+  if (message.action === utils.UNPAUSE_SINGLEPLAYER) {
+    console.log(
+      "received unpaused-----------------------------------------------------"
+    );
+    unpauseSingleplayer();
+  }
+
+  if (message.action === utils.QUIT_SINGLEPLAYER) {
+    singleplayerGameInformation = utils.defaultGameInformation;
+    singleplayerGameProperties = utils.defaultGameProperties;
+  }
+
+  if (message.action === utils.WIKIPEDIA_CLICK) {
+    handleWikipediaClick(message);
+  }
+
+  if (message.action === utils.SINGLEPLAYER_WIN) {
+    // we do not deal with it here?
+  }
+
+  if (message.action === "reset") {
+    chrome.storage.local.clear();
+  }
+});
+
+function pauseSingleplayer() {
+  chrome.storage.local.get([utils.SINGLEPLAYER_GAME_INFORMATION], (result) => {
+    if (result[utils.SINGLEPLAYER_GAME_INFORMATION]) {
+      singleplayerGameInformation = result[utils.SINGLEPLAYER_GAME_INFORMATION];
+      if (
+        singleplayerGameInformation.status.playing &&
+        !singleplayerGameInformation.status.paused
+      ) {
+        singleplayerGameInformation.status.paused = true;
+        singleplayerGameInformation.status.pauseStart = Date.now();
+        clearInterval(timerInterval);
+        // if (isTimerRunning) {
+        // isTimerRunning = false;
+        // }
+        chrome.storage.local.set({
+          [utils.SINGLEPLAYER_GAME_INFORMATION]: singleplayerGameInformation,
+        });
+      }
+    }
+  });
+  // chrome.runtime.sendMessage({ action: "pause_wikipedia"});
+}
+
+function unpauseSingleplayer() {
+  chrome.storage.local.get(
+    [utils.SINGLEPLAYER_GAME_INFORMATION, utils.SINGLEPLAYER_GAME_PROPERTIES],
+    (result) => {
+      if (
+        result[utils.SINGLEPLAYER_GAME_INFORMATION] &&
+        result[utils.SINGLEPLAYER_GAME_PROPERTIES]
+      ) {
+        singleplayerGameInformation =
+          result[utils.SINGLEPLAYER_GAME_INFORMATION];
+        singleplayerGameProperties = result[utils.SINGLEPLAYER_GAME_PROPERTIES];
+        if (
+          singleplayerGameInformation.status.playing &&
+          singleplayerGameInformation.status.paused
+        ) {
+          singleplayerGameInformation.status.paused = false;
+          const pausedDuration =
+            Date.now() - singleplayerGameInformation.status.pauseStart;
+          singleplayerGameInformation.status.pauseGap += pausedDuration;
+          singleplayerGameInformation.status.pauseStart = 0;
+          console.log("Updating pausing information");
+          console.log("Conditional reached!");
           timerInterval = setInterval(() => {
-            const elapsedTime = Math.floor((Date.now() - updatedSingleplayerGame.startTime) / 1000);
-            chrome.storage.local.set({ elapsedTime: elapsedTime });
+            const elapsedTime = Math.floor(
+              (Date.now() -
+                singleplayerGameProperties.startTime -
+                singleplayerGameInformation.status.pauseGap) /
+                1000
+            );
+
+            console.log("Added timer again");
+            chrome.storage.local.set({ [utils.ELAPSED_TIME]: elapsedTime });
+            console.log("Updated elapsed Time ");
           }, 1000);
-          isTimerRunning = true;
+          console.log("Reached end");
+          // if (true) {
+            // isTimerRunning = true;
+          // }
+
+          console.log(singleplayerGameInformation);
+          chrome.storage.local.set({
+            [utils.SINGLEPLAYER_GAME_INFORMATION]: singleplayerGameInformation,
+          });
         }
       }
     }
+  );
+}
 
-
-    singleplayerGame = updatedSingleplayerGame;
-  }
-});
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "start_singleplayer") {
-    const { start, end } = message.data;
-    chrome.tabs.create({ url: start.link }, (newTab) => {
-      if(!singleplayerGame || !singleplayerGame.singleplayerCustomizations || !singleplayerGame.playing 
-        || !singleplayerGame.startTime || !singleplayerGame.path || !singleplayerGame.freePath || 
-        singleplayerGame.nodeHistory || !singleplayerGame.edgeHistory || !singleplayerGame.visitedPath
-      ) {
-        singleplayerGame = defaultGame;
-      }
-      singleplayerGame.singleplayerCustomizations = message.data || {};
-      singleplayerGame.playing = true;
-      singleplayerGame.startTime = Date.now();
-
-      singleplayerGame.path = [
-        singleplayerGame.singleplayerCustomizations.start,
-        ...(singleplayerGame.singleplayerCustomizations.mode?.path
-          ?.intermediate_links || []),
-        singleplayerGame.singleplayerCustomizations.end,
+function startSingleplayer() {
+  chrome.tabs.create(
+    { url: singleplayerCustomizations.start.link },
+    (newTab) => {
+      singleplayerGameProperties.startTime = Date.now();
+      singleplayerGameProperties.path = [
+        singleplayerCustomizations.start,
+        ...(singleplayerCustomizations.mode.type === "path"
+          ? singleplayerCustomizations.mode.path.intermediate_links
+          : []),
+        singleplayerCustomizations.end,
       ];
 
-      if (!singleplayerGame.singleplayerCustomizations.mode.path.directed) {
-        singleplayerGame.freePath = Array.from(
-          { length: singleplayerGame.path.length },
+      const pathLength = singleplayerGameProperties.path.length;
+
+      chrome.storage.local.set({
+        [utils.SINGLEPLAYER_GAME_PROPERTIES]: singleplayerGameProperties,
+      });
+
+      singleplayerGameInformation.status = {
+        playing: true,
+        paused: false,
+        pauseStart: 0,
+        pauseGap: 0,
+      };
+
+      if (
+        singleplayerCustomizations.mode.type === "path" &&
+        !singleplayerCustomizations.mode.path.directed
+      ) {
+        singleplayerGameInformation.freePath = Array.from(
+          { length: pathLength },
           () => ({ title: "???", link: "www.wikipedia.org" })
         );
 
-        singleplayerGame.freePath[0] =
-          singleplayerGame.singleplayerCustomizations.start;
-        singleplayerGame.freePath[singleplayerGame.path.length - 1] =
-          singleplayerGame.singleplayerCustomizations.end;
+        singleplayerGameInformation.freePath[0] =
+          singleplayerCustomizations.start;
+        singleplayerGameInformation.freePath[pathLength - 1] =
+          singleplayerCustomizations.end;
       }
 
-      singleplayerGame.nodeHistory = Array.from(
-        { length: singleplayerGame.path.length },
+      singleplayerGameInformation.nodeHistory = Array.from(
+        { length: pathLength },
         () => ({ clicks: 0, elapsedTime: 0 })
       );
 
-      singleplayerGame.edgeHistory = Array.from(
-        { length: singleplayerGame.path.length - 2 },
+      singleplayerGameInformation.edgeHistory = Array.from(
+        { length: pathLength - 1 },
         () => []
       );
 
-      singleplayerGame.visitedPath = [
-        singleplayerGame.singleplayerCustomizations.start.link,
+      singleplayerGameInformation.visitedPath = [
+        singleplayerCustomizations.start.link,
       ];
 
-      chrome.storage.local.set({ "singleplayer-game": singleplayerGame });
-      if (singleplayerGame.playing) {
+      chrome.storage.local.set({
+        [utils.SINGLEPLAYER_GAME_INFORMATION]: singleplayerGameInformation,
+      });
+
+      chrome.storage.local.set({
+        [utils.SINGLEPLAYER_GAME_WIN]: false,
+      });
+
+      if (singleplayerGameInformation.status.playing) {
+        // isTimerRunning = true;
         timerInterval = setInterval(() => {
           const elapsedTime = Math.floor(
-            (Date.now() - singleplayerGame.startTime) / 1000
+            (Date.now() -
+              singleplayerGameProperties.startTime -
+              singleplayerGameInformation.status.pauseGap) /
+              1000
           );
-          chrome.storage.local.set({ elapsedTime: elapsedTime });
+          chrome.storage.local.set({ [utils.ELAPSED_TIME]: elapsedTime });
         }, 1000);
       }
-    });
-  }
-
-  if (message.action === "wikipedia_click") {
-    if (singleplayerGame.playing) {
-      chrome.storage.local.get(["clickCount"], (result) => {
-        let clicks = result.clickCount || 0;
-        clicks++;
-        chrome.storage.local.set({ clickCount: clicks });
-
-        const pageUrl = message.page;
-        const currentNode = singleplayerGame.currentNode;
-        const nextPage = singleplayerGame.path[currentNode + 1]; // FOR DIRECTED/NORMAL; need to address undirected now
-
-        const searchTitle = pageUrl.split("/").pop();
-        fetch(
-          `https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.title) {
-              const pageTitle = data.title;
-              let currentEdgeHistory =
-                singleplayerGame.edgeHistory[currentNode] || [];
-              currentEdgeHistory.push({ url: pageUrl, title: pageTitle });
-              singleplayerGame.edgeHistory[currentNode] = currentEdgeHistory;
-
-              let currentNodeHistory = singleplayerGame.nodeHistory[
-                currentNode
-              ] || { clicks: 0, elapsedTime: 0 };
-              currentNodeHistory.clicks++;
-              singleplayerGame.nodeHistory[currentNode] = currentNodeHistory;
-            }
-
-            if (
-              singleplayerGame.singleplayerCustomizations.mode.path.directed
-            ) {
-              if (pageUrl === nextPage.link) {
-                singleplayerGame.currentNode++;
-                singleplayerGame.visitedPath.push(pageUrl);
-              }
-            } else {
-              console.log(
-                "undirected",
-                singleplayerGame.path,
-                singleplayerGame.visitedPath,
-                pageUrl
-              );
-              if (
-                singleplayerGame.path
-                  .map((article) => article.link)
-                  .includes(pageUrl) &&
-                !singleplayerGame.visitedPath.includes(pageUrl)
-              ) {
-                console.log("Should be here!");
-                singleplayerGame.currentNode++;
-                singleplayerGame.freePath[singleplayerGame.currentNode] = {
-                  title: data.title,
-                  link: pageUrl,
-                };
-                singleplayerGame.visitedPath.push(pageUrl);
-              }
-            }
-            chrome.storage.local.set({ "singleplayer-game": singleplayerGame });
-          })
-          .catch((error) => {
-            console.error("Error fetching page title: ", error);
-          });
-      });
     }
-  }
+  );
+}
 
-  if (message.action === "quit_singleplayer") {
-    singleplayerGame.playing = false;
-    clearInterval(timerInterval); 
-    const updatedSingleplayerGame = {
-      ...singleplayerGame,
-      playing: false,
-      startTime:0,
-      tracking:0,
-      path: [],
-      freePath: [],
-      visitedPath:[],
-      nodeHistory:[],
-      edgeHistory:[],
-      currentNode:0
+function handleWikipediaClick(message) {
+  // if (singleplayerGameInformation.status.playing) {
+  chrome.storage.local.get(
+    [
+      utils.SINGLEPLAYER_GAME_INFORMATION,
+      utils.SINGLEPLAYER_GAME_PROPERTIES,
+      utils.CLICK_COUNT,
+      utils.SINGLEPLAYER_CUSTOMIZATIONS
+    ],
+    (result) => {
+      if (
+        result[utils.SINGLEPLAYER_GAME_INFORMATION] &&
+        result[utils.SINGLEPLAYER_GAME_PROPERTIES] &&
+        result[utils.SINGLEPLAYER_CUSTOMIZATIONS]
+      ) {
+        singleplayerGameInformation =
+          result[utils.SINGLEPLAYER_GAME_INFORMATION];
+        singleplayerGameProperties = result[utils.SINGLEPLAYER_GAME_PROPERTIES];
+        singleplayerCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+
+        if (singleplayerGameInformation.status.playing) {
+          let clicks = result[utils.CLICK_COUNT] || 0;
+          clicks++;
+          chrome.storage.local.set({ [utils.CLICK_COUNT]: clicks });
+
+          const pageUrl = message.page;
+          const currentNode = singleplayerGameInformation.currentNode;
+          const nextPage = singleplayerGameProperties.path[currentNode + 1]; // NEED TO ADDRESS UNDIRECTED!!!
+
+          const searchTitle = pageUrl.split("/").pop();
+          fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.title) {
+                const pageTitle = data.title;
+                let currentEdgeHistory =
+                  singleplayerGameInformation.edgeHistory[currentNode] || 0;
+                currentEdgeHistory.push({ url: pageUrl, title: pageTitle });
+                singleplayerGameInformation.edgeHistory[currentNode] =
+                  currentEdgeHistory;
+
+                let currentNodeHistory = singleplayerGameInformation
+                  .nodeHistory[currentNode] || { clicks: 0, elapsedTime: 0 };
+                currentNodeHistory.clicks++;
+                singleplayerGameInformation.nodeHistory[currentNode] =
+                  currentNodeHistory;
+
+                if (singleplayerCustomizations.mode.path.directed) {
+                  if (pageUrl === nextPage.link) {
+                    singleplayerGameInformation.currentNode++;
+                    singleplayerGameInformation.visitedPath.push(pageUrl);
+                  }
+                } else {
+                  if (
+                    singleplayerGameProperties.path
+                      .map((article) => article.link)
+                      .includes(pageUrl) &&
+                    !singleplayerGameInformation.visitedPath.includes(
+                      pageUrl
+                    ) &&
+                    (pageUrl === singleplayerCustomizations.end.link
+                      ? currentNode ===
+                        singleplayerGameProperties.path.length - 2
+                      : true)
+                  ) {
+                    singleplayerGameInformation.currentNode++;
+                    singleplayerGameInformation.freePath[
+                      singleplayerGameInformation.currentNode
+                    ] = {
+                      title: data.title,
+                      link: pageUrl,
+                    };
+                    singleplayerGameInformation.visitedPath.push(pageUrl);
+                  }
+                }
+                chrome.storage.local.set({
+                  [utils.SINGLEPLAYER_GAME_INFORMATION]:
+                    singleplayerGameInformation,
+                });
+
+                console.log(singleplayerGameInformation.currentNode, pageUrl, singleplayerCustomizations.end.link);
+
+                if (
+                  singleplayerGameInformation.currentNode ===
+                    singleplayerGameProperties.path.length - 1 &&
+                  pageUrl === singleplayerCustomizations.end.link
+                ) {
+                  clearInterval(timerInterval);
+                  // isTimerRunning = false;
+                  singleplayerGameInformation.status.playing = false;
+                  chrome.storage.local.set({
+                    [utils.SINGLEPLAYER_GAME_INFORMATION]:
+                      singleplayerGameInformation,
+                  });
+                  chrome.storage.local.set({
+                    [utils.SINGLEPLAYER_GAME_WIN]: true,
+                  });
+                  // chrome.runtime.sendMessage({ action: "singleplayer-win" });
+                }
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching page title: ", error);
+            });
+        }
+      }
     }
-    chrome.storage.local.set({"singleplayer-game":updatedSingleplayerGame})
-  }
-});
+  );
+}

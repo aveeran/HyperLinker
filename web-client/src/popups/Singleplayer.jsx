@@ -1,10 +1,13 @@
-import PathProgress from "../components/PathProgress";
-import GameTracker from "../components/GameTracker";
+import GameTracker from "../components/GameTracker.jsx";
+import PathProgress from "../components/PathProgress.jsx";
+
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import * as utils from "@utils/utils.js";
 
 function Singleplayer() {
-  const [track, setTrack] = useState("");
+  const [track, setTrack] = useState("time");
+
   const [countDown, setCountDown] = useState(-1);
   const [paused, setPaused] = useState(false);
   const [pause, setPause] = useState(true);
@@ -16,39 +19,71 @@ function Singleplayer() {
     []
   );
 
-  if (isChromeExtension) {
-    chrome.storage.local.get(["singleplayer-game"], (result) => {
-      const customizations =
-        result["singleplayer-game"].singleplayerCustomizations;
-      setTrack(customizations.track[0]);
-      if (customizations.mode.type === "countDown") {
-        setCountDown(customizations.mode.countDown.timer);
-      }
-    });
-  }
+  useEffect(() => {
+    if(isChromeExtension) {
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS, 
+        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION], (results) => {
+        const storedCustomizations = results[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+        const storedWin = results[utils.SINGLEPLAYER_GAME_WIN];
+        const storedGameInformation = results[utils.SINGLEPLAYER_GAME_INFORMATION];
 
-  // maybe check if there is a pause butotn?
+        if(storedCustomizations) {
+          setTrack(storedCustomizations.track[0])
+          if(storedCustomizations.mode.type === "count-down") {
+            setCountDown(storedCustomizations.mode["count-down"].timer)
+          }
+        }
+
+        if(storedGameInformation) {
+          setPaused(storedGameInformation.status.paused);
+        }
+
+        if(storedWin) {
+          navigate('/singleplayer-end')
+        }
+
+      });
+    }
+  }, [isChromeExtension, navigate]);
+
+  useEffect(() => {
+    if(isChromeExtension) {
+      const handleWinChanges = (changes, areaName) => {
+        if(areaName === "local" && changes[utils.SINGLEPLAYER_GAME_WIN]) {
+          const win = changes[utils.SINGLEPLAYER_GAME_WIN].newValue;
+          if(win) {
+            console.log("win received");
+            navigate('/singleplayer-end')
+          }
+        }
+      }
+
+      chrome.storage.onChanged.addListener(handleWinChanges);
+
+      return () => {
+        chrome.storage.onChanged.removeListener(handleWinChanges);
+      }
+    }
+  }, [isChromeExtension, navigate])
 
   const handleQuit = () => {
-    if (isChromeExtension) {
-      chrome.runtime.sendMessage({ action: "quit_singleplayer" });
+    if(isChromeExtension) {
+      chrome.runtime.sendMessage({ action: utils.QUIT_SINGLEPLAYER})
     }
-
-    // navigate(-1);
-  };
+    navigate(-1);
+  }
 
   const handleTogglePause = () => {
-    chrome.storage.local.get(["singleplayer-game"], (result) => {
-      const storedGameData = result["singleplayer-game"];
-      const updatedGameData = {
-        ...storedGameData,
-        playing: paused
-      }
-    })
-
-
+    if(paused) {
+      console.log("sending unpaused");
+      chrome.runtime.sendMessage({ action : utils.UNPAUSE_SINGLEPLAYER});
+    } else {
+      console.log("sending paused");
+      chrome.runtime.sendMessage({ action: utils.PAUSE_SINGLEPLAYER});
+    }
     setPaused(!paused);
-  };
+  }
+
 
   return (
     <div className="p-2">
@@ -57,7 +92,8 @@ function Singleplayer() {
       <div className="flex items-center justify-center border-2 rounded-md p-2">
         <button
           className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2"
-          onClick={handleQuit()}
+          onClick={handleQuit}
+
         >
           Quit
         </button>

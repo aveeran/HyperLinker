@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import * as utils from "@utils/utils";
 
-// Default restrictions
 const defaultRestrictions = [
   "no-opening-para",
   "no-find",
@@ -13,47 +13,35 @@ const defaultRestrictions = [
 
 function SingleRestrictions() {
   const navigate = useNavigate();
-  const [availableRestrictions, setAvailableRestrictions] = useState([]);
+  const [customizations, setCustomizations] = useState(
+    utils.defaultSingleplayerCustomizations
+  );
+  const [availableRestrictions, setAvailableRestrictions] =
+    useState(defaultRestrictions);
   const [chosenRestrictions, setChosenRestrictions] = useState([]);
 
-  // Determine if we are in a Chrome extension environment
-  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
 
-  // Define storage mechanism using useMemo
-  const storage = useMemo(() => {
+  useEffect(() => {
     if (isChromeExtension) {
-      return chrome.storage.local;
-    } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+        if (storedCustomizations) {
+          setCustomizations(storedCustomizations);
+          setAvailableRestrictions(
+            defaultRestrictions.filter(
+              (element) => !storedCustomizations.restrictions.includes(element)
+            )
+          );
+          setChosenRestrictions(storedCustomizations.restrictions);
         }
-      };
+      });
     }
   }, [isChromeExtension]);
-
-  // Load customizations when the component mounts
-  useEffect(() => {
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = {};
-      if (result['singleplayer-customizations']) {
-        customizations = result['singleplayer-customizations'];
-      }
-      setAvailableRestrictions(
-        defaultRestrictions.filter(
-          (element) => !customizations.restrictions.includes(element)
-        )
-      );
-      setChosenRestrictions(customizations.restrictions || []);
-    });
-  }, [storage]);
 
   const handleDragStart = (e, restriction, sourceWidget) => {
     e.dataTransfer.setData("tile", restriction);
@@ -84,19 +72,24 @@ function SingleRestrictions() {
   };
 
   const handleSubmit = () => {
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = result['singleplayer-customizations'] || {};
-      customizations.restrictions = chosenRestrictions;
-      storage.set({ 'singleplayer-customizations': customizations });
-      handleBack();
+    const updatedCustomizations = {
+      ...customizations,
+      restrictions: chosenRestrictions,
+    };
+
+    chrome.storage.local.set({
+      [utils.SINGLEPLAYER_CUSTOMIZATIONS]: updatedCustomizations,
     });
+    handleBack();
   };
 
   return (
     <div>
       <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h2 className="text-3xl text-center mb-3">Singleplayer - Customization</h2>
-      <hr className="m-5"/>
+      <h2 className="text-3xl text-center mb-3">
+        Singleplayer - Customization
+      </h2>
+      <hr className="m-5" />
       <div className="flex flex-col items-center">
         <p className="text-center mb-3">Restrictions</p>
 
