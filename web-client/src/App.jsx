@@ -16,9 +16,9 @@ function App() {
   
     <Router>
       <div className="w-[400px] border-black border-solid border-[3px]">
-        <Singleplayer/>
-        {/* <RouteTracker/> */}
-      {/* <Routes>
+        {/* <Singleplayer/> */}
+        <RouteTracker/>
+      <Routes>
         <Route path ="/" element={<Home/>}/>
         <Route path ="/singleplayer_dashboard" element={<SingleplayerDashboard/>}/>
         <Route path ="/singleplayer_dashboard/singleplayer_customization/mode" element={<SingleMode/>}/>
