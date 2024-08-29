@@ -63,6 +63,7 @@ export function getFormattedDate() {
   export const QUIT_SINGLEPLAYER = "quit_singleplayer";
   export const WIKIPEDIA_CLICK = "wikipedia_click";
   export const SINGLEPLAYER_WIN = "singleplayer_win";
+  export const SINGLEPLAYER_TIME_FINISHED = "singleplayer_time_finished";
 
   // data
   export const SINGLEPLAYER_CUSTOMIZATIONS = "singleplayer-customizations";

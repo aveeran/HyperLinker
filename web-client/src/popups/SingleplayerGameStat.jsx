@@ -21,10 +21,7 @@ function SingleplayerGameStat() {
   }
 
   const reset = () => {
-    chrome.storage.local.set({ [utils.EXTERNAL_WIKI_VISIT] : false});
-    chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_PROPERTEIS] : utils.defaultSingleplayerGameProperties});
-    chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_INFORMATION] : utils.defaultSingleplayerGameInformation });
-    chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_WIN] : false});
+    chrome.runtime.sendMessage({action: utils.QUIT_SINGLEPLAYER})
 
     navigate('/')
   }
