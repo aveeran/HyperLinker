@@ -3,6 +3,21 @@ let singleplayerCustomizations = utils.defaultSingleplayerCustomizations;
 let singleplayerGameProperties = utils.defaultGameProperties;
 let singleplayerGameInformation = utils.defaultGameInformation;
 
+// chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS,
+//   utils.SINGLEPLAYER_GAME_INFORMATION, utils.SINGLEPLAYER_GAME_PROPERTIES], (result) => {
+//     if(result[utils.SINGLEPLAYER_CUSTOMIZATIONS]) {
+//       singleplayerCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+//     }
+
+//     if(result[utils.SINGLEPLAYER_GAME_INFORMATION]) {
+//       singleplayerGameInformation = result[utils.SINGLEPLAYER_GAME_INFORMATION];
+//     }
+
+//     if(result[utils.SINGLEPLAYER_GAME_PROPERTIES]) {
+//       singleplayerGameProperties = result[utils.SINGLEPLAYER_GAME_PROPERTIES];
+//     }
+//   });
+
 let timerInterval;
 let isTimerRunning;
 
@@ -59,6 +74,7 @@ function handleTimeUpdate(elapsedTimeChanges) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, response) => {
+  //TODO: switch this to cases
   if (message.action === utils.START_SINGLEPLAYER) {
     // SHOULD WE MAKE THESE CONSTANTS??
     startSingleplayer();
@@ -79,6 +95,7 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
   if (message.action === utils.QUIT_SINGLEPLAYER) {
     singleplayerGameInformation = utils.defaultGameInformation;
     singleplayerGameProperties = utils.defaultGameProperties;
+    chrome.storage.local.set({ [utils.TAB_ID]: null });
   }
 
   if (message.action === utils.WIKIPEDIA_CLICK) {
@@ -153,7 +170,7 @@ function unpauseSingleplayer() {
           }, 1000);
           console.log("Reached end");
           // if (true) {
-            // isTimerRunning = true;
+          // isTimerRunning = true;
           // }
 
           console.log(singleplayerGameInformation);
@@ -241,18 +258,20 @@ function startSingleplayer() {
           chrome.storage.local.set({ [utils.ELAPSED_TIME]: elapsedTime });
         }, 1000);
       }
+      chrome.storage.local.set({ [utils.TAB_ID]: newTab.id }); // SETTING THE TAB ID
     }
   );
 }
 
 function handleWikipediaClick(message) {
   // if (singleplayerGameInformation.status.playing) {
+  //TODO: see if this is still needed (async getting)
   chrome.storage.local.get(
     [
       utils.SINGLEPLAYER_GAME_INFORMATION,
       utils.SINGLEPLAYER_GAME_PROPERTIES,
       utils.CLICK_COUNT,
-      utils.SINGLEPLAYER_CUSTOMIZATIONS
+      utils.SINGLEPLAYER_CUSTOMIZATIONS,
     ],
     (result) => {
       if (
@@ -327,7 +346,11 @@ function handleWikipediaClick(message) {
                     singleplayerGameInformation,
                 });
 
-                console.log(singleplayerGameInformation.currentNode, pageUrl, singleplayerCustomizations.end.link);
+                console.log(
+                  singleplayerGameInformation.currentNode,
+                  pageUrl,
+                  singleplayerCustomizations.end.link
+                );
 
                 if (
                   singleplayerGameInformation.currentNode ===
@@ -356,3 +379,29 @@ function handleWikipediaClick(message) {
     }
   );
 }
+
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if (details.url.includes("wikipedia.org")) {
+    chrome.storage.local.get(
+      [utils.TAB_ID, utils.SINGLEPLAYER_GAME_INFORMATION],
+      (result) => {
+        const storedGameInformation =
+          result[utils.SINGLEPLAYER_GAME_INFORMATION];
+        if (storedGameInformation) {
+          if (storedGameInformation.status.playing) {
+            const storedTabId = result[utils.TAB_ID];
+            const currentTabId = details.tabId;
+
+            if (storedTabId) {
+              if (storedTabId !== currentTabId) {
+                console.log("not matching");
+                chrome.storage.local.set({ [utils.EXTERNAL_WIKI_VISIT]: true });
+                clearInterval(timerInterval);
+              }
+            }
+          }
+        }
+      }
+    );
+  }
+});

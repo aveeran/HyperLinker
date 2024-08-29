@@ -7,7 +7,6 @@ import * as utils from "@utils/utils.js";
 
 function Singleplayer() {
   const [track, setTrack] = useState("time");
-
   const [countDown, setCountDown] = useState(-1);
   const [paused, setPaused] = useState(false);
   const [pause, setPause] = useState(true);
@@ -22,10 +21,17 @@ function Singleplayer() {
   useEffect(() => {
     if(isChromeExtension) {
       chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS, 
-        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION], (results) => {
+        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION, utils.EXTERNAL_WIKI_VISIT], (results) => {
         const storedCustomizations = results[utils.SINGLEPLAYER_CUSTOMIZATIONS];
         const storedWin = results[utils.SINGLEPLAYER_GAME_WIN];
         const storedGameInformation = results[utils.SINGLEPLAYER_GAME_INFORMATION];
+        const storedExternalWikiVisit = results[utils.EXTERNAL_WIKI_VISIT];
+
+        if(storedExternalWikiVisit !== null && storedExternalWikiVisit !== undefined) {
+          if(storedExternalWikiVisit === true) {
+            navigate('/singleplayer-end');
+          }
+        }
 
         if(storedCustomizations) {
           setTrack(storedCustomizations.track[0])
@@ -45,6 +51,29 @@ function Singleplayer() {
       });
     }
   }, [isChromeExtension, navigate]);
+
+  useEffect(() => {
+    if(isChromeExtension) {
+      const handleExternalWikiVisitChanges = (changes, areaName) => {
+        if(areaName === "local" && changes[utils.EXTERNAL_WIKI_VISIT]) {
+          const storedExternalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT].newValue;
+          if(storedExternalWikiVisit !== null && storedExternalWikiVisit !== undefined) {
+            if(storedExternalWikiVisit === true) {
+              navigate('/singleplayer-end');
+            }
+          }
+        }
+      }
+
+      chrome.storage.onChanged.addListener(handleExternalWikiVisitChanges);
+
+      return () => {
+        chrome.storage.onChanged.removeListener(handleExternalWikiVisitChanges);
+      }
+    }
+  }, [isChromeExtension, navigate])
+
+
 
   useEffect(() => {
     if(isChromeExtension) {

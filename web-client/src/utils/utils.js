@@ -71,6 +71,8 @@ export function getFormattedDate() {
   export const SINGLEPLAYER_GAME_WIN = "singleplayer-game-win";
   export const ELAPSED_TIME = "elapsed-time";
   export const CLICK_COUNT = "click-count";
+  export const TAB_ID = "tab-id";
+  export const EXTERNAL_WIKI_VISIT = "external-wiki-visit";
 
   // should we have consts here for common storage like "singleplayer-customizations", "singleplayer-game-properties", "singleplayer-game-information"
 
