@@ -104,7 +104,7 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
       chrome.storage.local.set({
         [utils.SINGLEPLAYER_GAME_INFORMATION]: utils.defaultGameInformation,
       });
-      //TODO: work on uniform resetting? or look at the different requirements
+      //TODO: work on uniform resetting? or look at the different requirements !!!!! ------------------------------------------
       chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_WIN]: false });
       chrome.storage.local.set({ [utils.ELAPSED_TIME]: 0 });
       chrome.storage.local.set({ [utils.CLICK_COUNT]: 0 });
