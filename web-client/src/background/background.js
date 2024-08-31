@@ -124,10 +124,24 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
       chrome.storage.local.clear();
       break;
 
+    case "get_tab_id":
+      sendTabId(sender, response);
+      break;
+
     default:
       console.warn("Unknown action:", message.action);
   }
+
+  return true;
 });
+
+function sendTabId(sender, response) {
+  if(sender.tab) {
+    response({ tabId: sender.tab.id });
+  } else {
+    response({ tabId: null });
+  }
+}
 
 function pauseSingleplayer() {
   chrome.storage.local.get([utils.SINGLEPLAYER_GAME_INFORMATION], (result) => {
