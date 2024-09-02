@@ -33,6 +33,7 @@ export function getFormattedDate() {
       "no-back",
       "no-category",
       "no-dates",
+      "same-page-link"
     ],
   };
 

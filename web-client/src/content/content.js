@@ -3,6 +3,10 @@ const NO_FIND = "no-find";
 const NO_BACK = "no-back";
 const NO_CATEGORY = "no-category";
 const NO_DATES = "no-dates";
+const SAME_PAGE_LINK = "same-page-link";
+const currentPagePath = window.location.pathname;
+let countSamePageLink = false;
+let useBack = true;
 
 chrome.storage.local.get(
   ["tab-id", "singleplayer-game-information", "singleplayer-customizations"],
@@ -22,6 +26,12 @@ chrome.storage.local.get(
               const storedCustomizations =
                 result["singleplayer-customizations"];
               const restrictions = storedCustomizations.restrictions;
+              if (restrictions.includes(SAME_PAGE_LINK)) {
+                countSamePageLink = true;
+              }
+              if (restrictions.includes(NO_BACK)) {
+                useBack = false;
+              }
               enforceRestrictions(restrictions);
               // console.log("Playing tab ID");
             } else {
@@ -49,10 +59,6 @@ function enforceRestrictions(restrictions) {
       case NO_FIND:
         noFind();
         break;
-      case NO_BACK:
-        console.log('no back enabled');
-        noBack();
-        break;
       default:
         break;
     }
@@ -79,33 +85,27 @@ function noFind() {
   });
 }
 
-function noBack() {
-    console.log('noBack function called.');
-    
-    // Push initial state
-    window.history.pushState({ page: 1 }, "", window.location.href);
-
-    // Handle popstate event to prevent back navigation
-    window.addEventListener('popstate', (event) => {
-        console.log('popstate event triggered.');
-        
-        // Replace the current state to prevent moving back
-        window.history.replaceState({ page: 1 }, "", window.location.href);
-
-        // Optionally, provide user feedback (use sparingly)
-        alert('Back navigation is disabled.');
-    });
-}
-
 document.addEventListener("click", (event) => {
   if (
     event.target.tagName === "A" &&
     event.target.href.includes("wikipedia.org")
   ) {
-    chrome.runtime.sendMessage({
-      action: "wikipedia_click",
-      page: event.target.href,
-    });
+    const targetPagePath = new URL(event.target.href).pathname;
+    if (
+      countSamePageLink ||
+      (!countSamePageLink && currentPagePath !== targetPagePath)
+    ) {
+      chrome.runtime.sendMessage({
+        action: "wikipedia_click",
+        page: event.target.href,
+      });
+    }
+
+    if (!useBack) {
+      history.pushState(null, null, event.target.href);
+      history.back();
+      history.forward();
+    }
   }
 });
 

@@ -8,8 +8,8 @@ const defaultRestrictions = [
   "no-back",
   "no-category",
   "no-dates",
-  "no-countries",
-];
+  "same-page-link"
+]
 
 function SingleRestrictions() {
   const navigate = useNavigate();
