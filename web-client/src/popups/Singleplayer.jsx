@@ -54,43 +54,23 @@ function Singleplayer() {
 
   useEffect(() => {
     if(isChromeExtension) {
-      const handleExternalWikiVisitChanges = (changes, areaName) => {
-        if(areaName === "local" && changes[utils.EXTERNAL_WIKI_VISIT]) {
-          const storedExternalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT].newValue;
-          if(storedExternalWikiVisit !== null && storedExternalWikiVisit !== undefined) {
-            if(storedExternalWikiVisit === true) {
-              navigate('/singleplayer-end');
-            }
+      const handleGameEndFlagChanges = (changes, areaName) => {
+        if(areaName === "local") {
+          const externalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || false;
+          const singleplayerTimeFinished = changes[utils.SINGLEPLAYER_TIME_FINISHED]?.newValue || false;
+          const singleplayerGameWin = changes[utils.SINGLEPLAYER_GAME_WIN]?.newValue || false;
+
+          if(externalWikiVisit || singleplayerTimeFinished || singleplayerGameWin) {
+            console.log(`${externalWikiVisit} ${singleplayerTimeFinished} ${singleplayerGameWin}`)
+            navigate('/singleplayer-end');
           }
         }
       }
 
-      chrome.storage.onChanged.addListener(handleExternalWikiVisitChanges);
+      chrome.storage.onChanged.addListener(handleGameEndFlagChanges);
 
       return () => {
-        chrome.storage.onChanged.removeListener(handleExternalWikiVisitChanges);
-      }
-    }
-  }, [isChromeExtension, navigate])
-
-
-
-  useEffect(() => {
-    if(isChromeExtension) {
-      const handleWinChanges = (changes, areaName) => {
-        if(areaName === "local" && changes[utils.SINGLEPLAYER_GAME_WIN]) {
-          const win = changes[utils.SINGLEPLAYER_GAME_WIN].newValue;
-          if(win) {
-            console.log("win received");
-            navigate('/singleplayer-end')
-          }
-        }
-      }
-
-      chrome.storage.onChanged.addListener(handleWinChanges);
-
-      return () => {
-        chrome.storage.onChanged.removeListener(handleWinChanges);
+        chrome.storage.onChanged.removeListener(handleGameEndFlagChanges);
       }
     }
   }, [isChromeExtension, navigate])
@@ -112,8 +92,7 @@ function Singleplayer() {
     }
     setPaused(!paused);
   }
-
-
+  
   return (
     <div className="p-2">
       <GameTracker track={track} countDown={countDown} />

@@ -3,20 +3,20 @@ let singleplayerCustomizations = utils.defaultSingleplayerCustomizations;
 let singleplayerGameProperties = utils.defaultGameProperties;
 let singleplayerGameInformation = utils.defaultGameInformation;
 
-// chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS,
-//   utils.SINGLEPLAYER_GAME_INFORMATION, utils.SINGLEPLAYER_GAME_PROPERTIES], (result) => {
-//     if(result[utils.SINGLEPLAYER_CUSTOMIZATIONS]) {
-//       singleplayerCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-//     }
+chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS,
+  utils.SINGLEPLAYER_GAME_INFORMATION, utils.SINGLEPLAYER_GAME_PROPERTIES], (result) => {
+    if(result[utils.SINGLEPLAYER_CUSTOMIZATIONS]) {
+      singleplayerCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+    }
 
-//     if(result[utils.SINGLEPLAYER_GAME_INFORMATION]) {
-//       singleplayerGameInformation = result[utils.SINGLEPLAYER_GAME_INFORMATION];
-//     }
+    if(result[utils.SINGLEPLAYER_GAME_INFORMATION]) {
+      singleplayerGameInformation = result[utils.SINGLEPLAYER_GAME_INFORMATION];
+    }
 
-//     if(result[utils.SINGLEPLAYER_GAME_PROPERTIES]) {
-//       singleplayerGameProperties = result[utils.SINGLEPLAYER_GAME_PROPERTIES];
-//     }
-//   });
+    if(result[utils.SINGLEPLAYER_GAME_PROPERTIES]) {
+      singleplayerGameProperties = result[utils.SINGLEPLAYER_GAME_PROPERTIES];
+    }
+  });
 
 let timerInterval;
 
@@ -54,8 +54,9 @@ function handleTimeUpdate(elapsedTimeChanges) {
   const mode = singleplayerCustomizations.mode.type;
   const countDown = singleplayerCustomizations.mode["count-down"].timer;
 
-  if (mode === "count-down" && countDown - updatedTime < 0) {
-    chrome.runtime.sendMessage({ action: utils.SINGLEPLAYER_TIME_FINISHED });
+  if (mode === "count-down" && countDown - updatedTime < 0) { 
+    stopPlaying();
+    chrome.storage.local.set({ [utils.SINGLEPLAYER_TIME_FINISHED] : true})
   } else {
     let currentNodeHistory = nodeHistory[currentNode] || {
       elapsedTime: 0,
@@ -97,19 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
       break;
 
     case utils.QUIT_SINGLEPLAYER:
-      clearInterval(timerInterval);
-      chrome.storage.local.set({
-        [utils.SINGLEPLAYER_GAME_PROPERTIES]: utils.defaultGameProperties,
-      });
-      chrome.storage.local.set({
-        [utils.SINGLEPLAYER_GAME_INFORMATION]: utils.defaultGameInformation,
-      });
-      //TODO: work on uniform resetting? or look at the different requirements !!!!! ------------------------------------------
-      chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_WIN]: false });
-      chrome.storage.local.set({ [utils.ELAPSED_TIME]: 0 });
-      chrome.storage.local.set({ [utils.CLICK_COUNT]: 0 });
-      chrome.storage.local.set({ [utils.TAB_ID]: null });
-      chrome.storage.local.set({ [utils.EXTERNAL_WIKI_VISIT]: false });
+      stopPlaying();
       break;
 
     case utils.WIKIPEDIA_CLICK:
@@ -126,6 +115,10 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
 
     case "get_tab_id":
       sendTabId(sender, response);
+      break;
+
+    case utils.SINGLEPLAYER_CLEAR_END:
+      clearEndFlags();
       break;
 
     default:
@@ -166,17 +159,11 @@ function unpauseSingleplayer() {
   chrome.storage.local.get(
     [utils.SINGLEPLAYER_GAME_INFORMATION, utils.SINGLEPLAYER_GAME_PROPERTIES],
     (result) => {
-      if (
-        result[utils.SINGLEPLAYER_GAME_INFORMATION] &&
-        result[utils.SINGLEPLAYER_GAME_PROPERTIES]
-      ) {
+      if (result[utils.SINGLEPLAYER_GAME_INFORMATION] && result[utils.SINGLEPLAYER_GAME_PROPERTIES]) {
         singleplayerGameInformation =
           result[utils.SINGLEPLAYER_GAME_INFORMATION];
         singleplayerGameProperties = result[utils.SINGLEPLAYER_GAME_PROPERTIES];
-        if (
-          singleplayerGameInformation.status.playing &&
-          singleplayerGameInformation.status.paused
-        ) {
+        if (singleplayerGameInformation.status.playing && singleplayerGameInformation.status.paused) {
           singleplayerGameInformation.status.paused = false;
           const pausedDuration =
             Date.now() - singleplayerGameInformation.status.pauseStart;
@@ -228,9 +215,7 @@ function startSingleplayer() {
       };
 
       if (
-        singleplayerCustomizations.mode.type === "path" &&
-        !singleplayerCustomizations.mode.path.directed
-      ) {
+        singleplayerCustomizations.mode.type === "path" && !singleplayerCustomizations.mode.path.directed) {
         singleplayerGameInformation.freePath = Array.from(
           { length: pathLength },
           () => ({ title: "???", link: "www.wikipedia.org" })
@@ -289,13 +274,8 @@ function handleWikipediaClick(message) {
       utils.SINGLEPLAYER_CUSTOMIZATIONS,
     ],
     (result) => {
-      if (
-        result[utils.SINGLEPLAYER_GAME_INFORMATION] &&
-        result[utils.SINGLEPLAYER_GAME_PROPERTIES] &&
-        result[utils.SINGLEPLAYER_CUSTOMIZATIONS]
-      ) {
-        singleplayerGameInformation =
-          result[utils.SINGLEPLAYER_GAME_INFORMATION];
+      if (result[utils.SINGLEPLAYER_GAME_INFORMATION] && result[utils.SINGLEPLAYER_GAME_PROPERTIES] && result[utils.SINGLEPLAYER_CUSTOMIZATIONS]) {
+        singleplayerGameInformation = result[utils.SINGLEPLAYER_GAME_INFORMATION];
         singleplayerGameProperties = result[utils.SINGLEPLAYER_GAME_PROPERTIES];
         singleplayerCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
 
@@ -309,9 +289,7 @@ function handleWikipediaClick(message) {
           const nextPage = singleplayerGameProperties.path[currentNode + 1];
 
           const searchTitle = pageUrl.split("/").pop();
-          fetch(
-            `https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`
-          )
+          fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`)
             .then((response) => response.json())
             .then((data) => {
               if (data.title) {
@@ -366,12 +344,7 @@ function handleWikipediaClick(message) {
                     singleplayerGameProperties.path.length - 1 &&
                   pageUrl === singleplayerCustomizations.end.link
                 ) {
-                  clearInterval(timerInterval);
-                  singleplayerGameInformation.status.playing = false;
-                  chrome.storage.local.set({
-                    [utils.SINGLEPLAYER_GAME_INFORMATION]:
-                      singleplayerGameInformation,
-                  });
+                  stopPlaying();
                   chrome.storage.local.set({
                     [utils.SINGLEPLAYER_GAME_WIN]: true,
                   });
@@ -402,8 +375,8 @@ chrome.webNavigation.onCommitted.addListener((details) => {
 
             if (storedTabId) {
               if (storedTabId !== currentTabId) {
+                stopPlaying();
                 chrome.storage.local.set({ [utils.EXTERNAL_WIKI_VISIT]: true });
-                clearInterval(timerInterval);
               }
             }
           }
@@ -415,4 +388,31 @@ chrome.webNavigation.onCommitted.addListener((details) => {
 
 function stopPlaying() {
   clearInterval(timerInterval);
+  singleplayerGameInformation.status.playing = false; // do we need this?
+
+  const endGame = {
+    singleplayerGameProperties,
+    singleplayerGameInformation,
+    singleplayerCustomizations
+  }
+
+  chrome.storage.local.set({ [utils.END_GAME_INFO] : endGame})
+
+  chrome.storage.local.set({
+    [utils.SINGLEPLAYER_GAME_PROPERTIES] : utils.defaultGameProperties
+  });
+  chrome.storage.local.set({
+    [utils.SINGLEPLAYER_GAME_INFORMATION] : utils.defaultGameInformation
+  });
 }
+
+function clearEndFlags() {
+  chrome.storage.local.set({ [utils.END_GAME_INFO]: utils.defaultEndGameInfo})
+  chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_WIN] : false});
+  chrome.storage.local.set({ [utils.ELAPSED_TIME]: 0});
+  chrome.storage.local.set({ [utils.CLICK_COUNT] : 0});
+  chrome.storage.local.set({ [utils.TAB_ID]: null});
+  chrome.storage.local.set({ [utils.EXTERNAL_WIKI_VISIT]: false});
+  chrome.storage.local.set({ [utils.SINGLEPLAYER_TIME_FINISHED] : false})
+}
+

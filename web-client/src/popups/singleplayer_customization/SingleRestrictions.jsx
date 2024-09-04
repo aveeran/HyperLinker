@@ -6,9 +6,9 @@ const defaultRestrictions = [
   "no-opening-para",
   "no-find",
   "no-back",
-  "no-category",
   "no-dates",
-  "same-page-link"
+  "same-page-link",
+  "no-popups"
 ]
 
 function SingleRestrictions() {
