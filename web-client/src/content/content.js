@@ -11,17 +11,13 @@ let countSamePageLink = false;
 let useBack = true;
 let noDates = false;
 
-chrome.storage.local.onChanged.addListener((changes, areaName) => {
-  if(areaName === "local") {
-    const gameInformationChanges = changes["singleplayer-game-information"];
-    if(gameInformationChanges && gameInformationChanges.newValue != null) {
-      const newGameInformation = gameInformationChanges.newValue;
-      if(paused != newGameInformation.status.paused) {
-        paused = newGameInformation.status.paused;
-      }
-    }
-  }
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("Message received:", message);
+  // Handle the message here
 });
+
+
 
 chrome.storage.local.get(
   ["tab-id", "singleplayer-game-information", "singleplayer-customizations"],
@@ -131,7 +127,6 @@ document.addEventListener("click", (event) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {});
 
 function checkDate(url) {
   const datePatterns = [
