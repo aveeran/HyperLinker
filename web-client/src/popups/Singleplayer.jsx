@@ -77,7 +77,9 @@ function Singleplayer() {
 
   const handleQuit = () => {
     if(isChromeExtension) {
+      console.log('sending quit');
       chrome.runtime.sendMessage({ action: utils.QUIT_SINGLEPLAYER})
+      navigate('/singleplayer-end')
     }
   }
 
