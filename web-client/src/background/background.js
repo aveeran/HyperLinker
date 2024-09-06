@@ -36,22 +36,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
       singleplayerGameProperties = gamePropertyChanges.newValue;
     }
 
-    if (gameInformationChanges && gameInformationChanges.newValue != null) {
-      if(singleplayerGameInformation.status.paused != gameInformationChanges.newValue.status.paused) {
-        console.log("sending pause updated");
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-          if(tabs[0]) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              type: "pause_updated",
-              updatedPause: gameInformationChanges.newValue.status.paused
-            });
-          }
-        });
-     
-      }
-      singleplayerGameInformation = gameInformationChanges.newValue;
-
-      
+    if (gameInformationChanges && gameInformationChanges.newValue != null) {      
+      singleplayerGameInformation = gameInformationChanges.newValue; 
     }
 
     if (elapsedTimeChanges && elapsedTimeChanges.newValue != null) {
@@ -167,6 +153,15 @@ function pauseSingleplayer() {
       }
     }
   });
+
+  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    if(tabs[0]) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        type: "pause_updated",
+        updatedPause: true,
+      });
+    } 
+  });
 }
 
 function unpauseSingleplayer() {
@@ -200,6 +195,15 @@ function unpauseSingleplayer() {
       }
     }
   );
+
+  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    if(tabs[0]) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        type: "pause_updated",
+        updatedPause: false,
+      });
+    } 
+  });
 }
 
 function startSingleplayer() {

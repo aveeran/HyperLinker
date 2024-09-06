@@ -11,10 +11,12 @@ let countSamePageLink = false;
 let useBack = true;
 let noDates = false;
 
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Message received:", message);
-  // Handle the message here
+  console.log(message)
+  if(message.type === "pause_updated") {
+    paused = message.updatedPause;
+  }
+  return true;
 });
 
 
@@ -99,32 +101,38 @@ function noFind() {
 }
 
 document.addEventListener("click", (event) => {
-  alert(`${playing} ${paused}`);
-  if (playing && event.target.tagName === "A" && event.target.href.includes("wikipedia.org")) {
-    const targetPagePath = new URL(event.target.href).pathname;
-    const articlePage = targetPagePath.replace("/wiki/", "");
-    if (noDates && checkDate(articlePage)) {
+  if(playing && event.target.tagName === "A") {
+    if(paused) {
+      alert('Cannot visit pages while paused');
       event.preventDefault();
-      alert("Cannot visit pages related to dates");
       return;
+    } else {
+      if(!event.target.href.includes("wikipedia.org")) {
+        alert('Cannot visit non-wikipedia sites through links');
+        event.preventDefault();
+      } else {
+        const targetPagePath = new URL(event.target.href).pathname;
+        const articlePage = targetPagePath.replace("/wiki/", "");
+        if (noDates && checkDate(articlePage)) {
+          event.preventDefault();
+          alert("Cannot visit pages related to dates");
+          return;
+        }
+    
+        if (countSamePageLink || (!countSamePageLink && currentPagePath !== targetPagePath)) {
+          chrome.runtime.sendMessage({
+            action: "wikipedia_click",
+            page: event.target.href,
+          });
+        }
+        if (!useBack && currentPagePath !== targetPagePath) {
+          history.pushState(null, null, event.target.href);
+          history.back();
+          history.forward();
+        }
+      }
     }
-
-    if (countSamePageLink || (!countSamePageLink && currentPagePath !== targetPagePath)) {
-      chrome.runtime.sendMessage({
-        action: "wikipedia_click",
-        page: event.target.href,
-      });
-    }
-
-    if (!useBack && currentPagePath !== targetPagePath) {
-      history.pushState(null, null, event.target.href);
-      history.back();
-      history.forward();
-    }
-  } else if (playing && paused) {
-    alert('bruh');
-    event.preventDefault();
-  }
+  } 
 });
 
 
@@ -143,7 +151,7 @@ function checkDate(url) {
   return datePatterns.some((pattern) => pattern.test(url));
 }
 
-function noPopups() {
+function noPopups() { // TODO: do the same for no dates
   let links = document.querySelectorAll("a");
 
   links.forEach(function (link) {
