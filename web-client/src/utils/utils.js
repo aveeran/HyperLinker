@@ -78,6 +78,7 @@ export function getFormattedDate() {
   export const SINGLEPLAYER_GAME_INFORMATION = "singleplayer-game-information";
   export const SINGLEPLAYER_GAME_WIN = "singleplayer-game-win";
   export const SINGLEPLAYER_TIME_FINISHED = "singleplayer-time-finished";
+  export const SINGLEPLAYER_GAME_QUIT = "singleplayer-game-quit";
   export const ELAPSED_TIME = "elapsed-time";
   export const CLICK_COUNT = "click-count";
   export const TAB_ID = "tab-id";

@@ -12,14 +12,11 @@ let useBack = true;
 let noDates = false;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log(message)
   if(message.type === "pause_updated") {
     paused = message.updatedPause;
   }
   return true;
 });
-
-
 
 chrome.storage.local.get(
   ["tab-id", "singleplayer-game-information", "singleplayer-customizations"],
@@ -135,7 +132,6 @@ document.addEventListener("click", (event) => {
   } 
 });
 
-
 function checkDate(url) {
   const datePatterns = [
     /\d{4}-\d{2}-\d{2}/, // YYYY-MM-DD
@@ -151,7 +147,7 @@ function checkDate(url) {
   return datePatterns.some((pattern) => pattern.test(url));
 }
 
-function noPopups() { // TODO: do the same for no dates
+function noPopups() { 
   let links = document.querySelectorAll("a");
 
   links.forEach(function (link) {

@@ -98,6 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
       break;
 
     case utils.QUIT_SINGLEPLAYER:
+      chrome.storage.local.set({[utils.SINGLEPLAYER_GAME_QUIT] : true});
       stopPlaying();
       break;
 
@@ -431,6 +432,7 @@ function clearEndFlags() {
   chrome.storage.local.set({ [utils.CLICK_COUNT] : 0});
   chrome.storage.local.set({ [utils.TAB_ID]: null});
   chrome.storage.local.set({ [utils.EXTERNAL_WIKI_VISIT]: false});
-  chrome.storage.local.set({ [utils.SINGLEPLAYER_TIME_FINISHED] : false})
+  chrome.storage.local.set({ [utils.SINGLEPLAYER_TIME_FINISHED] : false});
+  chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_QUIT] : false});
 }
 

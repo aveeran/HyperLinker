@@ -79,15 +79,12 @@ function Singleplayer() {
     if(isChromeExtension) {
       chrome.runtime.sendMessage({ action: utils.QUIT_SINGLEPLAYER})
     }
-    navigate(-1);
   }
 
   const handleTogglePause = () => {
     if(paused) {
-      console.log("sending unpaused");
       chrome.runtime.sendMessage({ action : utils.UNPAUSE_SINGLEPLAYER});
     } else {
-      console.log("sending paused");
       chrome.runtime.sendMessage({ action: utils.PAUSE_SINGLEPLAYER});
     }
     setPaused(!paused);
