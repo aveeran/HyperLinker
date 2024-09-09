@@ -98,7 +98,6 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
       break;
 
     case utils.QUIT_SINGLEPLAYER:
-      console.log('bruh');
       chrome.storage.local.set({[utils.SINGLEPLAYER_GAME_QUIT] : true});
       stopPlaying();
       break;
@@ -411,6 +410,7 @@ function stopPlaying() {
   singleplayerGameInformation.status.playing = false; // do we need this?
 
   const endGame = {
+    ended: true,
     singleplayerGameProperties,
     singleplayerGameInformation,
     singleplayerCustomizations

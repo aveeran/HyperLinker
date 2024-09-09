@@ -26,19 +26,22 @@ function PathProgress() {
           utils.SINGLEPLAYER_GAME_INFORMATION,
           utils.SINGLEPLAYER_GAME_PROPERTIES,
           utils.SINGLEPLAYER_CUSTOMIZATIONS,
+          utils.END_GAME_INFO
         ],
         (result) => {
-          const storedGameInformation =
-            result[utils.SINGLEPLAYER_GAME_INFORMATION] ||
-            utils.defaultGameInformation;
-          const storedGameProperties =
-            result[utils.SINGLEPLAYER_GAME_PROPERTIES] ||
-            utils.defaultGameProperties;
-          const storedCustomizations =
-            result[utils.SINGLEPLAYER_CUSTOMIZATIONS] ||
-            utils.defaultSingleplayerCustomizations;
+          // the problem here is that we need an indicator that the game is done...?
+          const storedEndGameInfo = result[utils.END_GAME_INFO] || utils.defaultEndGameInfo;
+          const ended = storedEndGameInfo.ended || false; // TODO: rework the data structure
 
+          const storedGameInformation = ended ? storedEndGameInfo.singleplayerGameInformation : 
+          result[utils.SINGLEPLAYER_GAME_INFORMATION] || utils.defaultGameInformation;
 
+          const storedGameProperties = ended ? storedEndGameInfo.singleplayerGameProperties :
+          result[utils.SIGNLEPLAYER_GAME_PROPERTIES] || utils.defaultGameProperties;
+
+          const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS] || utils.defaultSingleplayerCustomizations;
+
+        
           setPath(storedGameProperties.path);
           setIsPath(storedCustomizations.mode.type === "path");
 
@@ -73,7 +76,7 @@ function PathProgress() {
         chrome.storage.onChanged.removeListener(handleTimeChanges);
       };
     }
-  });
+  }, [isChromeExtension]);
 
   const handleMouseEnterNode = (index) => {
     setHoveredNode(index);
@@ -260,5 +263,3 @@ function PathProgress() {
 }
 
 export default PathProgress;
-
-//TODO: fix path, fix unpause

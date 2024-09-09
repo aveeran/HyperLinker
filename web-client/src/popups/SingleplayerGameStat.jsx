@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from "react-router-dom"
 import * as utils from "@utils/utils"
+import PathProgress from '../components/PathProgress.jsx';
 
 function SingleplayerGameStat() {
   const [externalWikiVisit, setExternalWikiVisit] = useState(false);
@@ -83,6 +84,7 @@ function SingleplayerGameStat() {
           <p className="mb-3"><b>Tracking</b>: {endInfo.singleplayerCustomizations.track}</p>
         </div>
         <div>
+          <PathProgress/>
 
         </div>
       </div>

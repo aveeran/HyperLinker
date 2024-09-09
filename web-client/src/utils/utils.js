@@ -58,6 +58,7 @@ export function getFormattedDate() {
   }
 
   export const defaultEndGameInfo = {
+    ended : false,
     singleplayerGameInformation: defaultGameInformation,
     singleplayerGameProperties: defaultGameProperties,
     singleplayerCustomizations: defaultSingleplayerCustomizations
