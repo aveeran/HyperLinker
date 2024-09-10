@@ -1,11 +1,9 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { CLICK_COUNT, ELAPSED_TIME } from "@utils/utils";
 
 function GameTracker({ track="clicks", countDown=-1 }) {
   const [clickCount, setClickCount] = useState(0);
   const [time, setTime] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
-  let timerInterval = useRef(null);
 
   const isChromeExtension = useMemo(
     () =>
@@ -33,9 +31,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
         chrome.storage.onChanged.removeListener(handleClickChange);
       }
     }
-
-
-  }, [isChromeExtension, track])
+  }, [isChromeExtension, track]);
 
   useEffect(() => {
     if (isChromeExtension && (track === "time" || countDown !== -1)) {
@@ -55,60 +51,58 @@ function GameTracker({ track="clicks", countDown=-1 }) {
         chrome.storage.onChanged.removeListener(handleTimeChange);
       }
     }
-  }, [isChromeExtension, countDown, track])
+  }, [isChromeExtension, countDown, track]);
 
-  const startTimer = () => {
-    setTimerRunning(true);
-  };
 
-  const stopTimer = () => {
-    setTimerRunning(false);
-    clearInterval(timerInterval.current);
-  };
-
-  function parseTime(seconds) {
+  const parseTime = useCallback((seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
 
-    const formattedHours =
-      hours > 0 ? `${String(hours).padStart(2, "0")}:` : "";
+    const formattedHours = hours > 0 ? `${String(hours).padStart(2, "0")}:` : "";
     const formattedMinutes = `${String(minutes).padStart(2, "0")}:`;
     const formattedSeconds = String(remainingSeconds).padStart(2, "0");
 
     return `${formattedHours}${formattedMinutes}${formattedSeconds}`;
-  }
+  }, []);
 
-  return (
-    <div>
-      {track === "clicks" ? (
-        <div className="items-center border-black border-2 border-solid p-2 m-2">
-          <p>
-            <span className="m-2">{track}:</span> {clickCount}
-          </p>
-        </div>
-      ) : null}
+  const renderContent = () => {
+    switch (true) {
+      case track === "clicks":
+        return (
+          <div className="items-center border-black border-2 border-solid p-2 m-2">
+            <p>
+              <span className="m-2">{track}:</span> {clickCount}
+            </p>
+          </div>
+        );
 
-      {track === "time" ? (
-        <div>
-          <p>
-            <span className="m-2">{track}:</span>
-            {parseTime(time)}
-          </p>
-        </div>
-      ) : null}
+      case track === "time":
+        return (
+          <div>
+            <p>
+              <span className="m-2">{track}:</span>
+              {parseTime(time)}
+            </p>
+          </div>
+        );
 
-      {countDown !== -1 ? (
-        <div>
-          <p>
-            <span>Count down: </span>
-            {parseTime(countDown - time)}
+      case countDown !== -1:
+        return (
+          <div>
+            <p>
+              <span>Count down: </span>
+              {parseTime(countDown - time)}
+            </p>
+          </div>
+        );
 
-          </p>
-        </div>
-      ) : null}
-    </div>
-  );
+      default:
+        return null;
+    }
+  };
+
+  return <div>{renderContent()}</div>;
 }
 
 export default GameTracker;

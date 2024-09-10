@@ -16,8 +16,11 @@ function PathProgress() {
   const [path, setPath] = useState([]);
   const [freePath, setFreePath] = useState([]);
 
-  const isChromeExtension =
-    typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
 
   useEffect(() => {
     if (isChromeExtension) {
@@ -37,22 +40,22 @@ function PathProgress() {
           result[utils.SINGLEPLAYER_GAME_INFORMATION] || utils.defaultGameInformation;
 
           const storedGameProperties = ended ? storedEndGameInfo.singleplayerGameProperties :
-          result[utils.SIGNLEPLAYER_GAME_PROPERTIES] || utils.defaultGameProperties;
+          result[utils.SINGLEPLAYER_GAME_PROPERTIES] || utils.defaultGameProperties;
 
           const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS] || utils.defaultSingleplayerCustomizations;
 
         
           setPath(storedGameProperties.path);
+          setIsDirected(storedCustomizations.mode.path.directed);
           setIsPath(storedCustomizations.mode.type === "path");
+          // console.log(isPath, isDirected);
 
           setEdgeHistory(storedGameInformation.edgeHistory);
           setNodeHistory(storedGameInformation.nodeHistory);
           setCurrentNode(storedGameInformation.currentNode);
           setFreePath(storedGameInformation.freePath);
           setVisited(storedGameInformation.visitedPath);
-
           setEndArticle(storedCustomizations.end);
-          setIsDirected(storedCustomizations.mode.path.directed);
         }
       );
 
@@ -111,15 +114,15 @@ function PathProgress() {
     );
     setActiveNode(null);
   };
-
+  
   return (
     <div className="flex flex-col items-center">
-      <div className="flex items-center w-full p-2">
+      <div className="flex flex-wrap items-center gap-4 p-2">
         {isDirected || !isPath
           ? path.map((step, index) => (
               <React.Fragment key={index}>
                 <div
-                  className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
+                  className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer p-2 ${
                     visited.includes(step.link)
                       ? "bg-blue-500 text-white border-green-400"
                       : "bg-white border-gray-300"
@@ -135,7 +138,7 @@ function PathProgress() {
                 </div>
                 {index < path.length - 1 && (
                   <div
-                    className={`h-2 flex-1 ${
+                    className={`h-2 ${
                       visited.includes(path[index].link) &&
                       visited.includes(path[index + 1].link)
                         ? "bg-green-500"
@@ -143,7 +146,7 @@ function PathProgress() {
                     } ${
                       activeLink === index ? "border-2 border-green-400" : ""
                     }`}
-                    style={{ margin: "0 0.5rem" }}
+                    style={{ width: "2rem" }} // Adjust width as needed
                     onMouseEnter={() => handleMouseEnterLink(index)}
                     onMouseLeave={handleMouseLeaveLink}
                     onClick={() => handleClickLink(index)}
@@ -156,7 +159,7 @@ function PathProgress() {
           ? freePath.map((step, index) => (
               <React.Fragment key={index}>
                 <div
-                  className={`flex items-center justify-center w-12 h-12 border-2 rounded-full relative z-10 cursor-pointer p-2 ${
+                  className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer p-2 ${
                     visited.includes(step.link)
                       ? "bg-blue-500 text-white"
                       : "bg-white border-gray-300"
@@ -170,9 +173,9 @@ function PathProgress() {
                     {step.title}
                   </p>
                 </div>
-                {index < path.length - 1 && (
+                {index < freePath.length - 1 && (
                   <div
-                    className={`h-2 flex-1 ${
+                    className={`h-2 ${
                       visited.includes(freePath[index].link) &&
                       visited.includes(freePath[index + 1].link)
                         ? "bg-green-500"
@@ -180,7 +183,7 @@ function PathProgress() {
                     } ${
                       activeLink === index ? "border-2 border-green-400" : ""
                     }`}
-                    style={{ margin: "0 0.5rem" }}
+                    style={{ width: "2rem" }} // Adjust width as needed
                     onMouseEnter={() => handleMouseEnterLink(index)}
                     onMouseLeave={handleMouseLeaveLink}
                     onClick={() => handleClickLink(index)}
@@ -189,9 +192,8 @@ function PathProgress() {
               </React.Fragment>
             ))
           : null}
-
       </div>
-
+  
       {(hoveredNode !== null ||
         activeNode !== null ||
         hoveredLink !== null ||
@@ -203,7 +205,6 @@ function PathProgress() {
                 activeNode !== null ? "border-yellow-400" : "border-red-400"
               }`}
             >
-
               <h3 className="font-bold">
                 Node History for{" "}
                 {!isDirected && isPath
@@ -228,7 +229,7 @@ function PathProgress() {
               </ul>
             </div>
           )}
-
+  
           {(activeLink !== null || hoveredLink !== null) && (
             <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-lg m-2">
               <h3 className="font-bold">
@@ -260,6 +261,8 @@ function PathProgress() {
       )}
     </div>
   );
+  
+  
 }
 
 export default PathProgress;
