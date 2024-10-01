@@ -98,8 +98,8 @@ chrome.runtime.onMessage.addListener((message, sender, response) => {
       break;
 
     case utils.QUIT_SINGLEPLAYER:
-      chrome.storage.local.set({[utils.SINGLEPLAYER_GAME_QUIT] : true});
       stopPlaying();
+      chrome.storage.local.set({[utils.SINGLEPLAYER_GAME_QUIT] : true});
       break;
 
     case utils.WIKIPEDIA_CLICK:

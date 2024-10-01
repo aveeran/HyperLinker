@@ -4,7 +4,6 @@ import * as utils from "@utils/utils";
 function PathProgress() {
   const [isPath, setIsPath] = useState(false);
   const [isDirected, setIsDirected] = useState(false);
-  const [endArticle, setEndArticle] = useState({});
   const [hoveredNode, setHoveredNode] = useState(null);
   const [hoveredLink, setHoveredLink] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
@@ -15,6 +14,7 @@ function PathProgress() {
   const [currentNode, setCurrentNode] = useState(0);
   const [path, setPath] = useState([]);
   const [freePath, setFreePath] = useState([]);
+  const [endIndex, setEndIndex] = useState(0);
 
   const isChromeExtension = useMemo(
     () =>
@@ -35,6 +35,7 @@ function PathProgress() {
           // the problem here is that we need an indicator that the game is done...?
           const storedEndGameInfo = result[utils.END_GAME_INFO] || utils.defaultEndGameInfo;
           const ended = storedEndGameInfo.ended || false; // TODO: rework the data structure
+          console.log('ended: ', ended);
 
           const storedGameInformation = ended ? storedEndGameInfo.singleplayerGameInformation : 
           result[utils.SINGLEPLAYER_GAME_INFORMATION] || utils.defaultGameInformation;
@@ -48,17 +49,24 @@ function PathProgress() {
           setPath(storedGameProperties.path);
           setIsDirected(storedCustomizations.mode.path.directed);
           setIsPath(storedCustomizations.mode.type === "path");
-          // console.log(isPath, isDirected);
 
           setEdgeHistory(storedGameInformation.edgeHistory);
           setNodeHistory(storedGameInformation.nodeHistory);
           setCurrentNode(storedGameInformation.currentNode);
           setFreePath(storedGameInformation.freePath);
           setVisited(storedGameInformation.visitedPath);
-          setEndArticle(storedCustomizations.end);
+          
+          console.log(storedGameProperties.path, storedGameInformation.freePath);
+          let endIndex = storedGameProperties.path?.length || storedGameInformation.freePath?.length;
+          endIndex--;
+          setEndIndex(endIndex);
         }
       );
+    }
+  }, [isChromeExtension]);
 
+  useEffect(() => {
+    if(isChromeExtension) {
       function handleTimeChanges(changes, areaName) {
         if (areaName === "local") {
           if (
@@ -71,6 +79,31 @@ function PathProgress() {
             setNodeHistory(storedGameInformation.nodeHistory);
             setCurrentNode(storedGameInformation.currentNode);
           }
+
+          if(
+            changes[utils.END_GAME_INFO] && 
+            changes[utils.END_GAME_INFO].newValue
+          ) {
+            const storedEndGameInfo = changes[utils.END_GAME_INFO].newValue;
+            const storedGameInformation = storedEndGameInfo.singleplayerGameInformation;
+            const storedGameProperties = storedEndGameInfo.singleplayerGameProperties;
+            const storedCustomizations = storedEndGameInfo.singleplayerCustomizations;
+            console.log('acc updating', storedEndGameInfo, storedGameInformation, storedGameProperties, storedCustomizations);
+
+
+            setPath(storedGameProperties.path);
+            setIsDirected(storedCustomizations.mode.path.directed);
+            setIsPath(storedCustomizations.mode.type === "path");
+
+            setEdgeHistory(storedGameInformation.edgeHistory);
+            setNodeHistory(storedGameInformation.nodeHistory);
+            setCurrentNode(storedGameInformation.currentNode);
+            setFreePath(storedGameInformation.freePath);
+            setVisited(storedGameInformation.visitedPath);
+            let endIndex = storedGameProperties.path?.length || storedGameInformation.freePath?.length;
+            endIndex--;
+            setEndIndex(endIndex);
+          }
         }
       }
 
@@ -79,7 +112,7 @@ function PathProgress() {
         chrome.storage.onChanged.removeListener(handleTimeChanges);
       };
     }
-  }, [isChromeExtension]);
+  }, [isChromeExtension])
 
   const handleMouseEnterNode = (index) => {
     setHoveredNode(index);
@@ -194,10 +227,10 @@ function PathProgress() {
           : null}
       </div>
   
-      {(hoveredNode !== null ||
+      {((hoveredNode !== null ||
         activeNode !== null ||
         hoveredLink !== null ||
-        activeLink !== null) && (
+        activeLink !== null) && (hoveredNode !== endIndex && activeNode !== endIndex)) && (
         <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
           {(activeNode !== null || hoveredNode !== null) && (
             <div
@@ -259,6 +292,23 @@ function PathProgress() {
           )}
         </div>
       )}
+
+
+      {
+        (activeNode === endIndex || hoveredNode === endIndex) && (
+          <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
+            <div
+              className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
+                activeNode !== null ? "border-yellow-400" : "border-red-400"
+              }`}>
+                <h3 className="font-bold">
+                  Target Node: {!isDirected && isPath ? freePath[activeNode ?? hoveredNode]?.title 
+                  : path[activeNode ?? hoveredNode]?.title}
+                </h3>
+            </div>
+          </div>
+          )
+      }
     </div>
   );
   

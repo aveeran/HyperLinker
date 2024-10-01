@@ -24,12 +24,16 @@ function SingleplayerGameStat() {
       chrome.storage.local.get([utils.EXTERNAL_WIKI_VISIT, utils.SINGLEPLAYER_TIME_FINISHED,
         utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_QUIT, utils.END_GAME_INFO
       ], (result) => {
+
+        //TODO: problem (not here, since we get end game info); but problem with receiving status coded
         const storedExternalWikiVisit = result[utils.EXTERNAL_WIKI_VISIT];
         const storedGameWin = result[utils.SINGLEPLAYER_GAME_WIN];
         const storedTimeFinished = result[utils.SINGLEPLAYER_TIME_FINISHED];
         const storedGameQuit = result[utils.SINGLEPLAYER_GAME_QUIT];
         const storedEndGameInfo = result[utils.END_GAME_INFO];
-  
+
+        console.log(storedExternalWikiVisit, storedGameWin, storedTimeFinished, storedGameQuit, storedEndGameInfo);  
+
         if(storedExternalWikiVisit !== null && storedExternalWikiVisit !== undefined) {
           setExternalWikiVisit(storedExternalWikiVisit);
         }
@@ -50,6 +54,38 @@ function SingleplayerGameStat() {
           setEndInfo(storedEndGameInfo);
         }
       });
+    }
+  }, [isChromeExtension])
+
+  useEffect(() => {
+    if(isChromeExtension) {
+      const handleEndGameChanges = (changes, areaName) => {
+        if(areaName === "local") {
+          const storedExternalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || undefined;
+          const storedGameWin = changes[utils.SINGLEPLAYER_GAME_WIN]?.newValue || undefined;
+          const storedTimeFinished = changes[utils.SINGLEPLAYER_TIME_FINISHED]?.newValue || undefined;
+          const storedGameQuit = changes[utils.SINGLEPLAYER_GAME_QUIT]?.newValue || undefined;
+          const storedEndGameInfo = changes[utils.END_GAME_INFO]?.newValue || undefined;
+
+          console.log(storedExternalWikiVisit, storedGameWin, storedTimeFinished, storedGameQuit);
+          console.log(storedEndGameInfo);
+
+          if(storedExternalWikiVisit !== undefined) setExternalWikiVisit(storedExternalWikiVisit);
+          if(storedGameWin !== undefined) setGameWin(storedGameWin);
+          if(storedTimeFinished !== undefined) setTimeFinished(storedTimeFinished);
+          if(storedGameQuit !== undefined) setGameQuit(storedGameQuit);
+          if(storedEndGameInfo !== undefined) {
+            setEndInfo(storedEndGameInfo);
+            console.log('setting!: ', storedEndGameInfo);
+          }
+        }
+      }
+
+      chrome.storage.onChanged.addListener(handleEndGameChanges);
+      
+      return () => {
+        chrome.storage.onChanged.removeListener(handleEndGameChanges);
+      }
     }
   }, [isChromeExtension])
 
