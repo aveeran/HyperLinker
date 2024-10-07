@@ -25,7 +25,6 @@ function SingleplayerGameStat() {
         utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_QUIT, utils.END_GAME_INFO
       ], (result) => {
 
-        //TODO: problem (not here, since we get end game info); but problem with receiving status coded
         const storedExternalWikiVisit = result[utils.EXTERNAL_WIKI_VISIT];
         const storedGameWin = result[utils.SINGLEPLAYER_GAME_WIN];
         const storedTimeFinished = result[utils.SINGLEPLAYER_TIME_FINISHED];
@@ -90,7 +89,7 @@ function SingleplayerGameStat() {
   }, [isChromeExtension])
 
   const reset = () => {
-    chrome.runtime.sendMessage({action: utils.QUIT_SINGLEPLAYER})
+    chrome.runtime.sendMessage({action: utils.SINGLEPLAYER_CLEAR_END})
     navigate('/')
   }
 

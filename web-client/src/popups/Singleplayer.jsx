@@ -22,20 +22,23 @@ function Singleplayer() {
   useEffect(() => {
     if(isChromeExtension) {
       chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS, 
-        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION, utils.EXTERNAL_WIKI_VISIT, utils.END_GAME_INFO], (results) => {
+        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION, utils.EXTERNAL_WIKI_VISIT, utils.END_GAME_INFO,
+      utils.SINGLEPLAYER_TIME_FINISHED], (results) => {
         const storedCustomizations = results[utils.SINGLEPLAYER_CUSTOMIZATIONS];
         const storedWin = results[utils.SINGLEPLAYER_GAME_WIN] || false;
         const storedGameInformation = results[utils.SINGLEPLAYER_GAME_INFORMATION];
         const storedExternalWikiVisit = results[utils.EXTERNAL_WIKI_VISIT] || false;
         const storedSingleplayerGameQuit = results[utils.SINGLEPLAYER_GAME_QUIT] || false;
+        const storedSingleplayerTimeFinished = results[utils.SINGLEPLAYER_TIME_FINISHED] || false;
         const endGameInfo = results[utils.END_GAME_INFO]?.ended || false;
 
         if(endGameInfo) {
           setGameEnded(true);
         }
 
+        console.log(`${gameEnded || endGameInfo} ${storedExternalWikiVisit} ${storedWin} ${storedSingleplayerGameQuit} ${storedSingleplayerTimeFinished}`)
         if((endGameInfo.ended || gameEnded)) {
-          if(storedExternalWikiVisit || storedWin || storedSingleplayerGameQuit) {
+          if(storedExternalWikiVisit || storedWin || storedSingleplayerGameQuit || storedSingleplayerTimeFinished) {
             navigate('/singleplayer-end');
           }
         }
@@ -65,9 +68,10 @@ function Singleplayer() {
           const singleplayerQuit = changes[utils.SINGLEPLAYER_GAME_QUIT]?.newValue || false;
 
           if(endGameInfo) {
-            setGameEnded(endGameInfo);
+            setGameEnded(true);
           }
 
+          console.log(`${gameEnded || endGameInfo} ${externalWikiVisit} ${singleplayerTimeFinished} ${singleplayerGameWin} ${singleplayerQuit}`)
           if((gameEnded || endGameInfo) && (externalWikiVisit || singleplayerTimeFinished || singleplayerGameWin || singleplayerQuit)) {
             navigate('/singleplayer-end');
           }
@@ -100,10 +104,10 @@ function Singleplayer() {
   const kill = () => {
     navigate('/singleplayer-end')
   }
-  
+  //TODO: LMFAOO MAJOR BUG: COUNTDOWN
   return (
     <div className="p-2">
-      <GameTracker track={track} countDown={countDown} />
+      <GameTracker track={track} countDown={countDown} /> 
       <PathProgress />
       <div className="flex items-center justify-center border-2 rounded-md p-2">
         <button
