@@ -10,6 +10,7 @@ function Singleplayer() {
   const [countDown, setCountDown] = useState(-1);
   const [paused, setPaused] = useState(false);
   const [pause, setPause] = useState(true);
+  const [gameEnded, setGameEnded] = useState(false);
   const navigate = useNavigate();
 
   const isChromeExtension = useMemo(
@@ -21,14 +22,20 @@ function Singleplayer() {
   useEffect(() => {
     if(isChromeExtension) {
       chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS, 
-        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION, utils.EXTERNAL_WIKI_VISIT], (results) => {
+        utils.SINGLEPLAYER_GAME_WIN, utils.SINGLEPLAYER_GAME_INFORMATION, utils.EXTERNAL_WIKI_VISIT, utils.END_GAME_INFO], (results) => {
         const storedCustomizations = results[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-        const storedWin = results[utils.SINGLEPLAYER_GAME_WIN];
+        const storedWin = results[utils.SINGLEPLAYER_GAME_WIN] || false;
         const storedGameInformation = results[utils.SINGLEPLAYER_GAME_INFORMATION];
-        const storedExternalWikiVisit = results[utils.EXTERNAL_WIKI_VISIT];
+        const storedExternalWikiVisit = results[utils.EXTERNAL_WIKI_VISIT] || false;
+        const storedSingleplayerGameQuit = results[utils.SINGLEPLAYER_GAME_QUIT] || false;
+        const endGameInfo = results[utils.END_GAME_INFO]?.ended || false;
 
-        if(storedExternalWikiVisit !== null && storedExternalWikiVisit !== undefined) {
-          if(storedExternalWikiVisit === true) {
+        if(endGameInfo) {
+          setGameEnded(true);
+        }
+
+        if((endGameInfo.ended || gameEnded)) {
+          if(storedExternalWikiVisit || storedWin || storedSingleplayerGameQuit) {
             navigate('/singleplayer-end');
           }
         }
@@ -43,14 +50,9 @@ function Singleplayer() {
         if(storedGameInformation) {
           setPaused(storedGameInformation.status.paused);
         }
-
-        if(storedWin) {
-          navigate('/singleplayer-end')
-        }
-
       });
     }
-  }, [isChromeExtension, navigate]);
+  }, [isChromeExtension, navigate, gameEnded]);
 
   useEffect(() => {
     if(isChromeExtension) {
@@ -59,9 +61,14 @@ function Singleplayer() {
           const externalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || false;
           const singleplayerTimeFinished = changes[utils.SINGLEPLAYER_TIME_FINISHED]?.newValue || false;
           const singleplayerGameWin = changes[utils.SINGLEPLAYER_GAME_WIN]?.newValue || false;
+          const endGameInfo = changes[utils.END_GAME_INFO]?.newValue?.ended || false;
+          const singleplayerQuit = changes[utils.SINGLEPLAYER_GAME_QUIT]?.newValue || false;
 
-          if(externalWikiVisit || singleplayerTimeFinished || singleplayerGameWin) {
-            console.log(`${externalWikiVisit} ${singleplayerTimeFinished} ${singleplayerGameWin}`)
+          if(endGameInfo) {
+            setGameEnded(endGameInfo);
+          }
+
+          if((gameEnded || endGameInfo) && (externalWikiVisit || singleplayerTimeFinished || singleplayerGameWin || singleplayerQuit)) {
             navigate('/singleplayer-end');
           }
         }
@@ -73,13 +80,11 @@ function Singleplayer() {
         chrome.storage.onChanged.removeListener(handleGameEndFlagChanges);
       }
     }
-  }, [isChromeExtension, navigate])
+  }, [isChromeExtension, navigate, gameEnded])
 
   const handleQuit = () => {
     if(isChromeExtension) {
-      console.log('sending quit');
-      chrome.runtime.sendMessage({ action: utils.QUIT_SINGLEPLAYER})
-      navigate('/singleplayer-end')
+      chrome.runtime.sendMessage({ action: utils.QUIT_SINGLEPLAYER});
     }
   }
 
@@ -90,6 +95,10 @@ function Singleplayer() {
       chrome.runtime.sendMessage({ action: utils.PAUSE_SINGLEPLAYER});
     }
     setPaused(!paused);
+  }
+
+  const kill = () => {
+    navigate('/singleplayer-end')
   }
   
   return (
@@ -115,6 +124,10 @@ function Singleplayer() {
             {paused ? "Unpause" : "Pause"}
           </button>
         ) : null}
+
+        <button onClick={kill}>
+          kill
+        </button>
       </div>
     </div>
   );

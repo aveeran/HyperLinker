@@ -408,22 +408,25 @@ chrome.webNavigation.onCommitted.addListener((details) => {
 function stopPlaying() {
   clearInterval(timerInterval);
   singleplayerGameInformation.status.playing = false; // do we need this?
-
+  
   const endGame = {
-    ended: true,
+    ended: true, 
     singleplayerGameProperties,
     singleplayerGameInformation,
     singleplayerCustomizations
   }
 
-  chrome.storage.local.set({ [utils.END_GAME_INFO] : endGame})
-
+  chrome.storage.local.set({
+    [utils.END_GAME_INFO] : endGame
+  }, () => {console.log('set end game info!!')});
+  
   chrome.storage.local.set({
     [utils.SINGLEPLAYER_GAME_PROPERTIES] : utils.defaultGameProperties
   });
   chrome.storage.local.set({
     [utils.SINGLEPLAYER_GAME_INFORMATION] : utils.defaultGameInformation
   });
+
 }
 
 function clearEndFlags() {
