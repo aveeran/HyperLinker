@@ -29,21 +29,43 @@ function SingleMode() {
 
   useEffect(() => {
     if (isChromeExtension) {
-      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
-        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS] || utils.defaultSingleplayerCustomizations;
-        if(storedCustomizations) {
-          setCustomizations(storedCustomizations);
-          setMode(storedCustomizations.mode.type);
-          setStartArticle(storedCustomizations.start);
-          setEndArticle(storedCustomizations.end);
-          setPathLength(storedCustomizations.mode.path.pathLength);
-          setIsPathDirected(storedCustomizations.mode.path.directed);
-          setPathArticles(storedCustomizations.mode.path.intermediate_links);
-          setTimer(storedCustomizations.mode["count-down"].timer);
+      chrome.storage.local.get(
+        [utils.SINGLEPLAYER_CUSTOMIZATIONS],
+        (result) => {
+          const storedCustomizations =
+            result[utils.SINGLEPLAYER_CUSTOMIZATIONS] ||
+            utils.defaultSingleplayerCustomizations;
+          // if(storedCustomizations) {
+          //   setCustomizations(storedCustomizations);
+          //   setMode(storedCustomizations.mode.type);
+          //   setStartArticle(storedCustomizations.start);
+          //   setEndArticle(storedCustomizations.end);
+          //   setPathLength(storedCustomizations.mode.path.pathLength);
+          //   setIsPathDirected(storedCustomizations.mode.path.directed);
+          //   setPathArticles(storedCustomizations.mode.path.intermediate_links);
+          //   setTimer(storedCustomizations.mode["count-down"].timer);
+          // }
+          setStates(storedCustomizations);
         }
-      });
+      );
+    } else {
+      const storedCustomizations = utils.defaultSingleplayerCustomizations;
+      setStates(storedCustomizations);
     }
   }, [isChromeExtension]);
+
+  const setStates = (storedCustomizations) => {
+    if (storedCustomizations) {
+      setCustomizations(storedCustomizations);
+      setMode(storedCustomizations.mode.type);
+      setStartArticle(storedCustomizations.start);
+      setEndArticle(storedCustomizations.end);
+      setPathLength(storedCustomizations.mode.path.pathLength);
+      setIsPathDirected(storedCustomizations.mode.path.directed);
+      setPathArticles(storedCustomizations.mode.path.intermediate_links);
+      setTimer(storedCustomizations.mode["count-down"].timer);
+    }
+  };
 
   const updatePathArticles = (value) => {
     if (value) {
@@ -107,9 +129,11 @@ function SingleMode() {
           : endArticle,
     };
 
-    chrome.storage.local.set({
-      [utils.SINGLEPLAYER_CUSTOMIZATIONS]: updatedCustomizations,
-    });
+    if (isChromeExtension) {
+      chrome.storage.local.set({
+        [utils.SINGLEPLAYER_CUSTOMIZATIONS]: updatedCustomizations,
+      });
+    }
 
     handleBack();
   };

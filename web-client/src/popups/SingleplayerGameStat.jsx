@@ -89,7 +89,9 @@ function SingleplayerGameStat() {
   }, [isChromeExtension])
 
   const reset = () => {
-    chrome.runtime.sendMessage({action: utils.SINGLEPLAYER_CLEAR_END})
+    if(isChromeExtension) {
+      chrome.runtime.sendMessage({action: utils.SINGLEPLAYER_CLEAR_END})
+    }
     navigate('/')
   }
 

@@ -42,7 +42,8 @@ function Singleplayer() {
             navigate('/singleplayer-end');
           }
         }
-
+        console.log('stuff about customizations');
+        console.log(storedCustomizations, storedCustomizations.track[0], storedCustomizations.mode.type, storedCustomizations.mode["count-down"].timer);
         if(storedCustomizations) {
           setTrack(storedCustomizations.track[0])
           if(storedCustomizations.mode.type === "count-down") {
@@ -104,7 +105,7 @@ function Singleplayer() {
   const kill = () => {
     navigate('/singleplayer-end')
   }
-  //TODO: LMFAOO MAJOR BUG: COUNTDOWN
+
   return (
     <div className="p-2">
       <GameTracker track={track} countDown={countDown} /> 

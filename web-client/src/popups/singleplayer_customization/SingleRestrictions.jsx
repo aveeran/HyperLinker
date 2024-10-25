@@ -30,18 +30,36 @@ function SingleRestrictions() {
     if (isChromeExtension) {
       chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
         const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-        if (storedCustomizations) {
-          setCustomizations(storedCustomizations);
-          setAvailableRestrictions(
-            defaultRestrictions.filter(
-              (element) => !storedCustomizations.restrictions.includes(element)
-            )
-          );
-          setChosenRestrictions(storedCustomizations.restrictions);
-        }
+        // if (storedCustomizations) {
+        //   setCustomizations(storedCustomizations);
+        //   setAvailableRestrictions(
+        //     defaultRestrictions.filter(
+        //       (element) => !storedCustomizations.restrictions.includes(element)
+        //     )
+        //   );
+        //   setChosenRestrictions(storedCustomizations.restrictions);
+        // }
+        setStates(storedCustomizations);
       });
+    } else {
+      const storedCustomizations = utils.defaultSingleplayerCustomizations;
+      setStates(storedCustomizations);
     }
   }, [isChromeExtension]);
+
+  const setStates = (storedCustomizations) => {
+    if (storedCustomizations) {
+      setCustomizations(storedCustomizations);
+      setAvailableRestrictions(
+        defaultRestrictions.filter(
+          (element) => !storedCustomizations.restrictions.includes(element)
+        )
+      );
+      setChosenRestrictions(storedCustomizations.restrictions);
+    }
+  }
+
+
 
   const handleDragStart = (e, restriction, sourceWidget) => {
     e.dataTransfer.setData("tile", restriction);

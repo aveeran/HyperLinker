@@ -22,7 +22,7 @@ const getCategory = (value) => {
       return key;
     }
   }
-  return null; 
+  return null;
 };
 
 function SingleplayerDashboard() {
@@ -38,17 +38,25 @@ function SingleplayerDashboard() {
   );
 
   useEffect(() => {
-    chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
-      const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-      if (storedCustomizations) {
-        setCustomizations(storedCustomizations);
-      }
-    });
-  });
+    if(isChromeExtension) {
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+        if (storedCustomizations) {
+          setCustomizations(storedCustomizations);
+        }
+      });
+    } else {
+      setCustomizations(utils.defaultSingleplayerCustomizations);
+    }
+  }, [isChromeExtension]);
 
   const reset = () => {
     setCustomizations(utils.defaultSingleplayerCustomizations);
-    chrome.storage.local.set({ [utils.SINGLEPLAYER_CUSTOMIZATIONS ]: customizations });
+    if(isChromeExtension) {
+      chrome.storage.local.set({
+        [utils.SINGLEPLAYER_CUSTOMIZATIONS]: customizations,
+      });
+    }
   };
 
   const sortedEntries = Object.entries(customizations).sort(
@@ -76,7 +84,9 @@ function SingleplayerDashboard() {
   };
 
   const handleSubmit = () => {
-    chrome.runtime.sendMessage({action: utils.START_SINGLEPLAYER})
+    if(isChromeExtension) {
+      chrome.runtime.sendMessage({ action: utils.START_SINGLEPLAYER });
+    }
     navigate("/singleplayer");
   };
 
@@ -88,7 +98,10 @@ function SingleplayerDashboard() {
         <p className="text-center">Customizations</p>
         <hr className="m-5" />
         {sortedEntries.map(([key, value]) => (
-          <div key={key} className="relative group flex mb-2">
+          <div
+            key={key}
+            className="relative group flex mb-2 p-2"
+          >
             <strong className="mr-2">{key}</strong>
             <p className="whitespace-normal">
               {Array.isArray(value) ? (
@@ -135,7 +148,7 @@ function SingleplayerDashboard() {
                 : null}
             </div>
             <button
-              className="absolute right-0 top-0 mt-0.5 mr-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
               onClick={() => handleEdit(key)}
             >
               Edit

@@ -16,14 +16,27 @@ function SingleTrack() {
   );
 
   useEffect(() => {
-    chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
-      const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-      if (storedCustomizations) {
-        setCustomizations(storedCustomizations);
-        setTrack(storedCustomizations.track[0]);
-      }
-    });
+    if(isChromeExtension) {
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+        // if (storedCustomizations) {
+        //   setCustomizations(storedCustomizations);
+        //   setTrack(storedCustomizations.track[0]);
+        // }
+        setStates(storedCustomizations);
+      });
+    } else {
+      const storedCustomizations = utils.defaultSingleplayerCustomizations;
+      setStates(storedCustomizations);
+    }
   }, [isChromeExtension]);
+
+  const setStates = (storedCustomizations) => {
+    if (storedCustomizations) {
+      setCustomizations(storedCustomizations);
+      setTrack(storedCustomizations.track[0]);
+    }
+  }
 
   const handleOptionChange = (event) => {
     setTrack(event.target.value);
