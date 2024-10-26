@@ -53,11 +53,7 @@ function SingleplayerGameStat() {
           setEndInfo(storedEndGameInfo);
         }
       });
-    }
-  }, [isChromeExtension])
 
-  useEffect(() => {
-    if(isChromeExtension) {
       const handleEndGameChanges = (changes, areaName) => {
         if(areaName === "local") {
           const storedExternalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || undefined;
@@ -85,8 +81,47 @@ function SingleplayerGameStat() {
       return () => {
         chrome.storage.onChanged.removeListener(handleEndGameChanges);
       }
+    } else {
+      setExternalWikiVisit(false);
+      setGameWin(true);
+      setTimeFinished(false);
+      setGameQuit(false);
+      setEndInfo(false);
+
     }
   }, [isChromeExtension])
+
+  // useEffect(() => {
+  //   if(isChromeExtension) {
+  //     const handleEndGameChanges = (changes, areaName) => {
+  //       if(areaName === "local") {
+  //         const storedExternalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || undefined;
+  //         const storedGameWin = changes[utils.SINGLEPLAYER_GAME_WIN]?.newValue || undefined;
+  //         const storedTimeFinished = changes[utils.SINGLEPLAYER_TIME_FINISHED]?.newValue || undefined;
+  //         const storedGameQuit = changes[utils.SINGLEPLAYER_GAME_QUIT]?.newValue || undefined;
+  //         const storedEndGameInfo = changes[utils.END_GAME_INFO]?.newValue || undefined;
+
+  //         console.log(storedExternalWikiVisit, storedGameWin, storedTimeFinished, storedGameQuit);
+  //         console.log(storedEndGameInfo);
+
+  //         if(storedExternalWikiVisit !== undefined) setExternalWikiVisit(storedExternalWikiVisit);
+  //         if(storedGameWin !== undefined) setGameWin(storedGameWin);
+  //         if(storedTimeFinished !== undefined) setTimeFinished(storedTimeFinished);
+  //         if(storedGameQuit !== undefined) setGameQuit(storedGameQuit);
+  //         if(storedEndGameInfo !== undefined) {
+  //           setEndInfo(storedEndGameInfo);
+  //           console.log('setting!: ', storedEndGameInfo);
+  //         }
+  //       }
+  //     }
+
+  //     chrome.storage.onChanged.addListener(handleEndGameChanges);
+      
+  //     return () => {
+  //       chrome.storage.onChanged.removeListener(handleEndGameChanges);
+  //     }
+  //   }
+  // }, [isChromeExtension])
 
   const reset = () => {
     if(isChromeExtension) {

@@ -36,14 +36,12 @@ function Singleplayer() {
           setGameEnded(true);
         }
 
-        console.log(`${gameEnded || endGameInfo} ${storedExternalWikiVisit} ${storedWin} ${storedSingleplayerGameQuit} ${storedSingleplayerTimeFinished}`)
         if((endGameInfo.ended || gameEnded)) {
           if(storedExternalWikiVisit || storedWin || storedSingleplayerGameQuit || storedSingleplayerTimeFinished) {
             navigate('/singleplayer-end');
           }
         }
-        console.log('stuff about customizations');
-        console.log(storedCustomizations, storedCustomizations.track[0], storedCustomizations.mode.type, storedCustomizations.mode["count-down"].timer);
+
         if(storedCustomizations) {
           setTrack(storedCustomizations.track[0])
           if(storedCustomizations.mode.type === "count-down") {
@@ -55,11 +53,7 @@ function Singleplayer() {
           setPaused(storedGameInformation.status.paused);
         }
       });
-    }
-  }, [isChromeExtension, navigate, gameEnded]);
 
-  useEffect(() => {
-    if(isChromeExtension) {
       const handleGameEndFlagChanges = (changes, areaName) => {
         if(areaName === "local") {
           const externalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || false;
@@ -72,7 +66,7 @@ function Singleplayer() {
             setGameEnded(true);
           }
 
-          console.log(`${gameEnded || endGameInfo} ${externalWikiVisit} ${singleplayerTimeFinished} ${singleplayerGameWin} ${singleplayerQuit}`)
+        
           if((gameEnded || endGameInfo) && (externalWikiVisit || singleplayerTimeFinished || singleplayerGameWin || singleplayerQuit)) {
             navigate('/singleplayer-end');
           }
@@ -85,7 +79,36 @@ function Singleplayer() {
         chrome.storage.onChanged.removeListener(handleGameEndFlagChanges);
       }
     }
-  }, [isChromeExtension, navigate, gameEnded])
+  }, [isChromeExtension, navigate, gameEnded]);
+
+  // useEffect(() => {
+  //   if(isChromeExtension) {
+  //     const handleGameEndFlagChanges = (changes, areaName) => {
+  //       if(areaName === "local") {
+  //         const externalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || false;
+  //         const singleplayerTimeFinished = changes[utils.SINGLEPLAYER_TIME_FINISHED]?.newValue || false;
+  //         const singleplayerGameWin = changes[utils.SINGLEPLAYER_GAME_WIN]?.newValue || false;
+  //         const endGameInfo = changes[utils.END_GAME_INFO]?.newValue?.ended || false;
+  //         const singleplayerQuit = changes[utils.SINGLEPLAYER_GAME_QUIT]?.newValue || false;
+
+  //         if(endGameInfo) {
+  //           setGameEnded(true);
+  //         }
+
+        
+  //         if((gameEnded || endGameInfo) && (externalWikiVisit || singleplayerTimeFinished || singleplayerGameWin || singleplayerQuit)) {
+  //           navigate('/singleplayer-end');
+  //         }
+  //       }
+  //     }
+
+  //     chrome.storage.onChanged.addListener(handleGameEndFlagChanges);
+
+  //     return () => {
+  //       chrome.storage.onChanged.removeListener(handleGameEndFlagChanges);
+  //     }
+  //   }
+  // }, [isChromeExtension, navigate, gameEnded])
 
   const handleQuit = () => {
     if(isChromeExtension) {
@@ -94,12 +117,14 @@ function Singleplayer() {
   }
 
   const handleTogglePause = () => {
-    if(paused) {
-      chrome.runtime.sendMessage({ action : utils.UNPAUSE_SINGLEPLAYER});
-    } else {
-      chrome.runtime.sendMessage({ action: utils.PAUSE_SINGLEPLAYER});
+    if(isChromeExtension) {
+      if(paused) {
+        chrome.runtime.sendMessage({ action : utils.UNPAUSE_SINGLEPLAYER});
+      } else {
+        chrome.runtime.sendMessage({ action: utils.PAUSE_SINGLEPLAYER});
+      }
+      setPaused(!paused);
     }
-    setPaused(!paused);
   }
 
   const kill = () => {

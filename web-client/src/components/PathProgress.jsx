@@ -35,7 +35,6 @@ function PathProgress() {
           // the problem here is that we need an indicator that the game is done...?
           const storedEndGameInfo = result[utils.END_GAME_INFO] || utils.defaultEndGameInfo;
           const ended = storedEndGameInfo.ended || false; // TODO: rework the data structure
-          console.log('ended: ', ended);
 
           const storedGameInformation = ended ? storedEndGameInfo.singleplayerGameInformation : 
           result[utils.SINGLEPLAYER_GAME_INFORMATION] || utils.defaultGameInformation;
@@ -45,7 +44,6 @@ function PathProgress() {
 
           const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS] || utils.defaultSingleplayerCustomizations;
 
-        
           setPath(storedGameProperties.path);
           setIsDirected(storedCustomizations.mode.path.directed);
           setIsPath(storedCustomizations.mode.type === "path");
@@ -56,17 +54,12 @@ function PathProgress() {
           setFreePath(storedGameInformation.freePath);
           setVisited(storedGameInformation.visitedPath);
           
-          console.log(storedGameProperties.path, storedGameInformation.freePath);
           let endIndex = storedGameProperties.path?.length || storedGameInformation.freePath?.length;
           endIndex--;
           setEndIndex(endIndex);
         }
       );
-    }
-  }, [isChromeExtension]);
 
-  useEffect(() => {
-    if(isChromeExtension) {
       function handleTimeChanges(changes, areaName) {
         if (areaName === "local") {
           if (
@@ -88,7 +81,6 @@ function PathProgress() {
             const storedGameInformation = storedEndGameInfo.singleplayerGameInformation;
             const storedGameProperties = storedEndGameInfo.singleplayerGameProperties;
             const storedCustomizations = storedEndGameInfo.singleplayerCustomizations;
-            console.log('acc updating', storedEndGameInfo, storedGameInformation, storedGameProperties, storedCustomizations);
 
 
             setPath(storedGameProperties.path);
@@ -111,8 +103,81 @@ function PathProgress() {
       return () => {
         chrome.storage.onChanged.removeListener(handleTimeChanges);
       };
+    } else {
+      const storedGameInformation = utils.defaultGameInformation;
+
+      const storedGameProperties =  utils.defaultGameProperties;
+
+      const storedCustomizations =  utils.defaultSingleplayerCustomizations;
+
+    
+      setPath(storedGameProperties.path);
+      setIsDirected(storedCustomizations.mode.path.directed);
+      setIsPath(storedCustomizations.mode.type === "path");
+
+      setEdgeHistory(storedGameInformation.edgeHistory);
+      setNodeHistory(storedGameInformation.nodeHistory);
+      setCurrentNode(storedGameInformation.currentNode);
+      setFreePath(storedGameInformation.freePath);
+      setVisited(storedGameInformation.visitedPath);
+      
+      let endIndex = storedGameProperties.path?.length || storedGameInformation.freePath?.length;
+      endIndex--;
+      setEndIndex(endIndex);
     }
-  }, [isChromeExtension])
+
+
+    
+  }, [isChromeExtension]);
+
+  // useEffect(() => {
+  //   if(isChromeExtension) {
+  //     function handleTimeChanges(changes, areaName) {
+  //       if (areaName === "local") {
+  //         if (
+  //           changes[utils.SINGLEPLAYER_GAME_INFORMATION] &&
+  //           changes[utils.SINGLEPLAYER_GAME_INFORMATION].newValue
+  //         ) {
+  //           const storedGameInformation =
+  //             changes[utils.SINGLEPLAYER_GAME_INFORMATION].newValue;
+  //           setEdgeHistory(storedGameInformation.edgeHistory);
+  //           setNodeHistory(storedGameInformation.nodeHistory);
+  //           setCurrentNode(storedGameInformation.currentNode);
+  //         }
+
+  //         if(
+  //           changes[utils.END_GAME_INFO] && 
+  //           changes[utils.END_GAME_INFO].newValue
+  //         ) {
+  //           const storedEndGameInfo = changes[utils.END_GAME_INFO].newValue;
+  //           const storedGameInformation = storedEndGameInfo.singleplayerGameInformation;
+  //           const storedGameProperties = storedEndGameInfo.singleplayerGameProperties;
+  //           const storedCustomizations = storedEndGameInfo.singleplayerCustomizations;
+  //           console.log('acc updating', storedEndGameInfo, storedGameInformation, storedGameProperties, storedCustomizations);
+
+
+  //           setPath(storedGameProperties.path);
+  //           setIsDirected(storedCustomizations.mode.path.directed);
+  //           setIsPath(storedCustomizations.mode.type === "path");
+
+  //           setEdgeHistory(storedGameInformation.edgeHistory);
+  //           setNodeHistory(storedGameInformation.nodeHistory);
+  //           setCurrentNode(storedGameInformation.currentNode);
+  //           setFreePath(storedGameInformation.freePath);
+  //           setVisited(storedGameInformation.visitedPath);
+  //           let endIndex = storedGameProperties.path?.length || storedGameInformation.freePath?.length;
+  //           endIndex--;
+  //           setEndIndex(endIndex);
+  //         }
+  //       }
+  //     }
+
+  //     chrome.storage.onChanged.addListener(handleTimeChanges);
+  //     return () => {
+  //       chrome.storage.onChanged.removeListener(handleTimeChanges);
+  //     };
+  //   }
+  // }, [isChromeExtension])
 
   const handleMouseEnterNode = (index) => {
     setHoveredNode(index);
