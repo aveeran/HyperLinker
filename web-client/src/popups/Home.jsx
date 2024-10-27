@@ -44,11 +44,10 @@ function Home() {
   }, []);
 
   return (
-    <div className="pt-3">
+    <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
 
-      <div className="bg-green-100">
-        <div className="p-3">
+      <div className="bg-green-100 border-green-200 border-solid border-2 mb-1 p-3">
           <div className="bg-green-300 p-1 border-gray-400 border-solid border-2">
             <p className="text-center inline-block font-medium text-lg">
               From today&apos;s featured article
@@ -61,12 +60,14 @@ function Home() {
           ) : (
             <WikiArticle article={wikiContent} />
           )}
-        </div>
       </div>
 
-      <h5 className="text-2xl text-center mb-3 font-times">News</h5>
-      <div className="border-black border-2 border-solid p-2 m-3 rounded-lg shadow-lg">
-        <p className="font-seif">Currently no news!</p>
+      <div className="bg-sky-100 border-slate-400 border-solid border-2 mb-3 p-3">
+        <div className="bg-sky-200 p-1 border-gray-400 border-solid border-2">
+          <p className="text-center inline-block font-medium text-lg">In the news</p>
+        </div>
+          <p className="font-seif">Currently no news!</p>
+        
       </div>
 
       <div className="flex gap-4 p-4 justify-center">
