@@ -10,4 +10,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
+
+@font-face {
+  font-family: 'LinuxLibertine';
+  src: url('/web-client/public/fonts/LinLibertine_R.ttf') format ('truetype');
+  font-weight: normal;
+  font-style:normal
+}

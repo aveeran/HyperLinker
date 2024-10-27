@@ -15,7 +15,7 @@ function App() {
   return (
   
     <Router>
-      <div className="w-[400px] border-black border-solid border-[3px]">
+      <div className="w-[400px] border-black border-solid border-[3px] rounded-md pt-1">
         {/* <Singleplayer/> */}
         <RouteTracker/>
        <Routes>
