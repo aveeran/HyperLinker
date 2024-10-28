@@ -38,13 +38,17 @@ function SingleplayerDashboard() {
   );
 
   useEffect(() => {
-    if(isChromeExtension) {
-      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
-        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-        if (storedCustomizations) {
-          setCustomizations(storedCustomizations);
+    if (isChromeExtension) {
+      chrome.storage.local.get(
+        [utils.SINGLEPLAYER_CUSTOMIZATIONS],
+        (result) => {
+          const storedCustomizations =
+            result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+          if (storedCustomizations) {
+            setCustomizations(storedCustomizations);
+          }
         }
-      });
+      );
     } else {
       setCustomizations(utils.defaultSingleplayerCustomizations);
     }
@@ -52,7 +56,7 @@ function SingleplayerDashboard() {
 
   const reset = () => {
     setCustomizations(utils.defaultSingleplayerCustomizations);
-    if(isChromeExtension) {
+    if (isChromeExtension) {
       chrome.storage.local.set({
         [utils.SINGLEPLAYER_CUSTOMIZATIONS]: customizations,
       });
@@ -84,24 +88,25 @@ function SingleplayerDashboard() {
   };
 
   const handleSubmit = () => {
-    if(isChromeExtension) {
+    if (isChromeExtension) {
       chrome.runtime.sendMessage({ action: utils.START_SINGLEPLAYER });
     }
     navigate("/singleplayer");
   };
 
   return (
-    <div>
-      <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h2 className="text-3xl text-center mb-3">Singleplayer</h2>
-      <div className="border-black border-2 border-solid p-1.5 m-3">
-        <p className="text-center">Customizations</p>
-        <hr className="m-5" />
+    <div className="pt-3 p-1">
+      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
+        <div className="bg-sky-200 p-1 mb-1">
+          <p className="font-medium text-xl text-center">Singleplayer</p>
+        </div>
+        <div className="bg-slate-200">
+          <p className="text-center font-medium text-base">Customizations</p>
+        </div>
+        <hr className="border-t-1 border-black m-5"/>
         {sortedEntries.map(([key, value]) => (
-          <div
-            key={key}
-            className="relative group flex mb-2 p-2"
-          >
+          <div key={key} className="relative group flex mb-2 p-2">
             <strong className="mr-2">{key}</strong>
             <p className="whitespace-normal">
               {Array.isArray(value) ? (
