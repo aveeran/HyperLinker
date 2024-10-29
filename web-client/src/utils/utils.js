@@ -12,18 +12,18 @@ export function getFormattedDate() {
       path: {
         pathLength: 2,
         directed: true,
-        intermediate_links: [],
+        intermediate_links: ["c", "d", "e", "Kevin Wu"],
       },
       "count-down": {
-        timer: 0,
+        timer: 5,
       },
     },
     start: {
-      title: "",
+      title: "a",
       link: "",
     },
     end: {
-      title: "",
+      title: "b",
       end: "",
     },
     track: ["clicks"],

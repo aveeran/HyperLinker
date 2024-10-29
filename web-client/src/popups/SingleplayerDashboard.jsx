@@ -98,69 +98,124 @@ function SingleplayerDashboard() {
     <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
       <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
-        <div className="bg-sky-200 p-1 mb-1">
-          <p className="font-medium text-xl text-center">Singleplayer</p>
-        </div>
-        <div className="bg-slate-200">
-          <p className="text-center font-medium text-base">Customizations</p>
-        </div>
-        <hr className="border-t-1 border-black m-5"/>
-        {sortedEntries.map(([key, value]) => (
-          <div key={key} className="relative group flex mb-2 p-2">
-            <strong className="mr-2">{key}</strong>
-            <p className="whitespace-normal">
-              {Array.isArray(value) ? (
-                <React.Fragment>{value.join(", ")}</React.Fragment>
-              ) : null}
-            </p>
+        <p className="font-medium text-xl text-center bg-sky-200 p-1 mb-1">
+          Singleplayer
+        </p>
+        <p className="text-center font-medium text-base bg-slate-200">
+          Customizations
+        </p>
+        <hr className="border-t-1 border-black m-5" />
 
-            <div>
-              {value !== null &&
-              typeof value === "object" &&
-              !Array.isArray(value) ? (
-                <p>{value.title || value.type}</p>
-              ) : null}
-
-              {value !== null && typeof value === "object" && key === "mode"
-                ? Object.entries(value).map(
-                    ([innerKey, innerValue], innerIndex) =>
-                      innerKey === value.type ? (
-                        <div key={innerKey} className="mt-3">
-                          {Object.entries(innerValue).map(
-                            ([nestedKey, nestedValue], nestedIndex) => (
-                              <div key={nestedKey}>
-                                <strong>{nestedKey} </strong>
-                                {Array.isArray(nestedValue) ? (
-                                  <React.Fragment>
-                                    {nestedValue.map((article, index) => (
-                                      <React.Fragment key={index}>
-                                        {article.title}
-                                        {index < nestedValue.length - 1
-                                          ? ", "
-                                          : ""}
-                                      </React.Fragment>
-                                    ))}
-                                  </React.Fragment>
-                                ) : (
-                                  nestedValue.toString()
-                                )}
-                              </div>
-                            )
-                          )}
-                        </div>
-                      ) : null
-                  )
-                : null}
-            </div>
+        <div>
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Start Article</strong>
+            <p className="col-span-2">{customizations.start.title}</p>
             <button
+              data-key="start"
               className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-              onClick={() => handleEdit(key)}
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
             >
               Edit
             </button>
           </div>
-        ))}
+
+          <div key="end" className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">End Article</strong>
+            <p className="col-span-2">{customizations.end.title}</p>
+            <button
+              data-key="end"
+              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+            >
+              Edit
+            </button>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Tracking</strong>
+            <p className="col-span-2">{customizations.track[0]}</p>
+            <button
+              data-key="track"
+              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+            >
+              Edit
+            </button>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Restrictions</strong>
+            <p className="col-span-2">
+              {customizations.restrictions.join(" · ")}
+            </p>
+            <button
+              data-key="restrictions"
+              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+
+        <div className="">
+          <p className="text-center font-bold text-base bg-sky-200">Mode</p>
+          <div className="group relative">
+          <div className="grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Type</strong>
+            <p className="col-span-2">{customizations.mode.type}</p>
+          </div>
+
+          {customizations.mode.type === "path" ? (
+            <>
+              <div className="grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1">
+                  Path Length
+                </strong>
+                <p className="col-span-2">
+                  {customizations.mode.path.pathLength}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1 text-center">
+                  Intermediate Articles
+                </strong>
+
+                <p className="col-span-2">
+                  {customizations.mode.path.intermediate_links.join(", ")}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1">Directed</strong>
+                <p className="col-span-2">
+                  {customizations.mode.path.directed ? "true" : "false"}
+                </p>
+              </div>
+            </>
+          ) : null}
+
+          {customizations.mode.type === "count-down" ? (
+            <div className="grid grid-cols-3 gap-4 p-1">
+              <strong className="text-base mr-1 col-span-1">Timer</strong>
+              <p className="col-span-2">
+                {customizations.mode["count-down"].timer}
+              </p>
+            </div>
+          ) : null}
+          <button
+              data-key="mode"
+              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+            >
+              Edit
+            </button>
+          </div>
+          
+        </div>
       </div>
+
       <div className="flex justify-center mb-3">
         <button
           className="flex bg-gray-400 text-white px-4 py-2 rounded mr-2"
