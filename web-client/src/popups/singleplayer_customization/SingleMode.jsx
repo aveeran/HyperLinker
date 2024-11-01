@@ -166,37 +166,42 @@ function SingleMode() {
               <option value="normal">Normal</option>
               <option value="count-down">Count-Down</option>
               <option value="path">Path</option>
-              <option value="hitler">Hitler</option>
-              <option value="jesus">Jesus</option>
               <option value="random">Random</option>
             </select>
           </div>
           {mode === "normal" ? (
-            <div className="flex flex-col border-gray border-2 border-solid p-2 mb-2">
-              <div className="flex mb-2 items-center">
-                <p className="w-[15%]">Start</p>
-                <div className="ml-5">
-                  <SearchableDropdown
-                    onDataChange={updateFirstArticle}
-                    temp={startArticle}
-                  />
-                </div>
-              </div>
-              <div className="flex mb-2 items-center">
-                <p className="w-[15%]">End</p>
-                <div className="ml-5">
-                  <SearchableDropdown
-                    onDataChange={updateEndArticle}
-                    temp={endArticle}
-                  />
-                </div>
-              </div>
+            <div className="flex flex-col mb-2">
+              <ul className="flex flex-col list-disc ml-12">
+                <li className="list-item">
+                  <div className="flex mb-2 items-center">
+                    <p className="font-medium w-[15%]">Start</p>
+                    <div className="">
+                      <SearchableDropdown
+                        onDataChange={updateFirstArticle}
+                        temp={startArticle}
+                      />
+                    </div>
+                  </div>
+                </li>
+
+                <li className="list item">
+                  <div className="flex mb-2 items-center">
+                    <p className="font-medium w-[15%]">End</p>
+                    <div className="">
+                      <SearchableDropdown
+                        onDataChange={updateEndArticle}
+                        temp={endArticle}
+                      />
+                    </div>
+                  </div>
+                </li>
+              </ul>
             </div>
           ) : null}
 
           {mode === "count-down" ? (
             <div className="items-center justify-center m-2">
-              <div className="flex items-center justify-center mr-2 mb-2 w-auto">
+              <div className="flex items-center justify-center mr-2 mb-2 w-auto bg-purple-200 p-1">
                 <input
                   className="flex text-center border rounded p-2 mr-2 max-w-[50%]"
                   type="number"
@@ -207,28 +212,35 @@ function SingleMode() {
                   placeholder="1"
                   aria-label="Count-down timer"
                 />
-                <span>seconds</span>
+                <span className="text-blue-700 font-medium">seconds</span>
               </div>
 
-              <div className="flex flex-col border-gray border-2 border-solid p-2 mb-2">
-                <div className="flex mb-2 items-center">
-                  <p className="w-[15%]">Start</p>
-                  <div className="ml-5">
-                    <SearchableDropdown
-                      onDataChange={updateFirstArticle}
-                      temp={startArticle}
-                    />
-                  </div>
-                </div>
-                <div className="flex mb-2 items-center">
-                  <p className="w-[15%]">End</p>
-                  <div className="ml-5">
-                    <SearchableDropdown
-                      onDataChange={updateEndArticle}
-                      temp={endArticle}
-                    />
-                  </div>
-                </div>
+              <div className="flex flex-col mb-2">
+                <ul className="flex flex-col list-disc ml-12">
+                  <li className="list-item">
+                    <div className="flex mb-2 items-center">
+                      <p className="font-medium w-[15%]">Start</p>
+                      <div className="">
+                        <SearchableDropdown
+                          onDataChange={updateFirstArticle}
+                          temp={startArticle}
+                        />
+                      </div>
+                    </div>
+                  </li>
+
+                  <li className="list item">
+                    <div className="flex mb-2 items-center">
+                      <p className="font-medium w-[15%]">End</p>
+                      <div className="">
+                        <SearchableDropdown
+                          onDataChange={updateEndArticle}
+                          temp={endArticle}
+                        />
+                      </div>
+                    </div>
+                  </li>
+                </ul>
               </div>
             </div>
           ) : null}
@@ -268,7 +280,7 @@ function SingleMode() {
 
               <div className="items-center justify-center mb-2">
                 <p className="text-center mb-2 bg-purple-200 p-1 text-blue-700 font-semibold">
-                  Path Links
+                  Path
                 </p>
 
                 <ul className="flex flex-col list-disc ml-16">
@@ -281,7 +293,7 @@ function SingleMode() {
                           temp={startArticle}
                           className=""
                         />
-                    </div>
+                      </div>
                     </div>
                   </li>
 
@@ -304,7 +316,7 @@ function SingleMode() {
                                 : pathArticles[index]
                             }
                           />
-                      </div>
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -317,58 +329,26 @@ function SingleMode() {
                           onDataChange={updateEndArticle}
                           temp={endArticle}
                         />
-                    
-                    </div>
+                      </div>
                     </div>
                   </li>
                 </ul>
-
-                
               </div>
             </div>
           ) : null}
 
-          {mode === "hitler" ? (
-            <div className="flex flex-col items-center justify-center">
-              <SearchableDropdown onDataChange={updateFirstArticle} />
-              <div className="relative">
-                <input
-                  type="text"
-                  value={"Hitler"}
-                  readOnly
-                  className="p-2 border rounded w-full"
-                  placeholder="Search Wikipedia..."
-                />
-              </div>
-            </div>
-          ) : null}
-
-          {mode === "jesus" ? (
-            <div className="flex flex-col items-center justify-center">
-              <SearchableDropdown onDataChange={updateFirstArticle} />
-              <div className="relative">
-                <input
-                  type="text"
-                  value={"Jesus"}
-                  readOnly
-                  className="p-2 border rounded w-full"
-                  placeholder="Search Wikipedia..."
-                />
-              </div>
-            </div>
-          ) : null}
 
           {mode === "random" ? <div></div> : null}
 
           <div className="flex justify-center mb-3">
             <button
-              className="flex bg-gray-400 text-white px-4 py-2 rounded mr-3"
+              className="flex bg-gray-400 text-white px-4 py-2 rounded mr-3 font-custom"
               onClick={handleBack}
             >
               Return
             </button>
             <button
-              className="flex bg-blue-400 text-white px-4 py-2 rounded"
+              className="flex bg-blue-400 text-white px-4 py-2 rounded font-custom"
               onClick={handleSubmit}
             >
               Save

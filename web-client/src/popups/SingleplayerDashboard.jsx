@@ -112,7 +112,7 @@ function SingleplayerDashboard() {
             <p className="col-span-2">{customizations.start.title}</p>
             <button
               data-key="start"
-              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
               onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
             >
               Edit
@@ -124,7 +124,7 @@ function SingleplayerDashboard() {
             <p className="col-span-2">{customizations.end.title}</p>
             <button
               data-key="end"
-              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
               onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
             >
               Edit
@@ -136,7 +136,7 @@ function SingleplayerDashboard() {
             <p className="col-span-2">{customizations.track[0]}</p>
             <button
               data-key="track"
-              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
               onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
             >
               Edit
@@ -150,7 +150,7 @@ function SingleplayerDashboard() {
             </p>
             <button
               data-key="restrictions"
-              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
               onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
             >
               Edit
@@ -206,7 +206,7 @@ function SingleplayerDashboard() {
           ) : null}
           <button
               data-key="mode"
-              className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
               onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
             >
               Edit
@@ -218,13 +218,13 @@ function SingleplayerDashboard() {
 
       <div className="flex justify-center mb-3">
         <button
-          className="flex bg-gray-400 text-white px-4 py-2 rounded mr-2"
+          className="flex bg-gray-400 text-white px-4 py-2 rounded mr-2 font-custom"
           onClick={() => navigate(-1)}
         >
           Back
         </button>
         <button
-          className="flex bg-green-400 text-white px-4 py-2 rounded"
+          className="flex bg-green-400 text-white px-4 py-2 rounded font-custom"
           onClick={handleSubmit}
         >
           Start
