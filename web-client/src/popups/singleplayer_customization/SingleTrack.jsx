@@ -60,15 +60,16 @@ function SingleTrack() {
   };
 
   return (
-    <div>
-      <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h2 className="text-3xl text-center mb-3">
-        Singleplayer - Customization
-      </h2>
-      <div className="flex flex-col items-center justify-center border-black border-2 border-solid p-1.5 m-3">
-        <p className="text-center mb-3">Tracking</p>
-        <form onSubmit={handleSubmit} className="">
-          <div className="flex flex-col mb-4">
+    <div className="pt-3 p-1">
+      <h1 className="text-4xl text-center mb-3 font-custom">HyperLinker</h1>
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
+        <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
+          Singleplayer
+        </p>
+        <p className="text-center bg-purple-200 font-medium p-1 mb-1">Tracking</p>
+
+        <form onSubmit={handleSubmit} id="tracking" className="flex flex-col items-center">
+          <div className="flex flex-col mb-1">
             <label htmlFor="clicks" className="mr-4">
               <input
                 type="radio"
@@ -94,22 +95,27 @@ function SingleTrack() {
               <span>Time</span>
             </label>
           </div>
-          <div className="flex justify-center mb-3">
+          
+        </form>
+      </div>
+
+      <div className="flex justify-center mb-3">
             <button
-              className="bg-gray-500 text-white py-2 px-4 rounded mr-3"
+              className="bg-gray-500 text-white py-2 px-4 rounded mr-3 font-custom"
               onClick={handleBack}
+              form={"tracking"}
             >
               Return
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white py-2 px-4 rounded"
+              className="bg-blue-500 text-white py-2 px-4 rounded font-custom"
+              form="tracking"
             >
               Submit
             </button>
           </div>
-        </form>
-      </div>
+
     </div>
   );
 }

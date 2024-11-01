@@ -340,6 +340,8 @@ function SingleMode() {
 
           {mode === "random" ? <div></div> : null}
 
+        </div>
+      </div>
           <div className="flex justify-center mb-3">
             <button
               className="flex bg-gray-400 text-white px-4 py-2 rounded mr-3 font-custom"
@@ -354,8 +356,6 @@ function SingleMode() {
               Save
             </button>
           </div>
-        </div>
-      </div>
     </div>
   );
 }
