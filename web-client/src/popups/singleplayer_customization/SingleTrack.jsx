@@ -66,8 +66,12 @@ function SingleTrack() {
         <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
           Singleplayer
         </p>
-        <p className="text-center bg-purple-200 font-medium p-1 mb-1">Tracking</p>
+        <p className="text-center font-medium text-base bg-slate-200">
+          Customizations
+        </p>
+        <hr className="border-t-1 border-black m-3" />
 
+        <p className="text-center bg-purple-200 font-medium p-1 mb-1">Tracking</p>
         <form onSubmit={handleSubmit} id="tracking" className="flex flex-col items-center">
           <div className="flex flex-col mb-1">
             <label htmlFor="clicks" className="mr-4">
