@@ -12,7 +12,7 @@ export function getFormattedDate() {
       path: {
         pathLength: 2,
         directed: true,
-        intermediate_links: ["c", "d", "e", "Kevin Wu"],
+        intermediate_links: ["c", "d", "e", "Kevin Wu", "Shang"],
       },
       "count-down": {
         timer: 5,
@@ -39,7 +39,7 @@ export function getFormattedDate() {
 
   export const defaultGameProperties = {
     startTime: 0,
-    path: []
+    path: [{title:"a"}, {title:"c"}, {title:"d"}, {title:"e"}, {title:"k"}, {title:"s"}, {title:"b"}]
   }
 
   export const defaultGameInformation = {

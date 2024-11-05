@@ -215,44 +215,75 @@ function PathProgress() {
   
   return (
     <div className="flex flex-col items-center">
-      <div className="flex flex-wrap items-center gap-4 p-2">
-        {isDirected || !isPath
-          ? path.map((step, index) => (
-              <React.Fragment key={index}>
+
+      <div className="flex flex-col gap-4 p-2">
+      {(isDirected || !isPath) &&
+    path
+      .reduce((acc, step, index) => {
+        const rowLength = 3; 
+        const rowIndex = Math.floor(index / rowLength);
+        if (!acc[rowIndex]) acc[rowIndex] = [];
+        acc[rowIndex].push(step);
+        return acc;
+      }, [])
+      .map((row, i) => (i % 2 === 1 ? row.reverse() : row)) // Reverse every other row
+      .flatMap((row, rowIndex, rows) => [
+
+        <div className="flex items-center gap-4" key={rowIndex}>
+          {row.map((step, index) => (
+            <React.Fragment key={index+(rowIndex*3)}>
+              <div
+                className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer p-2 ${
+                  visited.includes(step.link)
+                    ? "bg-blue-500 text-white border-yellow-400"
+                    : "bg-white border-gray-300"
+                } ${activeNode === (rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1))) ? "border-red-400" : ""}`}
+                onMouseEnter={() => handleMouseEnterNode((rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1))))}
+                onMouseLeave={handleMouseLeaveNode}
+                onClick={() => handleClickNode((rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1))))}
+                title={step.title}
+              >
+                <p className="truncate text-sm" aria-label={step.title}>
+                  {step.title + " " + (index+(rowIndex*3))}
+                </p>
+              </div>
+
+              {index < row.length - 1 && (
                 <div
-                  className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer p-2 ${
-                    visited.includes(step.link)
-                      ? "bg-blue-500 text-white border-green-400"
-                      : "bg-white border-gray-300"
-                  } ${activeNode === index ? "border-yellow-400" : ""}`}
-                  onMouseEnter={() => handleMouseEnterNode(index)}
-                  onMouseLeave={handleMouseLeaveNode}
-                  onClick={() => handleClickNode(index)}
-                  title={step.title}
-                >
-                  <p className="truncate text-sm" aria-label={step.title}>
-                    {step.title}
-                  </p>
-                </div>
-                {index < path.length - 1 && (
-                  <div
-                    className={`h-2 ${
-                      visited.includes(path[index].link) &&
-                      visited.includes(path[index + 1].link)
-                        ? "bg-green-500"
-                        : "bg-gray-300"
-                    } ${
-                      activeLink === index ? "border-2 border-green-400" : ""
-                    }`}
-                    style={{ width: "2rem" }} // Adjust width as needed
-                    onMouseEnter={() => handleMouseEnterLink(index)}
-                    onMouseLeave={handleMouseLeaveLink}
-                    onClick={() => handleClickLink(index)}
-                  ></div>
-                )}
-              </React.Fragment>
-            ))
-          : null}
+                  className={`h-2 ${//TODO: LOL
+                    visited.includes(path[index].link) &&
+                    visited.includes(path[index+1].link)
+                      ? "bg-green-500"
+                      : "bg-gray-300"
+                  } ${activeLink === (rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1)-1)) ? "border-2 border-green-400" : ""}`}
+                  style={{ width: "2rem" }}
+                  onMouseEnter={() => handleMouseEnterLink((rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1)-1)))}
+                  onMouseLeave={handleMouseLeaveLink}
+                  onClick={() => handleClickLink((rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1)-1)))}
+                ></div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>,
+
+
+
+        rowIndex < rows.length - 1 && (
+          <div
+            key={`connector-${rowIndex}`}
+            className={`flex ${rowIndex % 2 === 0 ? "justify-end" : "justify-start"}`}
+            style={{ width: "100%" }}
+            onMouseEnter={() => handleMouseEnterLink(rowIndex % 2 == 0 ? 2 : 5)}
+            onMouseLeave={handleMouseLeaveLink}
+            onClick={()=>handleClickLink(rowIndex % 2 == 0 ? 2 : 5)}
+          >
+            <div className={`w-2 bg-gray-300 h-8 ${rowIndex % 2 == 0 ? "mr-5":"ml-5"}
+            ${activeLink === (rowIndex % 2 == 0 ? 2 : 5)? "border-2 border-green-400" : ""}  `}></div> {/* Vertical connector */}
+          </div>
+        ),
+      ])}
+
+
         {!isDirected && isPath
           ? freePath.map((step, index) => (
               <React.Fragment key={index}>

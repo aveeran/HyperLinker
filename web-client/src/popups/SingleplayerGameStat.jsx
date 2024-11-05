@@ -86,7 +86,7 @@ function SingleplayerGameStat() {
       setGameWin(true);
       setTimeFinished(false);
       setGameQuit(false);
-      setEndInfo(false);
+      setEndInfo(utils.defaultEndGameInfo);
 
     }
   }, [isChromeExtension])
@@ -137,6 +137,7 @@ function SingleplayerGameStat() {
 
   return (
     <div>
+      {console.log("bruh")}
       <div className="border-black border-2 border-solid p-1.5 m-3 text-center"> 
         <p>
           {winElement}
