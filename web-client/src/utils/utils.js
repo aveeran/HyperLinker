@@ -39,12 +39,12 @@ export function getFormattedDate() {
 
   export const defaultGameProperties = {
     startTime: 0,
-    path: [{title:"a"}, {title:"c"}, {title:"d"}, {title:"e"}, {title:"k"}, {title:"s"}, {title:"b"}]
+    path: [{title:"a", link:"a"}, {title:"c", link:"c"}, {title:"d", link:"d"}, {title:"e", link:"e"}, {title:"k", link:"k"}, {title:"s", link:"s"}, {title:"b", link:"b"}]
   }
 
   export const defaultGameInformation = {
     freePath: [],
-    visitedPath: [],
+    visitedPath: ["a","c","d","e","k","s","b"],
     nodeHistory: [],
     edgeHistory: [],
     currentNode: 0,

@@ -251,8 +251,8 @@ function PathProgress() {
               {index < row.length - 1 && (
                 <div
                   className={`h-2 ${//TODO: LOL
-                    visited.includes(path[index].link) &&
-                    visited.includes(path[index+1].link)
+                    visited.includes(path[(rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1)))].link) &&
+                    visited.includes(path[(rowIndex % 2 == 0 ? (index+(rowIndex*3)+1) : ((rowIndex*3)+(3-index-1))-1)].link)
                       ? "bg-green-500"
                       : "bg-gray-300"
                   } ${activeLink === (rowIndex % 2 == 0 ? (index+(rowIndex*3)) : ((rowIndex*3)+(3-index-1)-1)) ? "border-2 border-green-400" : ""}`}
@@ -277,7 +277,13 @@ function PathProgress() {
             onMouseLeave={handleMouseLeaveLink}
             onClick={()=>handleClickLink(rowIndex % 2 == 0 ? 2 : 5)}
           >
-            <div className={`w-2 bg-gray-300 h-8 ${rowIndex % 2 == 0 ? "mr-5":"ml-5"}
+            <div className={`w-2 bg-gray-300 h-8 
+            ${
+              rowIndex % 2 == 0 ? 
+              (visited.includes(path[2]?.link) && visited.includes(path[3]?.link) ? "bg-green-500" : "bg-gray-300") 
+              : (visited.includes(path[5]?.link) && visited.includes(path[6]?.link) ? "bg-green-500" : "bg-gray-300")
+            }    
+            ${rowIndex % 2 == 0 ? "mr-5":"ml-5"}
             ${activeLink === (rowIndex % 2 == 0 ? 2 : 5)? "border-2 border-green-400" : ""}  `}></div> {/* Vertical connector */}
           </div>
         ),
