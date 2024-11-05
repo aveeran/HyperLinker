@@ -11,7 +11,7 @@ export function getFormattedDate() {
       type: "path",
       path: {
         pathLength: 2,
-        directed: true,
+        directed: false,
         intermediate_links: ["c", "d", "e", "Kevin Wu", "Shang"],
       },
       "count-down": {
@@ -43,8 +43,8 @@ export function getFormattedDate() {
   }
 
   export const defaultGameInformation = {
-    freePath: [],
-    visitedPath: ["a","c","d","e","k","s","b"],
+    freePath: [{title:"a", link:"a"}, {title:"c", link:"c"}, {title:"d", link:"d"}, {title:"e", link:"e"}, {title:"k", link:"k"}, {title:"s", link:"s"}, {title:"b", link:"b"}],
+    visitedPath: ["a","c"],
     nodeHistory: [],
     edgeHistory: [],
     currentNode: 0,
