@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import * as utils from "@utils/utils.js";
 
 function Singleplayer() {
-  const [track, setTrack] = useState("time");
+  const [track, setTrack] = useState("clicks");
   const [countDown, setCountDown] = useState(-1);
   const [paused, setPaused] = useState(false);
   const [pause, setPause] = useState(true);
@@ -132,12 +132,21 @@ function Singleplayer() {
   }
 
   return (
-    <div className="p-2">
-      <GameTracker track={track} countDown={countDown} /> 
-      <PathProgress />
-      <div className="flex items-center justify-center border-2 rounded-md p-2">
+    <div className="pt-3 p-1">
+      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
+      <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
+          Singleplayer
+        </p>
+        <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">Tracking</p>
+        <GameTracker track={track} countDown={10} /> 
+        <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">Progress</p>
+        <PathProgress />
+
+      </div>
+      <div className="flex items-center justify-center ">
         <button
-          className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2"
+          className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2 font-custom"
           onClick={handleQuit}
 
         >
@@ -146,7 +155,7 @@ function Singleplayer() {
 
         {pause ? (
           <button
-            className={`w-[25%] p-2 border-2 border-gray-200 rounded-md text-white ${
+            className={`w-[25%] p-2 border-2 border-gray-200 rounded-md text-white font-custom ${
               paused ? "bg-green-500" : "bg-gray-500"
             }`}
             onClick={handleTogglePause}

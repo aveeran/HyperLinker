@@ -1,7 +1,17 @@
+import PropTypes from 'prop-types'
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { CLICK_COUNT, ELAPSED_TIME } from "@utils/utils";
 
 function GameTracker({ track="clicks", countDown=-1 }) {
+  GameTracker.propTypes = {
+    track: PropTypes.string,          
+    countDown: PropTypes.number,     
+  };
+  
+  GameTracker.defaultProps = {
+    track: "clicks",                  
+    countDown: -1,                   
+  };
   const [clickCount, setClickCount] = useState(0);
   const [time, setTime] = useState(0);
 
@@ -78,9 +88,9 @@ function GameTracker({ track="clicks", countDown=-1 }) {
 
   const renderClicks = () => {
     return (
-      <div className="items-center border-black border-2 border-solid p-2 m-2">
+      <div >
             <p>
-              <span className="m-2">{track}:</span> {clickCount}
+              <span className="m-2">Click Count:</span> {clickCount}
             </p>
           </div>
     )
@@ -92,7 +102,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
         <p>
         {console.log(track)}{console.log(countDown)}
 
-          <span>Count down: </span>
+          <span>Count Down: </span>
           {parseTime(countDown - time)}
         </p>
       </div>
@@ -104,7 +114,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
       <div>
         <p>
         {console.log(track)}{console.log(countDown)}
-        <span className="m-2">{track}:</span>
+        <span className="m-2">Elapsed Time:</span>
           {parseTime(time)}
         </p>
       </div>
@@ -142,7 +152,7 @@ function GameTracker({ track="clicks", countDown=-1 }) {
     }
   };
 
-  return <div>{renderContent()}</div>;
+  return <div className="flex flex-col items-center mb-1">{renderContent()}</div>;
 }
 
 export default GameTracker;

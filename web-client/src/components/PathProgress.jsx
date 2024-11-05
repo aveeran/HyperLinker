@@ -271,7 +271,7 @@ function PathProgress() {
                       title={step.title}
                     >
                       <p className="truncate text-sm" aria-label={step.title}>
-                        {step.title + " " + (index + rowIndex * 3)}
+                        {step.title}
                       </p>
                     </div>
 
@@ -408,7 +408,7 @@ function PathProgress() {
                       title={step.title}
                     >
                       <p className="truncate text-sm" aria-label={step.title}>
-                        {step.title + " " + (index + rowIndex * 3)}
+                        {step.title}
                       </p>
                     </div>
                     {index < row.length - 1 && (

@@ -8,7 +8,7 @@ export function getFormattedDate() {
 
   export const defaultSingleplayerCustomizations = {
     mode: {
-      type: "path",
+      type: "count-down",
       path: {
         pathLength: 2,
         directed: false,
