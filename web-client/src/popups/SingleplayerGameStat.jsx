@@ -157,84 +157,87 @@ function SingleplayerGameStat() {
         <p className="text-center font-medium text-base p-1 mb-1 bg-slate-200">
           Game Customizations
         </p>
+        
+        <div className="max-h-36 overflow-y-auto">
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Start Article</strong>
+            <p className="col-span-2">{endInfo.singleplayerCustomizations.start.title}</p>
+          </div>
 
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">Start Article</strong>
-          <p className="col-span-2">{endInfo.singleplayerCustomizations.start.title}</p>
-        </div>
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">End Article</strong>
+            <p className="col-span-2">{endInfo.singleplayerCustomizations.end.title}</p>
+          </div>
 
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">End Article</strong>
-          <p className="col-span-2">{endInfo.singleplayerCustomizations.end.title}</p>
-        </div>
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Tracking</strong>
+            <p className="col-span-2">{endInfo.singleplayerCustomizations.track[0]}</p>
+          </div>
 
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">Tracking</strong>
-          <p className="col-span-2">{endInfo.singleplayerCustomizations.track[0]}</p>
-        </div>
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Restrictions</strong>
+            <p className="col-span-2">{endInfo.singleplayerCustomizations.restrictions.join(" · ")}</p>
+          </div>
 
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">Restrictions</strong>
-          <p className="col-span-2">{endInfo.singleplayerCustomizations.restrictions.join(" · ")}</p>
-        </div>
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Mode</strong>
+            <p className="col-span-2">{endInfo.singleplayerCustomizations.mode.type}</p>
+          </div>
 
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">Mode</strong>
-          <p className="col-span-2">{endInfo.singleplayerCustomizations.mode.type}</p>
-        </div>
+          {
+            endInfo.singleplayerCustomizations.mode.type === "path" ? (
+              <>
+                <div className="grid grid-cols-3 gap-4 p-1">
+                  <strong className="text-base mr-1 col-span-1">
+                    Path Length
+                  </strong>
+                  <p className="col-span-2">
+                    {endInfo.singleplayerCustomizations.mode.path.pathLength}
+                  </p>
+                </div>  
 
-        {
-          endInfo.singleplayerCustomizations.mode.type === "path" ? (
-            <>
+                              <div className="grid grid-cols-3 gap-4 p-1">
+                  <strong className="text-base mr-1 col-span-1 text-center">
+                    Intermediate Articles
+                  </strong>
+
+                  <p className="col-span-2">
+                    {endInfo.singleplayerCustomizations.mode.path.intermediate_links.join(", ")}
+                  </p>
+                </div> 
+
+                <div className="grid grid-cols-3 gap-4 p-1">
+                  <strong className="text-base mr-1 col-span-1">Directed</strong>
+                  <p className="col-span-2">
+                    {endInfo.singleplayerCustomizations.mode.path.directed ? "true" : "false"}
+                  </p>
+                </div>                      
+              </>
+            ) : null
+          }
+
+          {
+            endInfo.singleplayerCustomizations.mode.type === "count-down" ? (
+              <>
               <div className="grid grid-cols-3 gap-4 p-1">
-                <strong className="text-base mr-1 col-span-1">
-                  Path Length
-                </strong>
+                <strong className="text-base mr-1 col-span-1">Timer</strong>
                 <p className="col-span-2">
-                  {endInfo.singleplayerCustomizations.mode.path.pathLength}
+                  {endInfo.singleplayerCustomizations.mode["count-down"].timer}
                 </p>
-              </div>  
+              
+              </div>
+              </>
+            ) : null
+          }
+        </div>
 
-                            <div className="grid grid-cols-3 gap-4 p-1">
-                <strong className="text-base mr-1 col-span-1 text-center">
-                  Intermediate Articles
-                </strong>
-
-                <p className="col-span-2">
-                  {endInfo.singleplayerCustomizations.mode.path.intermediate_links.join(", ")}
-                </p>
-              </div> 
-
-              <div className="grid grid-cols-3 gap-4 p-1">
-                <strong className="text-base mr-1 col-span-1">Directed</strong>
-                <p className="col-span-2">
-                  {endInfo.singleplayerCustomizations.mode.path.directed ? "true" : "false"}
-                </p>
-              </div>                      
-            </>
-          ) : null
-        }
-
-        {
-          endInfo.singleplayerCustomizations.mode.type === "count-down" ? (
-            <>
-            <div className="grid grid-cols-3 gap-4 p-1">
-              <strong className="text-base mr-1 col-span-1">Timer</strong>
-              <p className="col-span-2">
-                {endInfo.singleplayerCustomizations.mode["count-down"].timer}
-              </p>
-            
-            </div>
-            </>
-          ) : null
-        }
 
         <p className="font-medium text-base text-center bg-slate-200 p-1 mb-1">
           Path Progress
         </p>
         <PathProgress/>
       </div>
-      
+
       <div className="flex justify-center mb-3">
         <button onClick={reset} className="flex bg-red-400 text-white px-4 py-2 rounded mr-2 font-custom">
           Home
