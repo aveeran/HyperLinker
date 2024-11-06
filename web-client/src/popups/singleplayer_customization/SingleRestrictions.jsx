@@ -30,15 +30,6 @@ function SingleRestrictions() {
     if (isChromeExtension) {
       chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
         const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-        // if (storedCustomizations) {
-        //   setCustomizations(storedCustomizations);
-        //   setAvailableRestrictions(
-        //     defaultRestrictions.filter(
-        //       (element) => !storedCustomizations.restrictions.includes(element)
-        //     )
-        //   );
-        //   setChosenRestrictions(storedCustomizations.restrictions);
-        // }
         setStates(storedCustomizations);
       });
     } else {
@@ -104,7 +95,7 @@ function SingleRestrictions() {
     });
     handleBack();
   };
-  //TODO: idea: this could be like the versus in a battle
+
   return (
     <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>

@@ -243,14 +243,22 @@ function PathProgress() {
                     <div
                       className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer p-2 ${
                         visited.includes(step.link)
-                          ? "bg-blue-500 text-white border-yellow-400"
+                          ? "bg-blue-500 text-white border-green-400"
                           : "bg-white border-gray-300"
                       } ${
                         activeNode ===
                         (rowIndex % 2 == 0
                           ? index + rowIndex * 3
                           : rowIndex * 3 + (3 - index - 1))
-                          ? "border-red-400"
+                          ? "border-yellow-400 shadow-gray-400 drop-shadow-2xl"
+                          : ""
+                      }
+                       ${
+                        hoveredNode ===
+                        (rowIndex % 2 == 0
+                          ? index + rowIndex * 3
+                          : rowIndex * 3 + (3 - index - 1))
+                          ? "shadow-gray-400 drop-shadow-2xl"
                           : ""
                       }`}
                       onMouseEnter={() =>
@@ -299,7 +307,16 @@ function PathProgress() {
                           (rowIndex % 2 == 0
                             ? index + rowIndex * 3
                             : rowIndex * 3 + (3 - index - 1) - 1)
-                            ? "border-2 border-green-400"
+                            ? "border-2 border-green-400 shadow-gray-600 drop-shadow-xl"
+                            : ""
+                        }
+                        
+                        ${
+                          hoveredLink ===
+                          (rowIndex % 2 == 0
+                            ? index + rowIndex * 3
+                            : rowIndex * 3 + (3 - index - 1) - 1)
+                            ? " shadow-gray-600 drop-shadow-xl"
                             : ""
                         }`}
                         style={{ width: "2rem" }}
@@ -353,9 +370,13 @@ function PathProgress() {
             ${rowIndex % 2 == 0 ? "mr-5" : "ml-5"}
             ${
               activeLink === (rowIndex % 2 == 0 ? 2 : 5)
-                ? "border-2 border-green-400"
+                ? "border-2 border-green-400 shadow-gray-400 drop-shadow-xl"
                 : ""
-            }  `}
+            }  ${
+              hoveredLink === (rowIndex % 2 == 0 ? 2 : 5)
+                ? "shadow-gray-400 drop-shadow-xl"
+                : ""
+            }`}
                   ></div>{" "}
                   {/* Vertical connector */}
                 </div>
@@ -435,7 +456,7 @@ function PathProgress() {
                           (rowIndex % 2 == 0
                             ? index + rowIndex * 3
                             : rowIndex * 3 + (3 - index - 1) - 1)
-                            ? "border-2 border-green-400"
+                            ? "border border-green-400 shadow-2xl"
                             : ""
                         }`}
                         style={{ width: "2rem" }}
@@ -489,7 +510,6 @@ function PathProgress() {
                     activeLink === (rowIndex % 2 == 0 ? 2 : 5) ? "border-2 border-green-400" : ""
                   }  `}
                   ></div>{" "}
-                  {/* Vertical connector */}
                 </div>
               ),
             ])}
@@ -506,10 +526,10 @@ function PathProgress() {
             {(activeNode !== null || hoveredNode !== null) && (
               <div
                 className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
-                  activeNode !== null ? "border-yellow-400" : "border-red-400"
+                  activeNode !== null ? "border-yellow-400" : "border-gray-400"
                 }`}
               >
-                <h3 className="font-bold">
+                <h3 className="font-bold truncate">
                   Node History for{" "}
                   {!isDirected && isPath
                     ? freePath[activeNode ?? hoveredNode]?.title
@@ -535,8 +555,8 @@ function PathProgress() {
             )}
 
             {(activeLink !== null || hoveredLink !== null) && (
-              <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-lg m-2">
-                <h3 className="font-bold">
+              <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-2xl m-2">
+                <h3 className="font-bold truncate">
                   Edge History for Link between{" "}
                   {!isDirected && isPath
                     ? freePath[hoveredLink]?.title
@@ -568,10 +588,10 @@ function PathProgress() {
         <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
           <div
             className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
-              activeNode !== null ? "border-yellow-400" : "border-red-400"
+              activeNode !== null ? "border-yellow-400" : "border-gray-400"
             }`}
           >
-            <h3 className="font-bold">
+            <h3 className="font-bold truncate">
               Target Node:{" "}
               {!isDirected && isPath
                 ? freePath[activeNode ?? hoveredNode]?.title

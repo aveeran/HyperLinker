@@ -19,10 +19,6 @@ function SingleTrack() {
     if(isChromeExtension) {
       chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
         const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
-        // if (storedCustomizations) {
-        //   setCustomizations(storedCustomizations);
-        //   setTrack(storedCustomizations.track[0]);
-        // }
         setStates(storedCustomizations);
       });
     } else {

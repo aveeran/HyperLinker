@@ -11,19 +11,19 @@ export function getFormattedDate() {
       type: "count-down",
       path: {
         pathLength: 2,
-        directed: false,
-        intermediate_links: ["c", "d", "e", "Kevin Wu", "Shang"],
+        directed: true,
+        intermediate_links: [],
       },
       "count-down": {
-        timer: 5,
+        timer: 0,
       },
     },
     start: {
-      title: "a",
+      title: "",
       link: "",
     },
     end: {
-      title: "b",
+      title: "",
       end: "",
     },
     track: ["clicks"],
@@ -39,12 +39,12 @@ export function getFormattedDate() {
 
   export const defaultGameProperties = {
     startTime: 0,
-    path: [{title:"a", link:"a"}, {title:"c", link:"c"}, {title:"d", link:"d"}, {title:"e", link:"e"}, {title:"k", link:"k"}, {title:"s", link:"s"}, {title:"b", link:"b"}]
+    path: []
   }
 
   export const defaultGameInformation = {
-    freePath: [{title:"a", link:"a"}, {title:"c", link:"c"}, {title:"d", link:"d"}, {title:"e", link:"e"}, {title:"k", link:"k"}, {title:"s", link:"s"}, {title:"b", link:"b"}],
-    visitedPath: ["a","c"],
+    freePath: [],
+    visitedPath: [],
     nodeHistory: [],
     edgeHistory: [],
     currentNode: 0,

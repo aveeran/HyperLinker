@@ -35,17 +35,7 @@ function SingleMode() {
           const storedCustomizations =
             result[utils.SINGLEPLAYER_CUSTOMIZATIONS] ||
             utils.defaultSingleplayerCustomizations;
-          // if(storedCustomizations) {
-          //   setCustomizations(storedCustomizations);
-          //   setMode(storedCustomizations.mode.type);
-          //   setStartArticle(storedCustomizations.start);
-          //   setEndArticle(storedCustomizations.end);
-          //   setPathLength(storedCustomizations.mode.path.pathLength);
-          //   setIsPathDirected(storedCustomizations.mode.path.directed);
-          //   setPathArticles(storedCustomizations.mode.path.intermediate_links);
-          //   setTimer(storedCustomizations.mode["count-down"].timer);
-          // }
-          setStates(storedCustomizations);
+            setStates(storedCustomizations);
         }
       );
     } else {
@@ -169,6 +159,7 @@ function SingleMode() {
               <option value="random">Random</option>
             </select>
           </div>
+          
           {mode === "normal" ? (
             <div className="flex flex-col mb-2">
               <ul className="flex flex-col list-disc ml-12">
@@ -200,8 +191,8 @@ function SingleMode() {
           ) : null}
 
           {mode === "count-down" ? (
-            <div className="items-center justify-center m-2">
-              <div className="flex items-center justify-center mr-2 mb-2 w-auto bg-purple-200 p-1">
+            <div className="items-center justify-center">
+              <div className="flex items-center justify-center mb-2 w-auto bg-slate-200 p-1">
                 <input
                   className="flex text-center border rounded p-2 mr-2 max-w-[50%]"
                   type="number"
@@ -247,7 +238,7 @@ function SingleMode() {
 
           {mode === "path" ? (
             <div className="">
-              <div className="flex items-center justify-center bg-purple-200 p-1">
+              <div className="flex items-center justify-center bg-green-200 p-1">
                 <span className="mr-2 text-blue-700 font-semibold">
                   Path Length
                 </span>
@@ -279,11 +270,11 @@ function SingleMode() {
               </div>
 
               <div className="items-center justify-center mb-2">
-                <p className="text-center mb-2 bg-purple-200 p-1 text-blue-700 font-semibold">
+                <p className="text-center mb-2 bg-green-200 p-1 text-blue-700 font-semibold">
                   Path
                 </p>
 
-                <ul className="flex flex-col list-disc ml-16">
+                <ul className="flex flex-col list-disc ml-12 max-h-36 overflow-y-auto">
                   <li className="mb-2 items-center justify-center list-item">
                     <div className="flex items-center">
                       <p className="w-[15%] font-medium">Start</p>

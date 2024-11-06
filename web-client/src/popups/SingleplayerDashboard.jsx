@@ -202,15 +202,15 @@ function SingleplayerDashboard() {
               <p className="col-span-2">
                 {customizations.mode["count-down"].timer}
               </p>
+            <button
+                data-key="mode"
+                className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+                onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+              >
+                Edit
+              </button>
             </div>
           ) : null}
-          <button
-              data-key="mode"
-              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
-            >
-              Edit
-            </button>
           </div>
           
         </div>
