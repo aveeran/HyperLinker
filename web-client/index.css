@@ -1,0 +1,21 @@
+/* index.css */
+
+/* Remove fixed width/height settings */
+body, #root {
+    width: auto;            /* Allow natural sizing */
+    height: auto;
+    padding: 2px;          /* Optional: add some padding for layout */
+    box-sizing: border-box; /* Ensure padding is included in element’s size */
+    overflow: hidden;       /* Prevent unnecessary scrollbars */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;           /* Optional: set to 100% to take full available space */
+  }
+  

@@ -1,70 +1,71 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import * as utils from "@utils/utils";
 
-// Default restrictions
 const defaultRestrictions = [
   "no-opening-para",
   "no-find",
   "no-back",
-  "no-category",
   "no-dates",
-  "no-countries",
-];
+  "same-page-link",
+  "no-popups"
+]
 
 function SingleRestrictions() {
   const navigate = useNavigate();
-  const [availableRestrictions, setAvailableRestrictions] = useState([]);
+  const [customizations, setCustomizations] = useState(
+    utils.defaultSingleplayerCustomizations
+  );
+  const [availableRestrictions, setAvailableRestrictions] =
+    useState(defaultRestrictions);
   const [chosenRestrictions, setChosenRestrictions] = useState([]);
 
-  // Determine if we are in a Chrome extension environment
-  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
 
-  // Define storage mechanism using useMemo
-  const storage = useMemo(() => {
+  useEffect(() => {
     if (isChromeExtension) {
-      return chrome.storage.local;
+      chrome.storage.local.get([utils.SINGLEPLAYER_CUSTOMIZATIONS], (result) => {
+        const storedCustomizations = result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+        setStates(storedCustomizations);
+      });
     } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
-        }
-      };
+      const storedCustomizations = utils.defaultSingleplayerCustomizations;
+      setStates(storedCustomizations);
     }
   }, [isChromeExtension]);
 
-  // Load customizations when the component mounts
-  useEffect(() => {
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = {};
-      if (result['singleplayer-customizations']) {
-        customizations = result['singleplayer-customizations'];
-      }
+  const setStates = (storedCustomizations) => {
+    if (storedCustomizations) {
+      setCustomizations(storedCustomizations);
       setAvailableRestrictions(
         defaultRestrictions.filter(
-          (element) => !customizations.restrictions.includes(element)
+          (element) => !storedCustomizations.restrictions.includes(element)
         )
       );
-      setChosenRestrictions(customizations.restrictions || []);
-    });
-  }, [storage]);
+      setChosenRestrictions(storedCustomizations.restrictions);
+    }
+  }
+
+
 
   const handleDragStart = (e, restriction, sourceWidget) => {
+    console.log(`Dragging ${restriction} from ${sourceWidget}`); // Debugging log
     e.dataTransfer.setData("tile", restriction);
     e.dataTransfer.setData("sourceBox", sourceWidget);
   };
 
   const handleDrop = (e, destinationWidget) => {
+    e.preventDefault();
     const tile = e.dataTransfer.getData("tile");
     const sourceBox = e.dataTransfer.getData("sourceBox");
 
-    e.preventDefault();
+    console.log(`Dropping ${tile} from ${sourceBox} to ${destinationWidget}`); // Debugging log
+
+
 
     if (sourceBox === "available" && destinationWidget === "chosen") {
       setAvailableRestrictions(availableRestrictions.filter((t) => t !== tile));
@@ -84,79 +85,106 @@ function SingleRestrictions() {
   };
 
   const handleSubmit = () => {
-    storage.get('singleplayer-customizations', (result) => {
-      let customizations = result['singleplayer-customizations'] || {};
-      customizations.restrictions = chosenRestrictions;
-      storage.set({ 'singleplayer-customizations': customizations });
-      handleBack();
+    const updatedCustomizations = {
+      ...customizations,
+      restrictions: chosenRestrictions,
+    };
+
+    chrome.storage.local.set({
+      [utils.SINGLEPLAYER_CUSTOMIZATIONS]: updatedCustomizations,
     });
+    handleBack();
   };
 
   return (
-    <div>
-      <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h2 className="text-3xl text-center mb-3">Singleplayer - Customization</h2>
-      <hr className="m-5"/>
-      <div className="flex flex-col items-center">
-        <p className="text-center mb-3">Restrictions</p>
+    <div className="pt-3 p-1">
+      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
 
-        <div className="flex gap-8 m-3">
-          <div
-            className="w-44 p-4 border border-gray-500"
-            onDrop={(e) => handleDrop(e, "available")}
-            onDragOver={handleDragOver}
-          >
-            <h2 className="text-center mb-4">Available</h2>
-            <div className="flex flex-col gap-2">
-              {availableRestrictions.map((tile) => (
-                <div
-                  key={tile}
-                  className="bg-gray-200 p-2 text-center rounded shadow-md cursor-pointer"
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, tile, "available")}
-                >
-                  {tile}
-                </div>
-              ))}
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
+        <p className="text-xl text-center font-medium bg-blue-200 p-1 mb-1">
+          Singleplayer
+        </p>
+        <p className="text-center font-medium text-base bg-slate-200 ">Customizations</p>
+        <hr className="border-t-1 border-black m-3" />
+        <p className="text-center font-medium text-base bg-purple-200 mb-1">Restrictions</p>
+
+        <div className="flex gap-0 justify-center p-1 m-1">
+          <div className="flex-1 border-r-2 border-dotted border-gray-600">
+            <div className="flex flex-col items-center">
+              Available
             </div>
-          </div>
 
-          <div
-            className="w-44 p-4 border border-gray-500"
-            onDrop={(e) => handleDrop(e, "chosen")}
-            onDragOver={handleDragOver}
-          >
-            <h2 className="text-center mb-4">Chosen</h2>
-            <div className="flex flex-col gap-2">
-              {chosenRestrictions.map((tile) => (
-                <div
-                  key={tile}
-                  className="bg-blue-200 p-2 text-center rounded shadow-md cursor-pointer"
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, tile, "chosen")}
-                >
-                  {tile}
-                </div>
-              ))}
+          </div>
+          <div className="flex-1 flex-col items-center">
+          <div className="flex flex-col items-center">
+              Chosen
             </div>
           </div>
         </div>
+
+        <p className="text-center font-medium text-base bg-purple-200">Options</p>
+
+        
+        <div className="flex gap-0 justify-center p-1 m-1"
+        onDragOver={handleDragOver}>
+          <div className="flex-1 border-r-2 border-dotted border-gray-600"
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, "available")}
+        
+          >
+            <div className="p-2">
+              <div className="flex flex-col gap-2">
+                {availableRestrictions.map((tile) => (
+                  <div 
+                  key={tile}
+                  className="bg-gray-200 p-2 text-center rounded shadow-md cursor-pointer"
+                  draggable="true"
+                  onDragStart={(e) => handleDragStart(e, tile, "available")}
+                  > {tile}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+          <div className="flex-1 flex-col items-center"
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, "chosen")}
+          >
+          <div className="p-2">
+              <div className="flex flex-col gap-2">
+                {chosenRestrictions.map((tile) => (
+                  <div 
+                  key={tile}
+                  className="bg-gray-200 p-2 text-center rounded shadow-md cursor-pointer"
+                  draggable="true"
+                  onDragStart={(e) => handleDragStart(e, tile, "chosen")}
+                  > {tile}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      
+      </div>
+
+
         <div className="flex justify-center mb-3">
           <button
-            className="bg-gray-500 text-white py-2 px-4 rounded mr-3"
+            className="bg-gray-500 font-custom text-white py-2 px-4 rounded mr-3"
             onClick={handleBack}
           >
             Return
           </button>
           <button
             type="submit"
-            className="bg-blue-500 text-white py-2 px-4 rounded"
+            className="bg-blue-500 font-custom text-white py-2 px-4 rounded"
             onClick={handleSubmit}
           >
             Submit
           </button>
         </div>
-      </div>
     </div>
   );
 }

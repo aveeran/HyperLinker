@@ -4,7 +4,13 @@ export default {
     "./index.html"
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        custom: ['LinuxLibertine', 'sans'],
+        times: ['"Times New roman"', 'Times', 'serif'],
+        georgia: ['Georgia', 'serif']
+      }
+    },
   },
   plugins: [],
 }

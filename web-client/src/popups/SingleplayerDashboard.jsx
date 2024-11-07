@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import * as utils from "@utils/utils";
 
 const keyCategory = {
   "/singleplayer_dashboard/singleplayer_customization/mode": [
@@ -21,90 +22,61 @@ const getCategory = (value) => {
       return key;
     }
   }
-  return null; // Ensure to return null if no category is found
-};
-
-const defaultCustomizations = {
-  mode: {
-    type: "path",
-    path: {
-      pathLength: 2,
-      directed: true,
-      intermediate_links: [],
-    },
-    countDown: {
-      timer: 0,
-    },
-  },
-  start: {
-    title: "",
-    link: "",
-  },
-  end: {
-    title: "",
-    end: "",
-  },
-  track: ["clicks"],
-  restrictions: [
-    "no-opening-para",
-    "no-find",
-    "no-back",
-    "no-category",
-    "no-dates",
-  ],
+  return null;
 };
 
 function SingleplayerDashboard() {
-  const [customizations, setCustomizations] = useState(defaultCustomizations);
+  const [customizations, setCustomizations] = useState(
+    utils.defaultSingleplayerCustomizations
+  );
   const navigate = useNavigate();
 
-  // Determine if we are in a Chrome extension environment
-  const isChromeExtension = useMemo(() => typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local, []);
+  const isChromeExtension = useMemo(
+    () =>
+      typeof chrome !== "undefined" && chrome.storage && chrome.storage.local,
+    []
+  );
 
-  // Define storage mechanism using useMemo to prevent unnecessary re-renders
-  const storage = useMemo(() => {
+  useEffect(() => {
     if (isChromeExtension) {
-      return chrome.storage.local;
-    } else {
-      return {
-        get: (key, callback) => {
-          const value = localStorage.getItem(key);
-          callback({ [key]: JSON.parse(value) });
-        },
-        set: (obj, callback) => {
-          const key = Object.keys(obj)[0];
-          const value = obj[key];
-          localStorage.setItem(key, JSON.stringify(value));
-          callback && callback();
+      chrome.storage.local.get(
+        [utils.SINGLEPLAYER_CUSTOMIZATIONS],
+        (result) => {
+          const storedCustomizations =
+            result[utils.SINGLEPLAYER_CUSTOMIZATIONS];
+          if (storedCustomizations) {
+            setCustomizations(storedCustomizations);
+          }
         }
-      };
+      );
+    } else {
+      setCustomizations(utils.defaultSingleplayerCustomizations);
     }
   }, [isChromeExtension]);
 
-  useEffect(() => {
-    // Retrieve customizations from storage
-    storage.get("singleplayer-customizations", (result) => {
-      if (result["singleplayer-customizations"]) {
-        setCustomizations(result["singleplayer-customizations"]);
-      } else {
-        storage.set({
-          "singleplayer-customizations": defaultCustomizations,
-        });
-      }
-    });
-  }, [storage]);
-
   const reset = () => {
-    setCustomizations(defaultCustomizations);
-    storage.set({
-      "singleplayer-customizations": defaultCustomizations,
-    });
+    setCustomizations(utils.defaultSingleplayerCustomizations);
+    if (isChromeExtension) {
+      chrome.storage.local.set({
+        [utils.SINGLEPLAYER_CUSTOMIZATIONS]: customizations,
+      });
+    }
   };
 
-  const sortedEntries = Object.entries(customizations).sort(([keyA], [keyB]) => {
-    const order = ["mode", "start", "end", "path", "count down", "track", "restrictions"];
-    return order.indexOf(keyA) - order.indexOf(keyB);
-  });
+  const sortedEntries = Object.entries(customizations).sort(
+    ([keyA], [keyB]) => {
+      const order = [
+        "mode",
+        "start",
+        "end",
+        "path",
+        "count down",
+        "track",
+        "restrictions",
+      ];
+      return order.indexOf(keyA) - order.indexOf(keyB);
+    }
+  );
 
   const handleEdit = (value) => {
     const categoryKey = getCategory(value);
@@ -115,87 +87,145 @@ function SingleplayerDashboard() {
     }
   };
 
-  const test = () => {
+  const handleSubmit = () => {
     if (isChromeExtension) {
-      chrome.runtime.sendMessage({action: "forwardToContent", data: "Hello Content script!"});
-    } else {
-      console.log("Message would be sent to content script");
+      chrome.runtime.sendMessage({ action: utils.START_SINGLEPLAYER });
     }
+    navigate("/singleplayer");
   };
 
   return (
-    <div>
-      <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h2 className="text-3xl text-center mb-3">Singleplayer</h2>
-      <div className="border-black border-2 border-solid p-1.5 m-3">
-        <p className="text-center">Customizations</p>
-        <hr className="m-5"/>
-        {sortedEntries.map(([key, value]) => (
-          <div key={key} className="relative group flex mb-2">
-            <strong className="mr-2">{key}</strong>
-            <p className="whitespace-normal">
-              {Array.isArray(value) ? (
-                <React.Fragment>{value.join(", ")}</React.Fragment>
-              ) : null}
-            </p>
+    <div className="pt-3 p-1">
+      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
+        <p className="font-medium text-xl text-center bg-sky-200 p-1 mb-1">
+          Singleplayer
+        </p>
+        <p className="text-center font-medium text-base bg-slate-200">
+          Customizations
+        </p>
+        <hr className="border-t-1 border-black m-5" />
 
-            <div>
-              {value !== null &&
-              typeof value === "object" &&
-              !Array.isArray(value) ? (
-                <p>{value.title || value.type}</p>
-              ) : null}
-
-              {value !== null && typeof value === "object" && key === "mode"
-                ? Object.entries(value).map(
-                    ([innerKey, innerValue], innerIndex) =>
-                      innerKey === value.type ? (
-                        <div key={innerKey} className="mt-3">
-                          {Object.entries(innerValue).map(
-                            ([nestedKey, nestedValue], nestedIndex) => (
-                              <div key={nestedKey}>
-                                <strong>{nestedKey} </strong>
-                                {Array.isArray(nestedValue) ? (
-                                  <React.Fragment>
-                                    {nestedValue.map((article, index) => (
-                                      <React.Fragment key={index}>
-                                        {article.title}
-                                        {index < nestedValue.length - 1
-                                          ? ", "
-                                          : ""}
-                                      </React.Fragment>
-                                    ))}
-                                  </React.Fragment>
-                                ) : (
-                                  nestedValue.toString()
-                                )}
-                              </div>
-                            )
-                          )}
-                        </div>
-                      ) : null
-                  )
-                : null}
-            </div>
+        <div>
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Start Article</strong>
+            <p className="col-span-2">{customizations.start.title}</p>
             <button
-              className="absolute right-0 top-0 mt-0.5 mr-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-              onClick={() => handleEdit(key)}
+              data-key="start"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
             >
               Edit
             </button>
           </div>
-        ))}
+
+          <div key="end" className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">End Article</strong>
+            <p className="col-span-2">{customizations.end.title}</p>
+            <button
+              data-key="end"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+            >
+              Edit
+            </button>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Tracking</strong>
+            <p className="col-span-2">{customizations.track[0]}</p>
+            <button
+              data-key="track"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+            >
+              Edit
+            </button>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Restrictions</strong>
+            <p className="col-span-2">
+              {customizations.restrictions.join(" · ")}
+            </p>
+            <button
+              data-key="restrictions"
+              className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+              onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+
+        <div className="">
+          <p className="text-center font-bold text-base bg-sky-200">Mode</p>
+          <div className="group relative">
+          <div className="grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Type</strong>
+            <p className="col-span-2">{customizations.mode.type}</p>
+          </div>
+
+          {customizations.mode.type === "path" ? (
+            <>
+              <div className="grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1">
+                  Path Length
+                </strong>
+                <p className="col-span-2">
+                  {customizations.mode.path.pathLength}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1 text-center">
+                  Intermediate Articles
+                </strong>
+
+                <p className="col-span-2">
+                  {customizations.mode.path.intermediate_links.join(", ")}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1">Directed</strong>
+                <p className="col-span-2">
+                  {customizations.mode.path.directed ? "true" : "false"}
+                </p>
+              </div>
+            </>
+          ) : null}
+
+          {customizations.mode.type === "count-down" ? (
+            <div className="grid grid-cols-3 gap-4 p-1">
+              <strong className="text-base mr-1 col-span-1">Timer</strong>
+              <p className="col-span-2">
+                {customizations.mode["count-down"].timer}
+              </p>
+            <button
+                data-key="mode"
+                className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+                onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+              >
+                Edit
+              </button>
+            </div>
+          ) : null}
+          </div>
+          
+        </div>
       </div>
+
       <div className="flex justify-center mb-3">
         <button
-          className="flex bg-gray-400 text-white px-4 py-2 rounded mr-2"
+          className="flex bg-gray-400 text-white px-4 py-2 rounded mr-2 font-custom"
           onClick={() => navigate(-1)}
         >
           Back
         </button>
         <button
-          className="flex bg-green-400 text-white px-4 py-2 rounded"
-          onClick={test}
+          className="flex bg-green-400 text-white px-4 py-2 rounded font-custom"
+          onClick={handleSubmit}
         >
           Start
         </button>

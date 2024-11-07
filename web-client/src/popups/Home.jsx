@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import WikiArticle from "../components/WikiArticle.jsx";
 import { getFormattedDate } from "../utils/utils.js";
 import SingleplayerDashboard from "./SingleplayerDashboard.jsx";
+import GameTracker from "../components/GameTracker.jsx";
+import PathProgress from "../components/PathProgress.jsx";
 
 function Home() {
   const [wikiContent, setWikiContent] = useState("");
@@ -42,29 +44,49 @@ function Home() {
   }, []);
 
   return (
-    <div>
-      <h1 className="text-4xl text-center mb-3">HyperLinker</h1>
-      <h5 className="text-2xl text-center mb-3">Article of the Day</h5>
-      <div className="border-black border-2 border-solid p-1.5 m-3">
-        {wikiLoading ? (
-          <p>Loading...</p>
-        ) : wikiError ? (
-          <p>Error: {wikiError.message}</p>
-        ) : (
-          <WikiArticle article={wikiContent} />
-        )}
+    <div className="pt-3 p-1">
+      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
+
+      <div className="bg-green-100 border-green-200 border-solid border-2 mb-1 p-3">
+          <div className="bg-green-300 p-1 border-gray-400 border-solid border-2">
+            <p className="text-center inline-block font-medium text-lg">
+              From today&apos;s featured article
+            </p>
+          </div>
+          {wikiLoading ? (
+            <p>Loading...</p>
+          ) : wikiError ? (
+            <p>Error: {wikiError.message}</p>
+          ) : (
+            <WikiArticle article={wikiContent} />
+          )}
       </div>
 
-      <h5 className="text-2xl text-center mb-3">News</h5>
-      <div className="border-black border-2 border-solid p-1.5 m-3"></div>
+      <div className="bg-sky-100 border-slate-400 border-solid border-2 mb-3 p-3">
+        <div className="bg-sky-200 p-1 border-gray-400 border-solid border-2">
+          <p className="text-center inline-block font-medium text-lg">In the news</p>
+        </div>
+          <p className="font-seif">Currently no news!</p>
+        
+      </div>
 
       <div className="flex gap-4 p-4 justify-center">
-        <button className="bg-green-400 text-white px-4 py-2 rounded"
-        onClick={handleSingleplayerclick}>
+        <button
+          className="bg-green-400 text-white px-4 py-2 rounded font-georgia shadow-md"
+          onClick={handleSingleplayerclick}
+        >
           Single Player
         </button>
-        <button className="bg-blue-400 text-white px-4 py-2 rounded">
+        <button className="bg-blue-400 text-white px-4 py-2 rounded font-georgia shadow-md">
           Multiplayer
+        </button>
+        <button
+          className="bg-red-400 text-white px-4 py-2 rounded font-georgia shadow-md"
+          onClick={() => {
+            chrome.runtime.sendMessage({ action: "reset" });
+          }}
+        >
+          Reset
         </button>
       </div>
     </div>
