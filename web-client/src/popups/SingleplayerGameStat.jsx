@@ -91,38 +91,6 @@ function SingleplayerGameStat() {
     }
   }, [isChromeExtension])
 
-  // useEffect(() => {
-  //   if(isChromeExtension) {
-  //     const handleEndGameChanges = (changes, areaName) => {
-  //       if(areaName === "local") {
-  //         const storedExternalWikiVisit = changes[utils.EXTERNAL_WIKI_VISIT]?.newValue || undefined;
-  //         const storedGameWin = changes[utils.SINGLEPLAYER_GAME_WIN]?.newValue || undefined;
-  //         const storedTimeFinished = changes[utils.SINGLEPLAYER_TIME_FINISHED]?.newValue || undefined;
-  //         const storedGameQuit = changes[utils.SINGLEPLAYER_GAME_QUIT]?.newValue || undefined;
-  //         const storedEndGameInfo = changes[utils.END_GAME_INFO]?.newValue || undefined;
-
-  //         console.log(storedExternalWikiVisit, storedGameWin, storedTimeFinished, storedGameQuit);
-  //         console.log(storedEndGameInfo);
-
-  //         if(storedExternalWikiVisit !== undefined) setExternalWikiVisit(storedExternalWikiVisit);
-  //         if(storedGameWin !== undefined) setGameWin(storedGameWin);
-  //         if(storedTimeFinished !== undefined) setTimeFinished(storedTimeFinished);
-  //         if(storedGameQuit !== undefined) setGameQuit(storedGameQuit);
-  //         if(storedEndGameInfo !== undefined) {
-  //           setEndInfo(storedEndGameInfo);
-  //           console.log('setting!: ', storedEndGameInfo);
-  //         }
-  //       }
-  //     }
-
-  //     chrome.storage.onChanged.addListener(handleEndGameChanges);
-      
-  //     return () => {
-  //       chrome.storage.onChanged.removeListener(handleEndGameChanges);
-  //     }
-  //   }
-  // }, [isChromeExtension])
-
   const reset = () => {
     if(isChromeExtension) {
       chrome.runtime.sendMessage({action: utils.SINGLEPLAYER_CLEAR_END})
@@ -157,7 +125,7 @@ function SingleplayerGameStat() {
         <p className="text-center font-medium text-base p-1 mb-1 bg-slate-200">
           Game Customizations
         </p>
-        
+
         <div className="max-h-36 overflow-y-auto">
           <div className="group relative grid grid-cols-3 gap-4 p-1">
             <strong className="text-base mr-1 col-span-1">Start Article</strong>

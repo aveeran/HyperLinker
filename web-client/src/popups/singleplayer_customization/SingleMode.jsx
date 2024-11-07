@@ -295,7 +295,7 @@ function SingleMode() {
                     >
                       <div className="flex items-center">
                         <p className="w-[15%] font-medium">{index + 2}</p>
-                        <div className="ml-5">
+                        <div className="">
                           <SearchableDropdown
                             key={index}
                             onDataChange={updatePathArticles}

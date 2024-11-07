@@ -237,7 +237,7 @@ function PathProgress() {
             }, [])
             .map((row, i) => (i % 2 === 1 ? row.reverse() : row)) // Reverse every other row
             .flatMap((row, rowIndex, rows) => [
-              <div className="flex items-center gap-4" key={rowIndex}>
+              <div className={`flex items-center gap-4 ${rowIndex == 1 ? "justify-end" : ""} `} key={rowIndex}>
                 {row.map((step, index) => (
                   <React.Fragment key={index + rowIndex * 3}>
                     <div
@@ -291,14 +291,14 @@ function PathProgress() {
                               rowIndex % 2 == 0
                                 ? index + rowIndex * 3
                                 : rowIndex * 3 + (3 - index - 1)
-                            ].link
+                            ]?.link
                           ) &&
                           visited.includes(
                             path[
                               rowIndex % 2 == 0
                                 ? index + rowIndex * 3 + 1
                                 : rowIndex * 3 + (3 - index - 1) - 1
-                            ].link
+                            ]?.link
                           )
                             ? "bg-green-500"
                             : "bg-gray-300"
@@ -440,14 +440,14 @@ function PathProgress() {
                               rowIndex % 2 == 0
                                 ? index + rowIndex * 3
                                 : rowIndex * 3 + (3 - index - 1)
-                            ].link
+                            ]?.link
                           ) &&
                           visited.includes(
                             path[
                               rowIndex % 2 == 0
                                 ? index + rowIndex * 3 + 1
                                 : rowIndex * 3 + (3 - index - 1) - 1
-                            ].link
+                            ]?.link
                           )
                             ? "bg-green-500"
                             : "bg-gray-300"
