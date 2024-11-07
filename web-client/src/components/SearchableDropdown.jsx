@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
 
 function SearchableDropdown({ onDataChange, index=0, temp={
   title: "",
   link: ""
 }}) {
+  SearchableDropdown.propTypes = {
+    onDataChange: PropTypes.func.isRequired,      
+    index: PropTypes.number,                    
+    temp: PropTypes.shape({                      
+      title: PropTypes.string,
+      link: PropTypes.string,
+    }),
+  };
+  
+  SearchableDropdown.defaultProps = {
+    index: 0,
+    temp: {
+      title: "",
+      link: ""
+    },
+  };
     const [query, setQuery] = useState(temp.title);
     const [suggestions, setSuggestions] = useState(temp.title);
     const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -64,10 +81,10 @@ function SearchableDropdown({ onDataChange, index=0, temp={
           return articles; 
         }
       };
+
       const handleInputChange = (event) => {
         setIsTyping(true);
         const newQuery = event.target.value;
-        console.log(newQuery); 
         setQuery(newQuery); 
       
         const exactMatch = suggestions.find(
@@ -77,7 +94,7 @@ function SearchableDropdown({ onDataChange, index=0, temp={
         if (exactMatch) {
           onDataChange({exactMatch, index});
         } else {
-          onDataChange({ title: newQuery, link: '', index });
+          onDataChange({ title: newQuery, link: '', index }); // TODO: how do we verify that they have made it to their article?
         }
       };
       
