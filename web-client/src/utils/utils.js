@@ -8,7 +8,7 @@ export function getFormattedDate() {
 
   export const defaultSingleplayerCustomizations = {
     mode: {
-      type: "normal",
+      type: "path",
       path: {
         pathLength: 2,
         directed: true,
@@ -24,7 +24,7 @@ export function getFormattedDate() {
     },
     end: {
       title: "",
-      end: "",
+      link: "",
     },
     track: ["clicks"],
     restrictions: [

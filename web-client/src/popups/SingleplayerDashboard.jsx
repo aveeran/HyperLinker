@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as utils from "@utils/utils";
+import { defaultSingleplayerCustomizations } from "@utils/utils";
 
 const keyCategory = {
   "/singleplayer_dashboard/singleplayer_customization/mode": [
@@ -29,6 +30,7 @@ function SingleplayerDashboard() {
   const [customizations, setCustomizations] = useState(
     utils.defaultSingleplayerCustomizations
   );
+  const [pathError, setPathError] = useState(null);
   const navigate = useNavigate();
 
   const isChromeExtension = useMemo(
@@ -87,16 +89,100 @@ function SingleplayerDashboard() {
     }
   };
 
+  const validatePath = () => {
+    if(isChromeExtension) {
+
+      
+      const mode = customizations.mode.type;
+      if(mode === "normal" || mode == "path") {
+        // ensuring that the articles themselves are valid
+        const pathLength = customizations.mode.path.pathLength;
+
+        // validating start article
+        const startArticle = customizations.start;
+        if(!startArticle.link) {
+          return 1;
+        }
+
+        // validating connecting articles
+        const intermediatePath = customizations.mode.path.intermediate_links;
+        const intermediatePathLength = customizations.mode.path.intermediate_links.length+2;
+        // what even is this one
+        if(pathLength != intermediatePathLength) {
+          return 2;
+        }
+
+        for(let i = 0; i < intermediatePath.length; i++) {
+          if (intermediatePath[i].link === "") {
+            return 3;
+          }
+        }
+
+        // validating end article
+        const endArticle = {title: customizations.end.title, link:customizations.end.link};
+
+        if(!endArticle.link) {
+          return 4;
+        }
+
+        // validating no duplicates
+        const path = [startArticle, ...intermediatePath, endArticle];
+        const objectStrings = path.map(item => JSON.stringify(item));
+        const hasDuplicates = new Set(objectStrings).size !== objectStrings.length;
+        if(hasDuplicates) {
+          return 5;
+        }
+      }
+    }
+    return 0;
+  }
+
   const handleSubmit = () => {
     if (isChromeExtension) {
-      chrome.runtime.sendMessage({ action: utils.START_SINGLEPLAYER });
+      const validation = validatePath();
+      switch(validation) {
+        case 0: 
+          chrome.runtime.sendMessage({ action: utils.START_SINGLEPLAYER });
+          navigate("/singleplayer");
+          break;
+        case 1:
+          setPathError("Invalid path. The start article has not been set with a valid article from the suggestions.")
+          break;
+        case 2: // Same behavior as case 3
+        case 3:
+          setPathError("Invalid path. At least one intermediate article has not been set with a valid article from the suggestions.")
+          break;
+        case 4:
+          setPathError("Invalid path. The end article has not been set with a valid article from the suggestions.");
+          break;
+        case 5:
+          setPathError("Invalid path. Currently, repeated articles are not supported.")
+          break;
+        default:
+          setPathError("There was an unidentified error");
+      }
     }
-    navigate("/singleplayer");
   };
 
+ // 3 second cool-down on path
+  useEffect(() => {
+    if (pathError) {
+      const timer = setTimeout(() => setPathError(null), 3000); 
+      return () => clearTimeout(timer); 
+    }
+  }, [pathError]);
+
   return (
-    <div className="pt-3 p-1">
+    <div className="relative pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
+      {
+        pathError && (
+          <div 
+          className="absolute bottom-2 left-0 right-0 bg-red-500 text-white text-center py-2 opacity-90"
+          onClick={() => {setPathError(null)}}
+          >{pathError}</div>
+        )
+      }
       <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
         <p className="font-medium text-xl text-center bg-sky-200 p-1 mb-1">
           Singleplayer
@@ -177,21 +263,32 @@ function SingleplayerDashboard() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 p-1">
-                <strong className="text-base mr-1 col-span-1 text-center">
-                  Intermediate Articles
-                </strong>
+              {
+                customizations.mode.path.pathLength > 2 && (
+                  <div className="grid grid-cols-3 gap-4 p-1">
+                    <strong className="text-base mr-1 col-span-1 text-center">
+                      Intermediate Articles
+                    </strong>
 
-                <p className="col-span-2">
-                  {customizations.mode.path.intermediate_links.join(", ")}
-                </p>
-              </div>
+                    <p className="col-span-2">
+                      {customizations.mode.path.intermediate_links.map(link=>link.title).join(", ")}
+                    </p>
+                  </div>
+                )
+              }
 
               <div className="grid grid-cols-3 gap-4 p-1">
                 <strong className="text-base mr-1 col-span-1">Directed</strong>
                 <p className="col-span-2">
                   {customizations.mode.path.directed ? "true" : "false"}
                 </p>
+                <button
+                data-key="mode"
+                className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
+                onClick={(e) => handleEdit(e.target.getAttribute("data-key"))}
+              >
+                Edit
+              </button>
               </div>
             </>
           ) : null}
