@@ -24,7 +24,7 @@ export function getFormattedDate() {
     },
     end: {
       title: "",
-      end: "",
+      link: "",
     },
     track: ["clicks"],
     restrictions: [
