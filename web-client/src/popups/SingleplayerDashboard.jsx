@@ -91,54 +91,75 @@ function SingleplayerDashboard() {
 
   const validatePath = () => {
     if(isChromeExtension) {
+
+      
       const mode = customizations.mode.type;
       if(mode === "normal" || mode == "path") {
+        // ensuring that the articles themselves are valid
         const pathLength = customizations.mode.path.pathLength;
 
         // validating start article
         const startArticle = customizations.start;
-        const defaultStartArticle = defaultSingleplayerCustomizations.start;
-        if(startArticle === defaultStartArticle) {
-          return false;
-        }
-        if(startArticle.link === "") {
-          return false;
+        if(!startArticle.link) {
+          return 1;
         }
 
         // validating connecting articles
         const intermediatePath = customizations.mode.path.intermediate_links;
         const intermediatePathLength = customizations.mode.path.intermediate_links.length+2;
+        // what even is this one
         if(pathLength != intermediatePathLength) {
-          return false;
+          return 2;
         }
 
         for(let i = 0; i < intermediatePath.length; i++) {
-          if(intermediatePath[i] === defaultStartArticle || intermediatePath[i].link === "") {
-            return false;
+          if (intermediatePath[i].link === "") {
+            return 3;
           }
         }
 
         // validating end article
-        const endArticle = customizations.end;
-        const defaultEndArticle = defaultSingleplayerCustomizations.end;
-        if(endArticle === defaultEndArticle) {
-          return false;
+        const endArticle = {title: customizations.end.title, link:customizations.end.link};
+
+        if(!endArticle.link) {
+          return 4;
         }
-        if(endArticle.link === "") {
-          return false;
+
+        // validating no duplicates
+        const path = [startArticle, ...intermediatePath, endArticle];
+        const objectStrings = path.map(item => JSON.stringify(item));
+        const hasDuplicates = new Set(objectStrings).size !== objectStrings.length;
+        if(hasDuplicates) {
+          return 5;
         }
       }
     }
-    return true;
+    return 0;
   }
 
   const handleSubmit = () => {
     if (isChromeExtension) {
-      if(validatePath()) {
-        chrome.runtime.sendMessage({ action: utils.START_SINGLEPLAYER });
-        navigate("/singleplayer");
-      } else {
-        setPathError("Invalid path. Please check your path settings to make sure every article is valid.")
+      const validation = validatePath();
+      switch(validation) {
+        case 0: 
+          chrome.runtime.sendMessage({ action: utils.START_SINGLEPLAYER });
+          navigate("/singleplayer");
+          break;
+        case 1:
+          setPathError("Invalid path. The start article has not been set with a valid article from the suggestions.")
+          break;
+        case 2: // Same behavior as case 3
+        case 3:
+          setPathError("Invalid path. At least one intermediate article has not been set with a valid article from the suggestions.")
+          break;
+        case 4:
+          setPathError("Invalid path. The end article has not been set with a valid article from the suggestions.");
+          break;
+        case 5:
+          setPathError("Invalid path. Currently, repeated articles are not supported.")
+          break;
+        default:
+          setPathError("There was an unidentified error");
       }
     }
   };
