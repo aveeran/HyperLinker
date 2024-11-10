@@ -13,6 +13,7 @@ export default defineConfig({
       input: {
         background: path.resolve(__dirname, 'src/background/background.js'),
         content: path.resolve(__dirname, 'src/content/content.js'),
+        connection: path.resolve(__dirname,'src/content/connection.js'),
         index: path.resolve(__dirname, 'index.html')
       },
       output: {

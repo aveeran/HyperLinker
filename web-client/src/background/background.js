@@ -440,3 +440,66 @@ function clearEndFlags() {
   chrome.storage.local.set({ [utils.SINGLEPLAYER_GAME_QUIT] : false});
 }
 
+// background.js or service_worker.js
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "connectionStatus") {
+    const isOnline = message.online;
+    console.log("Background script received connection status:", isOnline);
+
+    // Handle further logic based on online/offline status
+    if (isOnline) {
+      console.log("The extension is online.");
+    } else {
+      console.log("The extension is offline.");
+    }
+  }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "popupOpened") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const currentTab = tabs[0];
+      if (currentTab) {
+        const url = currentTab.url; // Get the URL from currentTab
+        if (
+          !url ||  // Covers empty URLs for new tabs with nothing loaded
+          url === "about:blank" ||  // Explicitly check for blank pages
+          url.startsWith("chrome://") ||
+          url.startsWith("chrome-extension://") ||
+          url.startsWith("about:") ||
+          url.startsWith("file://") ||  // Requires special permissions to detect, if necessary
+          url === "chrome://newtab/" ||  // Chrome's new tab page
+          url === "edge://newtab/" ||  // Edge's new tab page
+          url.startsWith("edge://") ||  // Covers Edge's internal pages
+          url.startsWith("edge-extension://")  // Edge's extension-specific pages
+                
+        ) {
+          console.log("restricted");
+        } else {
+          console.log("unrestricted");
+        }
+      }
+    });
+    // Return true to indicate that sendResponse will be called asynchronously
+    return true;
+  }
+});
+
+import io from 'socket.io-client'
+
+const socket = io("http://localhost:3000", {
+  transports: ["websocket"],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  timeout: 20000
+});
+
+socket.on("connect_error", (error) => {
+  console.error("Connection Error:", error);
+});
+
+socket.on("connect_timeout", (timeout) => {
+  console.error("Connection Timeout:", timeout);
+});

@@ -5,6 +5,9 @@ import { getFormattedDate } from "../utils/utils.js";
 import SingleplayerDashboard from "./SingleplayerDashboard.jsx";
 import GameTracker from "../components/GameTracker.jsx";
 import PathProgress from "../components/PathProgress.jsx";
+// import io from 'socket.io-client'
+
+// const socket = io('http://localhost:3000')
 
 function Home() {
   const [wikiContent, setWikiContent] = useState("");
@@ -14,6 +17,7 @@ function Home() {
   const [newsContent, setNewsContent] = useState("");
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState(null);
+
 
   const navigate = useNavigate();
 

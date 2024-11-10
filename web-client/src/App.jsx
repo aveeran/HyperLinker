@@ -8,9 +8,18 @@ import SingleRestrictions from "./popups/singleplayer_customization/SingleRestri
 import RouteTracker from "./popups/RouterTracker.jsx";
 import Singleplayer from "./popups/Singleplayer.jsx";
 import SingleplayerGameStat from "./popups/SingleplayerGameStat.jsx";
+import { useEffect } from 'react';
 
 
 function App() {
+
+  useEffect(() => {
+    chrome.runtime.sendMessage({type: "popupOpened"});
+  })
+
+  // TODO: we should intercept any internet disconnected warning here and basically pause the router? or where should we do it
+  // TODO: architecturally, how to pass down
+  // TODO: WE NEED TO ARCHITECT THE APP STOP PLAYING AROUND
 
   return (
   
