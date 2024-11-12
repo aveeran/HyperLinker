@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import WikiArticle from "../../components/WikiArticle";
+import { MODE, SINGLE_PLAYER, MULTI_PLAYER, RESET, getFormattedDate } from "../../utils/utils";
 
 interface Article {
   content_urls: {
@@ -19,11 +20,21 @@ function Home() {
   const [wikiLoading, setWikiLoading] = useState<boolean>(true);
   const [wikiError, setWikiError] = useState<Error | null>(null);
 
-  // const [newsContnet, setNewsContent] = useState<string>("");
-  // const [newsLoading, setNewsLoading] = useState<boolean>(true);
-  // const [newsError, setNewsError] = useState<Error | null>(null);
+  const [newsContent, setNewsContent] = useState<string>("");
+  const [newsLoading, setNewsLoading] = useState<boolean>(true);
+  const [newsError, setNewsError] = useState<Error | null>(null);
 
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
+
+  const isChromeExtension = useMemo<boolean>(() => {
+    return !!(
+      typeof chrome !== "undefined" &&
+      chrome.storage &&
+      chrome.storage.local
+    );
+  }, []);
+
+  
 
   useEffect(() => {
     const fetchHtml = async () => {
@@ -45,6 +56,28 @@ function Home() {
     };
     fetchHtml();
   }, []);
+
+  const handleResetClick = () => {
+    if(isChromeExtension) {
+      chrome.runtime.sendMessage({action: RESET});
+    } 
+  }
+
+  const handleSingleplayerClick = () => {
+    if(isChromeExtension) {
+      chrome.storage.local.set({[MODE] : SINGLE_PLAYER}, () => {
+        navigate("/dashboard");
+      });
+    }
+  }
+
+  const handleMultiplayerClick = () => {
+    if(isChromeExtension) {
+      chrome.storage.local.set({[MODE] : MULTI_PLAYER}, () => {
+        navigate("/dashboard");
+      })
+    }
+  }
 
   return (
     <div className="pt-3 p-1">
@@ -75,33 +108,23 @@ function Home() {
       <div className="flex gap-4 p-4 justify-center">
         <button
           className="bg-green-400 text-white px-4 py-2 rounded font-georgia shadow-md"
-          // onClick={console.log("w")}
+          onClick={handleSingleplayerClick}
         >
           Single Player
         </button>
-        <button className="bg-blue-400 text-white px-4 py-2 rounded font-georgia shadow-md">
+        <button className="bg-blue-400 text-white px-4 py-2 rounded font-georgia shadow-md"
+          onClick={handleMultiplayerClick}>
           Multiplayer
         </button>
         <button
           className="bg-red-400 text-white px-4 py-2 rounded font-georgia shadow-md"
-          onClick={() => {
-            // chrome.runtime.sendMessage({ action: "reset" });
-            console.log("reset");
-          }}
+          onClick={handleResetClick}
         >
           Reset
         </button>
       </div>
     </div>
   );
-}
-
-function getFormattedDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}/${month}/${day}`;
 }
 
 export default Home;
