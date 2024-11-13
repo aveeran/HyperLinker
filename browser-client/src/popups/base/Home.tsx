@@ -68,6 +68,8 @@ function Home() {
       chrome.storage.local.set({[MODE] : SINGLE_PLAYER}, () => {
         navigate("/dashboard");
       });
+    } else {
+      navigate("/dashboard");
     }
   }
 
@@ -75,7 +77,9 @@ function Home() {
     if(isChromeExtension) {
       chrome.storage.local.set({[MODE] : MULTI_PLAYER}, () => {
         navigate("/dashboard");
-      })
+      });
+    } else {
+      navigate("/dashboard");
     }
   }
 

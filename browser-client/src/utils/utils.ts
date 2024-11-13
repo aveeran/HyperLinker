@@ -36,6 +36,16 @@ export interface Article {
     link: string
 }
 
+export interface Suggestion {
+  article: Article;
+  index: number;
+}
+
+export const defaultArticle: Article = {
+  title:"",
+  link:""
+}
+
 export interface CustomizationInterface {
     mode: {
         type: string;

@@ -39,10 +39,17 @@ function Dashboard() {
         } else {
             setCustomizations(defaultCustomizations);
         }
-      }, [isChromeExtension])
+      }, [isChromeExtension]);
 
       // Add listener for changes to customizations field (multiplayer lobby)
+      /*
+      TODO: MULTIPLAYER; research best implementation
+      1. chrome.storage.local.get([MODE], (result) => { useEffect(...)})
+      2. useEffect(() => { chrome.storage.local.get([MODE], (result) => { })})
+      */
       useEffect(() => {
+        if(isChromeExtension) {
+        }
 
       })
 
