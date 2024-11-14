@@ -7,9 +7,12 @@ import {
   CUSTOMIZATIONS,
   defaultCustomizations,
   defaultRestrictions,
+  GAME_MODE,
+  MULTI_PLAYER,
   SOURCE,
   TILE,
   UPDATE_CUSTOMIZATION,
+  UPDATED_CUSTOMIZATION,
 } from "../../utils/utils";
 
 function RestrictionsChoice() {
@@ -36,6 +39,23 @@ function RestrictionsChoice() {
         if (storedCustomizations) {
           setCustomizationStates(storedCustomizations);
         }
+         // If multiplayer, then update when customizations updated
+
+         if(result[GAME_MODE] === MULTI_PLAYER) {
+            const handleMessage = (message: {type: string; customizations: CustomizationInterface},
+              sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
+            ) => {
+              if(message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+                setCustomizationStates(message.customizations);
+              }
+            }
+            chrome.runtime.onMessage.addListener(handleMessage);
+  
+            return () => {
+              chrome.runtime.onMessage.removeListener(handleMessage);
+            }
+          }
+         
       });
     } else {
         setCustomizationStates(defaultCustomizations);

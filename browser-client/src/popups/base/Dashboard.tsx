@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizations, MODE, MODE_NORMAL, MODE_PATH } from "../../utils/utils";
+import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizations, GAME_MODE, GAME_STARTED, MODE_NORMAL, MODE_PATH, MULTI_PLAYER, START_GAME, UPDATED_CUSTOMIZATION } from "../../utils/utils";
 import { useMemo, useState, useEffect } from "react";
 
 const getCategory = (value: string | null) => {
@@ -13,9 +13,11 @@ const getCategory = (value: string | null) => {
 
 
 function Dashboard() {
+  // TODO: add listener for game started, possibly add 'ready' feature in the future
     const [customizations, setCustomizations] = useState<CustomizationInterface>(defaultCustomizations);
     const [pathError,setPathError] = useState<string | null>(null);
 
+    
 
     const navigate = useNavigate();
     const isChromeExtension = useMemo<boolean>(() => {
@@ -30,28 +32,33 @@ function Dashboard() {
       // Initializing customizations
       useEffect(() => {
         if(isChromeExtension) {
-            chrome.storage.local.get([CUSTOMIZATIONS], (result) => {
+            chrome.storage.local.get([CUSTOMIZATIONS, GAME_MODE], (result) => {
                 const storedCustomizations = result[CUSTOMIZATIONS];
                 if(storedCustomizations) {
                     setCustomizations(storedCustomizations);
+                    console.log("See the customizations: ", storedCustomizations);
+                }
+                // If multiplayer, then update when customizations updated
+
+                if(result[GAME_MODE] === MULTI_PLAYER) {
+                  const handleMessage = (message: {type: string; customizations: CustomizationInterface},
+                    sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
+                  ) => {
+                    if(message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+                      setCustomizations(message.customizations);
+                    }
+                  }
+                  chrome.runtime.onMessage.addListener(handleMessage);
+
+                  return () => {
+                    chrome.runtime.onMessage.removeListener(handleMessage);
+                  }
                 }
             });
         } else {
             setCustomizations(defaultCustomizations);
         }
       }, [isChromeExtension]);
-
-      // Add listener for changes to customizations field (multiplayer lobby)
-      /*
-      TODO: MULTIPLAYER; research best implementation
-      1. chrome.storage.local.get([MODE], (result) => { useEffect(...)})
-      2. useEffect(() => { chrome.storage.local.get([MODE], (result) => { })})
-      */
-      useEffect(() => {
-        if(isChromeExtension) {
-        }
-
-      })
 
       const handleEdit = (value: string | null) => {
         const categoryKey = getCategory(value);
@@ -115,10 +122,10 @@ function Dashboard() {
         if (isChromeExtension) {
             const validation = validatePath();
             switch(validation) {
-              case 0: 
-                // TODO: here, do we want to check if multiplayer/singleplayer or do it in background.js?
-                chrome.runtime.sendMessage({ action: "bruh:" });
-                navigate("/singleplayer");
+              case 0:
+                chrome.runtime.sendMessage({type: START_GAME, customizations: customizations});
+                // TODO: add listener for GAME_STARTED messge (if multiplayer)
+                navigate("/");
                 break;
               case 1:
                 setPathError("Invalid path. The start article has not been set with a valid article from the suggestions.")

@@ -4,8 +4,11 @@ import {
   CustomizationInterface,
   CUSTOMIZATIONS,
   defaultCustomizations,
+  GAME_MODE,
+  MULTI_PLAYER,
   TRACK_CLICKS,
   UPDATE_CUSTOMIZATION,
+  UPDATED_CUSTOMIZATION,
 } from "../../utils/utils";
 
 function TrackerChoice() {
@@ -27,7 +30,28 @@ function TrackerChoice() {
     if (isChromeExtension) {
       chrome.storage.local.get([CUSTOMIZATIONS], (result) => {
         const storedCustomizations = result[CUSTOMIZATIONS];
-        setCustomizationStates(storedCustomizations);
+        if(storedCustomizations) {
+            setCustomizationStates(storedCustomizations);
+        }
+
+        // If multiplayer, then update when customizations updated
+
+        if(result[GAME_MODE] === MULTI_PLAYER) {
+            const handleMessage = (message: {type: string; customizations: CustomizationInterface},
+              sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
+            ) => {
+              if(message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+                setCustomizationStates(message.customizations);
+              }
+            }
+            chrome.runtime.onMessage.addListener(handleMessage);
+  
+            return () => {
+              chrome.runtime.onMessage.removeListener(handleMessage);
+            }
+          }
+  
+
       });
     } else {
       setCustomizationStates(defaultCustomizations);

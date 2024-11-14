@@ -1,5 +1,5 @@
 export const RESET: string = "reset";
-export const MODE: string = "mode";
+export const GAME_MODE: string = "mode";
 export const SINGLE_PLAYER: string = "singleplayer";
 export const MULTI_PLAYER: string = "multiplayer";
 export const LAST_ACTIVE_ROUTE: string = "last_active_route";
@@ -7,9 +7,13 @@ export const CUSTOMIZATIONS: string = "customizations";
 export const MODE_NORMAL: string = "normal";
 export const MODE_PATH: string = "path";
 export const MODE_COUNT_DOWN: string = "count_down";
+export const START_GAME: string = "start_game";
+export const GAME_STARTED: string = "game_started";
 
 export const UPDATE_CUSTOMIZATION: string = "update_customization";
 export const UPDATED_CUSTOMIZATION: string = "updated_customization";
+
+export const UPDATE_GAME_MODE: string = "update_game_mode";
 
 export function getFormattedDate() {
     const today = new Date();

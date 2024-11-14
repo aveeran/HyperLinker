@@ -5,6 +5,7 @@ import RouterTracker from './popups/base/RouterTracker.tsx';
 import ModeChoice from './popups/base/ModeChoice.tsx';
 import TrackerChoice from './popups/base/TrackChoice.tsx';
 import RestrictionsChoice from './popups/base/RestrictionsChoice.tsx';
+import Game from './popups/base/Game.tsx';
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/dashboard/mode" element={<ModeChoice/>}/>
           <Route path="/dashboard/track" element={<TrackerChoice/>}/>
           <Route path="/dashboard/restrictions" element={<RestrictionsChoice/>}/>
+          <Route path="/game" element={<Game/>}/>
         </Routes>
       </div>
     </Router>
