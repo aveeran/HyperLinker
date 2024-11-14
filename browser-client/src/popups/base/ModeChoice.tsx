@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Article, CustomizationInterface, CUSTOMIZATIONS, defaultArticle, defaultCustomizations, Suggestion } from "../../utils/utils";
+import { Article, CustomizationInterface, CUSTOMIZATIONS, defaultArticle, defaultCustomizations, MODE_COUNT_DOWN, MODE_PATH, Suggestion, UPDATE_CUSTOMIZATION } from "../../utils/utils";
 import SearchableDropdown from "../../components/SearchableDropdown";
 
 function ModeChoice() {
@@ -36,7 +36,7 @@ function ModeChoice() {
                 }
             })
         }
-      });
+      }, [isChromeExtension]);
 
       const setCustomizationStates = (updatedCustomizations : CustomizationInterface) => {
         if(updatedCustomizations) {
@@ -85,9 +85,36 @@ function ModeChoice() {
 
       const handleSubmit = () => {
         const updatedCustomizations = {
-
+          ...customizations,
+          mode: {
+            ...customizations.mode,
+            type: mode,
+            ...(mode === MODE_PATH && {
+              path: {
+                pathLength: pathLength,
+                directed: isPathDirected,
+                connections: pathArticles
+              }
+            }),
+            ...(mode === MODE_COUNT_DOWN && {
+              count_down: {
+                timer: timer
+              }
+            }),
+          },
+          start: startArticle,
+          end: endArticle
         }
 
+        if(isChromeExtension) {
+          chrome.storage.local.set({[CUSTOMIZATIONS] : updatedCustomizations}, () => {
+            chrome.runtime.sendMessage({
+              type: UPDATE_CUSTOMIZATION,
+              customizations: updatedCustomizations
+            });
+          });
+        }
+        setCustomizationStates(updatedCustomizations); // TODO: necessary?
         handleBack();
       }
 

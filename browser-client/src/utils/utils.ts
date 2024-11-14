@@ -8,6 +8,9 @@ export const MODE_NORMAL: string = "normal";
 export const MODE_PATH: string = "path";
 export const MODE_COUNT_DOWN: string = "count_down";
 
+export const UPDATE_CUSTOMIZATION: string = "update_customization";
+export const UPDATED_CUSTOMIZATION: string = "updated_customization";
+
 export function getFormattedDate() {
     const today = new Date();
     const year = today.getFullYear();
@@ -200,3 +203,28 @@ export const defaultClientGame: ClientGameInterface = {
     "/dashboard/track": ["track"],
     "/dashboard/restrictions":["restrictions"]
   }
+
+export const NO_OPENING_PARA = "no-opening-para";
+export const NO_FIND = "no-find";
+export const NO_BACK = "no-back";
+export const NO_DATES = "no-dates";
+export const SAME_PAGE_LINK = "same-page-link";
+export const NO_POPUPS = "no-popups";
+
+export const defaultRestrictions = [
+  NO_OPENING_PARA,
+  NO_FIND,
+  NO_BACK,
+  NO_DATES,
+  SAME_PAGE_LINK,
+  NO_POPUPS
+]
+
+// TODO: move into RestrictionsChoice.tsx
+export const TILE = "tile";
+export const SOURCE = "source";
+export const AVAILABLE = "available";
+export const CHOSEN = "chosen";
+
+export const TRACK_CLICKS = "clicks";
+export const TRACK_TIME = "time";
