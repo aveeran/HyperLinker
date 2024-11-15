@@ -118,7 +118,14 @@ export interface GameInterface {
     startTime: number;
     customizations: CustomizationInterface;
     participants: string[];
-    gameStatus: GameStatus;
+    gameClients: GameStatus;
+    gameStatus: {
+      playing: boolean;
+      paused?: boolean;
+      pauseStart?: number;
+      pauseGap?: number;
+      win: string | null
+  }
 }
 
 export const defaultGame: GameInterface = {
@@ -127,29 +134,26 @@ export const defaultGame: GameInterface = {
     startTime: 0,
     customizations: defaultCustomizations,
     participants: [/*String*/],
-    gameStatus: {
+    gameClients: {
       // clientID1: defaultClientGame,
+    },
+    gameStatus: {
+      playing: false,
+      win: null
     }
   }
 
 export interface NodeHistoryInterface {
     clicks: number;
-    timeElapsed: number;
+    arriveTime: number;
 }
 
 export interface ClientGameInterface {
     freePath: Article[];
     visitedPath: Article[];
     nodeHistory: NodeHistoryInterface[];
-    edgeHistory: Article[];
+    edgeHistory: Article[][];
     currentNode: number;
-    status: {
-        playing: boolean;
-        paused: boolean;
-        pauseStart: number;
-        pauseGap: number;
-        win: boolean
-    }
 }
 
 export const defaultClientGame: ClientGameInterface = {
@@ -181,13 +185,6 @@ export const defaultClientGame: ClientGameInterface = {
       */
     ],
     currentNode: 0,
-    status : {
-      playing: false,
-      paused: false,
-      pauseStart: 0,
-      pauseGap: 0,
-      win: false
-    }
   };
 
   export interface dashboardKeyInterface {
@@ -232,3 +229,9 @@ export const CHOSEN = "chosen";
 
 export const TRACK_CLICKS = "clicks";
 export const TRACK_TIME = "time";
+
+export const GAME = "game";
+
+export const TAB_ID = "tab_id";
+export const WIN = "win";
+export const WIKIPEDIA_CLICK = "wikipedia_click';"

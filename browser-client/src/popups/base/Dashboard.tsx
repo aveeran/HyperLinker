@@ -125,7 +125,7 @@ function Dashboard() {
               case 0:
                 chrome.runtime.sendMessage({type: START_GAME, customizations: customizations});
                 // TODO: add listener for GAME_STARTED messge (if multiplayer)
-                navigate("/");
+                navigate("/game");
                 break;
               case 1:
                 setPathError("Invalid path. The start article has not been set with a valid article from the suggestions.")
