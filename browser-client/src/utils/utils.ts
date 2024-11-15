@@ -125,7 +125,8 @@ export interface GameInterface {
       pauseStart?: number;
       pauseGap?: number;
       win: string | null
-  }
+  },
+  path: Article[]
 }
 
 export const defaultGame: GameInterface = {
@@ -140,7 +141,9 @@ export const defaultGame: GameInterface = {
     gameStatus: {
       playing: false,
       win: null
-    }
+    },
+    path: []
+    
   }
 
 export interface NodeHistoryInterface {
@@ -234,4 +237,6 @@ export const GAME = "game";
 
 export const TAB_ID = "tab_id";
 export const WIN = "win";
-export const WIKIPEDIA_CLICK = "wikipedia_click';"
+export const WIKIPEDIA_CLICK = "wikipedia_click";
+
+export const CLICK_COUNT = "click_count";

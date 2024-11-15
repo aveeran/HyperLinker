@@ -1,4 +1,5 @@
 import {
+    CLICK_COUNT,
   CustomizationInterface,
   CUSTOMIZATIONS,
   defaultArticle,
@@ -39,7 +40,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       break;
     case WIKIPEDIA_CLICK:
-        handleWikipediaClick(message.link);
+        handleWikipediaClick(message.page);
   }
 
   return false;
@@ -86,22 +87,28 @@ function startSingleplayer(customizations: CustomizationInterface) {
   };
 
   // Initializing free-path
-  if (
-    game.customizations.mode.type === MODE_PATH &&
-    !game.customizations.mode.path?.directed
-  ) {
+  if (game.customizations.mode.type === MODE_PATH &&
+    !game.customizations.mode.path?.directed) {
     game.gameClients[SINGLE_PLAYER].freePath = Array.from(
       { length: pathLength },
       () => ({ title: "???", link: "www.wikipedia.org" })
     );
   }
 
+  // Game Path
+  game.path = [
+    game.customizations.start,
+    ...(game.customizations.mode.type === MODE_PATH ? (game.customizations.mode.path?.connections ?? []) : []),
+    game.customizations.end
+  ];
+
   // Node history
   game.gameClients[SINGLE_PLAYER].nodeHistory = Array.from(
     { length: pathLength },
     () => ({ clicks: 0, arriveTime: -1 }) 
   );
-
+  
+  // Edge history
   game.gameClients[SINGLE_PLAYER].edgeHistory = Array.from(
     { length: pathLength - 1 },
     () => []
@@ -130,6 +137,65 @@ function handlePauseSingleplayer() {}
 
 function handleUnpauseSingleplayer() {}
 
-function handleWikipediaClick(link : string) {
-    
+function handleWikipediaClick(page : string ) {
+    chrome.storage.local.get([CLICK_COUNT], (result) => {
+        if(game.gameStatus.playing) {
+            let clicks = result[CLICK_COUNT] || 0;
+            clicks++;
+            chrome.storage.local.set({[CLICK_COUNT] : clicks});
+
+            const currentNode = game.gameClients[SINGLE_PLAYER].currentNode; // TODO: maybe instead of SINGLE_PLAYER, we use another IDENTITY that we set (to id)
+            const nextPage = game.path[currentNode + 1];
+
+            const searchTitle = page.split("/").pop();
+            fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${searchTitle}`)
+            .then((response) => response.json())
+            .then((data) => {
+                if(data.title) {
+                    const pageTitle = data.title;
+
+                    // Updating edge history
+                    let currentEdgeHistory = game.gameClients[SINGLE_PLAYER].edgeHistory[currentNode];
+                    currentEdgeHistory.push({title: pageTitle, link: page});
+                    game.gameClients[SINGLE_PLAYER].edgeHistory[currentNode] = currentEdgeHistory;
+
+                    // Updating node history
+                    let currentNodeHistory = game.gameClients[SINGLE_PLAYER].nodeHistory[currentNode];
+                    currentNodeHistory.clicks++;
+                    game.gameClients[SINGLE_PLAYER].nodeHistory[currentNode] = currentNodeHistory;
+
+                    if(game.customizations.mode.path?.directed === true) {
+                        if(page === nextPage.link) {
+                            game.gameClients[SINGLE_PLAYER].currentNode++;
+                            game.gameClients[SINGLE_PLAYER].visitedPath.push({title: pageTitle, link: page});
+                        }
+                    } 
+                    // TODO: WHAT THE FUCK DOES THIS CODE DO
+                    else if (game.customizations.mode.path?.directed === false) {
+                        if(game.path.map((article) => article.link).includes(page) && 
+                        !game.gameClients[SINGLE_PLAYER].visitedPath.includes({title: pageTitle, link: page})
+                        && (page === game.customizations.end.link ? currentNode === game.path.length - 2 : true)) {
+                           game.gameClients[SINGLE_PLAYER].currentNode++;
+                           game.gameClients[SINGLE_PLAYER].freePath[game.gameClients[SINGLE_PLAYER].currentNode] = {
+                            title: pageTitle,
+                            link:page
+                           } ;
+                           game.gameClients[SINGLE_PLAYER].visitedPath.push({title: pageTitle, link: page});
+                        }
+                    }
+                    // TODO: can optimize by creating article = {pageTitle, page}
+
+                    // store
+
+                    // if multiplayer, send out updated object gameClients[SINGLE_PLAYER]
+
+                    // check if end
+
+                    // if end and multiplayer, send message
+
+
+                }
+            });
+        }
+    }) 
 }
