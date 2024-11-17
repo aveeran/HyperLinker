@@ -1,4 +1,5 @@
 import {
+  Article,
     CLICK_COUNT,
   CustomizationInterface,
   CUSTOMIZATIONS,
@@ -154,6 +155,13 @@ function handleWikipediaClick(page : string ) {
                 if(data.title) {
                     const pageTitle = data.title;
 
+                    const currentArticle: Article = {
+                      title: pageTitle,
+                      link: page
+                    };
+
+                    console.log("Visited new page: ", currentArticle.title, " ", currentArticle.link);
+
                     // Updating edge history
                     let currentEdgeHistory = game.gameClients[SINGLE_PLAYER].edgeHistory[currentNode];
                     currentEdgeHistory.push({title: pageTitle, link: page});
@@ -164,37 +172,60 @@ function handleWikipediaClick(page : string ) {
                     currentNodeHistory.clicks++;
                     game.gameClients[SINGLE_PLAYER].nodeHistory[currentNode] = currentNodeHistory;
 
-                    if(game.customizations.mode.path?.directed === true) {
+                    if(game.customizations.mode.path?.directed === true || game.customizations.mode.type !== MODE_PATH) {
+                      console.log("Directed path");
                         if(page === nextPage.link) {
+                          console.log("Recorded");
                             game.gameClients[SINGLE_PLAYER].currentNode++;
-                            game.gameClients[SINGLE_PLAYER].visitedPath.push({title: pageTitle, link: page});
+                            game.gameClients[SINGLE_PLAYER].visitedPath.push(currentArticle);
                         }
-                    } 
-                    // TODO: WHAT THE FUCK DOES THIS CODE DO
-                    else if (game.customizations.mode.path?.directed === false) {
+                    } else if (game.customizations.mode.path?.directed === false) {
+                      console.log("Undirected path");
                         if(game.path.map((article) => article.link).includes(page) && 
-                        !game.gameClients[SINGLE_PLAYER].visitedPath.includes({title: pageTitle, link: page})
+                        !game.gameClients[SINGLE_PLAYER].visitedPath.includes(currentArticle)
                         && (page === game.customizations.end.link ? currentNode === game.path.length - 2 : true)) {
+                          console.log("Recorded");
                            game.gameClients[SINGLE_PLAYER].currentNode++;
-                           game.gameClients[SINGLE_PLAYER].freePath[game.gameClients[SINGLE_PLAYER].currentNode] = {
-                            title: pageTitle,
-                            link:page
-                           } ;
-                           game.gameClients[SINGLE_PLAYER].visitedPath.push({title: pageTitle, link: page});
+                           game.gameClients[SINGLE_PLAYER].freePath[game.gameClients[SINGLE_PLAYER].currentNode] = currentArticle;
+                           game.gameClients[SINGLE_PLAYER].visitedPath.push(currentArticle);
                         }
                     }
-                    // TODO: can optimize by creating article = {pageTitle, page}
 
-                    // store
-
-                    // if multiplayer, send out updated object gameClients[SINGLE_PLAYER]
-
+                    // TODO: for multiplayer, maybe keep a single game object saved for the current player (in case any overwrites)
+                    console.log("Updated game information: ", game);
+                    chrome.storage.local.set({
+                      [GAME] : game
+                    });
+                    
+                    if(gameMode === MULTI_PLAYER) {
+                      // TODO: send message to socket.io server
+                    }
+                    
+                    
+                    
                     // check if end
+                    console.log("Current Node: ", game.gameClients[SINGLE_PLAYER].currentNode, " Last Node: ", game.path.length-1,
+                      " Current Article: ", currentArticle, " End: ", game.customizations.end, " Equal?: ", currentArticle == game.customizations.end
+                     );
 
+                    if(game.gameClients[SINGLE_PLAYER].currentNode === game.path.length - 1
+                      && (currentArticle.link == game.customizations.end.link)) {
+                        console.log("Got here");
+                        if(gameMode === SINGLE_PLAYER) {
+                          console.log("game win");
+                        } else if (gameMode === MULTI_PLAYER) {
+                          
+                        }
+                      }
+                      
+                      console.log("---------------------------------");
                     // if end and multiplayer, send message
 
 
                 }
+            })
+            .catch((error) => {
+              console.error("Error fetching page title: ", error);
             });
         }
     }) 
