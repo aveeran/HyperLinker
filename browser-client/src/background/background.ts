@@ -23,6 +23,7 @@ import {
 let gameMode: string = SINGLE_PLAYER;
 let gameCustomizations: CustomizationInterface = defaultCustomizations;
 let game: GameInterface = defaultGame;
+let player: string = SINGLE_PLAYER;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -60,15 +61,16 @@ function handleGameModeUpdate(updatedGameMode: string) {
   gameMode = updatedGameMode;
 
   if (gameMode === MULTI_PLAYER) {
-    // TODO: disconnet from room
+    // TODO: player = id
   } else if (gameMode === SINGLE_PLAYER) {
+    // TODO: disconnet from room
   }
 }
 
 function startSingleplayer(customizations: CustomizationInterface) {
-  game.participants = [SINGLE_PLAYER];
+  game.participants = [player];
   game.gameClients = {
-    [SINGLE_PLAYER]: defaultClientGame,
+    [player]: defaultClientGame,
   };
 
   // Set up game
@@ -90,7 +92,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
   // Initializing free-path
   if (game.customizations.mode.type === MODE_PATH &&
     !game.customizations.mode.path?.directed) {
-    game.gameClients[SINGLE_PLAYER].freePath = Array.from(
+    game.gameClients[player].freePath = Array.from(
       { length: pathLength },
       () => ({ title: "???", link: "www.wikipedia.org" })
     );
@@ -104,23 +106,23 @@ function startSingleplayer(customizations: CustomizationInterface) {
   ];
 
   // Node history
-  game.gameClients[SINGLE_PLAYER].nodeHistory = Array.from(
+  game.gameClients[player].nodeHistory = Array.from(
     { length: pathLength },
-    () => ({ clicks: 0, arriveTime: -1 }) 
+    () => ({ clicks: 0, arriveTime: null }) 
   );
   
   // Edge history
-  game.gameClients[SINGLE_PLAYER].edgeHistory = Array.from(
+  game.gameClients[player].edgeHistory = Array.from(
     { length: pathLength - 1 },
     () => []
   );
 
-  game.gameClients[SINGLE_PLAYER].visitedPath = [game.customizations.start];
+  game.gameClients[player].visitedPath = [game.customizations.start];
 
   chrome.tabs.create({ url: game.customizations.start.link }, (newTab) => {
     // Initializing time
     game.startTime = Date.now();
-    game.gameClients[SINGLE_PLAYER].nodeHistory[0].arriveTime = game.startTime;
+    game.gameClients[player].nodeHistory[0].arriveTime = game.startTime;
 
     chrome.storage.local.set(
       { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id },
@@ -141,11 +143,13 @@ function handleUnpauseSingleplayer() {}
 function handleWikipediaClick(page : string ) {
     chrome.storage.local.get([CLICK_COUNT], (result) => {
         if(game.gameStatus.playing) {
+
+            // Retrieve and implement clicks
             let clicks = result[CLICK_COUNT] || 0;
             clicks++;
             chrome.storage.local.set({[CLICK_COUNT] : clicks});
 
-            const currentNode = game.gameClients[SINGLE_PLAYER].currentNode; // TODO: maybe instead of SINGLE_PLAYER, we use another IDENTITY that we set (to id)
+            const currentNode = game.gameClients[player].currentNode;
             const nextPage = game.path[currentNode + 1];
 
             const searchTitle = page.split("/").pop();
@@ -163,36 +167,37 @@ function handleWikipediaClick(page : string ) {
                     console.log("Visited new page: ", currentArticle.title, " ", currentArticle.link);
 
                     // Updating edge history
-                    let currentEdgeHistory = game.gameClients[SINGLE_PLAYER].edgeHistory[currentNode];
+                    let currentEdgeHistory = game.gameClients[player].edgeHistory[currentNode];
                     currentEdgeHistory.push({title: pageTitle, link: page});
-                    game.gameClients[SINGLE_PLAYER].edgeHistory[currentNode] = currentEdgeHistory;
+                    game.gameClients[player].edgeHistory[currentNode] = currentEdgeHistory;
 
                     // Updating node history
-                    let currentNodeHistory = game.gameClients[SINGLE_PLAYER].nodeHistory[currentNode];
+                    let currentNodeHistory = game.gameClients[player].nodeHistory[currentNode];
                     currentNodeHistory.clicks++;
-                    game.gameClients[SINGLE_PLAYER].nodeHistory[currentNode] = currentNodeHistory;
+                    game.gameClients[player].nodeHistory[currentNode] = currentNodeHistory;
 
                     if(game.customizations.mode.path?.directed === true || game.customizations.mode.type !== MODE_PATH) {
-                      console.log("Directed path");
                         if(page === nextPage.link) {
-                          console.log("Recorded");
-                            game.gameClients[SINGLE_PLAYER].currentNode++;
-                            game.gameClients[SINGLE_PLAYER].visitedPath.push(currentArticle);
+                            game.gameClients[player].currentNode++;
+                            game.gameClients[player].visitedPath.push(currentArticle);
+
+                            // Updating arrive-time for the next node
+                            setNextNodeArrivedTime(currentNode);
                         }
                     } else if (game.customizations.mode.path?.directed === false) {
-                      console.log("Undirected path");
                         if(game.path.map((article) => article.link).includes(page) && 
-                        !game.gameClients[SINGLE_PLAYER].visitedPath.includes(currentArticle)
+                        !game.gameClients[player].visitedPath.includes(currentArticle)
                         && (page === game.customizations.end.link ? currentNode === game.path.length - 2 : true)) {
-                          console.log("Recorded");
-                           game.gameClients[SINGLE_PLAYER].currentNode++;
-                           game.gameClients[SINGLE_PLAYER].freePath[game.gameClients[SINGLE_PLAYER].currentNode] = currentArticle;
-                           game.gameClients[SINGLE_PLAYER].visitedPath.push(currentArticle);
+                           game.gameClients[player].currentNode++;
+                           game.gameClients[player].freePath[game.gameClients[player].currentNode] = currentArticle;
+                           game.gameClients[player].visitedPath.push(currentArticle);
+
+                          // Updating arrive-time for the next node
+                          setNextNodeArrivedTime(currentNode);                        
                         }
                     }
 
                     // TODO: for multiplayer, maybe keep a single game object saved for the current player (in case any overwrites)
-                    console.log("Updated game information: ", game);
                     chrome.storage.local.set({
                       [GAME] : game
                     });
@@ -202,24 +207,17 @@ function handleWikipediaClick(page : string ) {
                     }
                     
                     
-                    
-                    // check if end
-                    console.log("Current Node: ", game.gameClients[SINGLE_PLAYER].currentNode, " Last Node: ", game.path.length-1,
-                      " Current Article: ", currentArticle, " End: ", game.customizations.end, " Equal?: ", currentArticle == game.customizations.end
-                     );
-
-                    if(game.gameClients[SINGLE_PLAYER].currentNode === game.path.length - 1
+                    // Checking if the game has been won with this click     
+                    if(game.gameClients[player].currentNode === game.path.length - 1
                       && (currentArticle.link == game.customizations.end.link)) {
-                        console.log("Got here");
                         if(gameMode === SINGLE_PLAYER) {
-                          console.log("game win");
+                          // TODO: send message of win
                         } else if (gameMode === MULTI_PLAYER) {
                           
                         }
                       }
                       
-                      console.log("---------------------------------");
-                    // if end and multiplayer, send message
+                    // TODO: if end and multiplayer, send message
 
 
                 }
@@ -229,4 +227,10 @@ function handleWikipediaClick(page : string ) {
             });
         }
     }) 
+}
+
+function setNextNodeArrivedTime(currentNode: number) {
+  let nextNodeHistory = game.gameClients[player].nodeHistory[currentNode +1];
+  nextNodeHistory.arriveTime = Date.now();
+  game.gameClients[player].nodeHistory[currentNode + 1] = nextNodeHistory; 
 }

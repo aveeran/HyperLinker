@@ -148,7 +148,7 @@ export const defaultGame: GameInterface = {
 
 export interface NodeHistoryInterface {
     clicks: number;
-    arriveTime: number;
+    arriveTime: number | null;
 }
 
 export interface ClientGameInterface {

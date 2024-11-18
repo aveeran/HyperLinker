@@ -143,6 +143,8 @@ function Dashboard() {
               default:
                 setPathError("There was an unidentified error");
             }
+          } else {
+            navigate("/game");
           }
       }
 
