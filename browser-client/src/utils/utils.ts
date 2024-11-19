@@ -12,8 +12,12 @@ export const GAME_STARTED: string = "game_started";
 
 export const UPDATE_CUSTOMIZATION: string = "update_customization";
 export const UPDATED_CUSTOMIZATION: string = "updated_customization";
+export const UPDATED_GAME_CLIENT: string = "updated_game_client";
 
 export const UPDATE_GAME_MODE: string = "update_game_mode";
+export const PLAYER: string = "player";
+export const VIEWING_PLAYER: string = "viewing_player";
+export const UPDATED_VIEWING_PLAYER: string = "updated_viewing_player";
 
 export function getFormattedDate() {
     const today = new Date();

@@ -8,14 +8,19 @@ import {
   defaultCustomizations,
   defaultGame,
   GAME,
+  GAME_MODE,
   GameInterface,
   MODE_PATH,
   MULTI_PLAYER,
+  PLAYER,
   SINGLE_PLAYER,
   START_GAME,
   TAB_ID,
   UPDATE_CUSTOMIZATION,
   UPDATE_GAME_MODE,
+  UPDATED_GAME_CLIENT,
+  UPDATED_VIEWING_PLAYER,
+  VIEWING_PLAYER,
   WIKIPEDIA_CLICK,
   WIN,
 } from "../utils/utils";
@@ -24,6 +29,7 @@ let gameMode: string = SINGLE_PLAYER;
 let gameCustomizations: CustomizationInterface = defaultCustomizations;
 let game: GameInterface = defaultGame;
 let player: string = SINGLE_PLAYER;
+let viewingPlayer: string = SINGLE_PLAYER;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -43,10 +49,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     case WIKIPEDIA_CLICK:
         handleWikipediaClick(message.page);
+        break;
+      case UPDATED_VIEWING_PLAYER:
+        handleUpdatedViewingPlayer(message.clientID);
+        break;
+
   }
 
   return false;
 });
+
+function handleUpdatedViewingPlayer(clientID: string) {
+  viewingPlayer = clientID;
+}
 
 function handleCustomizationsUpdate(
   updatedCustomizations: CustomizationInterface
@@ -59,6 +74,7 @@ function handleCustomizationsUpdate(
 
 function handleGameModeUpdate(updatedGameMode: string) {
   gameMode = updatedGameMode;
+  chrome.storage.local.set({[GAME_MODE]: gameMode});
 
   if (gameMode === MULTI_PLAYER) {
     // TODO: player = id
@@ -125,7 +141,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
     game.gameClients[player].nodeHistory[0].arriveTime = game.startTime;
 
     chrome.storage.local.set(
-      { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id },
+      { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer },
       () => {}
     );
   });
@@ -198,12 +214,20 @@ function handleWikipediaClick(page : string ) {
                     }
 
                     // TODO: for multiplayer, maybe keep a single game object saved for the current player (in case any overwrites)
+                    // !! apparently no overwrites
                     chrome.storage.local.set({
                       [GAME] : game
                     });
                     
                     if(gameMode === MULTI_PLAYER) {
                       // TODO: send message to socket.io server
+                    } else if (gameMode === SINGLE_PLAYER) {
+                      chrome.runtime.sendMessage({
+                        type: UPDATED_GAME_CLIENT,
+                        clientID: viewingPlayer,
+                        gameClient: game.gameClients[viewingPlayer]
+                      });
+                      console.log("Sent the message about updated game client");
                     }
                     
                     
