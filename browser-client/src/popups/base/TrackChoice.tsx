@@ -6,7 +6,8 @@ import {
   defaultCustomizations,
   GAME_MODE,
   MULTI_PLAYER,
-  TRACK_CLICKS,
+  TRACKING_CLICKS,
+  TRACKING_TIME,
   UPDATE_CUSTOMIZATION,
   UPDATED_CUSTOMIZATION,
 } from "../../utils/utils";
@@ -16,7 +17,7 @@ function TrackerChoice() {
   const [customizations, setCustomizations] = useState<CustomizationInterface>(
     defaultCustomizations
   );
-  const [track, setTrack] = useState<string>(TRACK_CLICKS);
+  const [track, setTrack] = useState<string>(TRACKING_CLICKS);
 
   const isChromeExtension = useMemo<boolean>(() => {
     return !!(
@@ -114,25 +115,25 @@ function TrackerChoice() {
           className="flex flex-col items-center"
         >
           <div className="flex flex-col mb-1">
-            <label htmlFor="clicks" className="mr-4">
+            <label htmlFor={TRACKING_CLICKS} className="mr-4">
               <input
                 type="radio"
-                id="clicks"
+                id={TRACKING_CLICKS}
                 name="tracking"
-                value="clicks"
-                checked={track === "clicks"}
+                value={TRACKING_CLICKS}
+                checked={track === TRACKING_CLICKS}
                 onChange={handleOptionChange}
                 className="mr-2"
               />
               <span>Clicks</span>
             </label>
-            <label htmlFor="time" className="mr-4">
+            <label htmlFor={TRACKING_TIME} className="mr-4">
               <input
                 type="radio"
-                id="time"
+                id={TRACKING_TIME}
                 name="tracking"
-                value="time"
-                checked={track === "time"}
+                value={TRACKING_TIME}
+                checked={track === TRACKING_TIME}
                 onChange={handleOptionChange}
                 className="mr-2"
               />

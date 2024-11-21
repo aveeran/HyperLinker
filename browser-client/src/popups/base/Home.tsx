@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import WikiArticle from "../../components/WikiArticle";
-import { GAME_MODE, SINGLE_PLAYER, MULTI_PLAYER, RESET, getFormattedDate, UPDATE_GAME_MODE } from "../../utils/utils";
+import { GAME_MODE, SINGLE_PLAYER, MULTI_PLAYER, RESET, getFormattedDate, UPDATE_GAME_MODE, CUSTOMIZATIONS, defaultCustomizations, defaultGame, GAME } from "../../utils/utils";
 
 interface Article {
   content_urls: {
@@ -60,6 +60,12 @@ function Home() {
   const handleResetClick = () => {
     if(isChromeExtension) {
       chrome.runtime.sendMessage({action: RESET});
+      chrome.storage.local.clear();
+      chrome.storage.local.set({
+        [GAME_MODE]: SINGLE_PLAYER,
+        [CUSTOMIZATIONS]: defaultCustomizations,
+        [GAME]: defaultGame
+      });
     } 
   }
 

@@ -17,8 +17,6 @@ function Dashboard() {
     const [customizations, setCustomizations] = useState<CustomizationInterface>(defaultCustomizations);
     const [pathError,setPathError] = useState<string | null>(null);
 
-    
-
     const navigate = useNavigate();
     const isChromeExtension = useMemo<boolean>(() => {
         return !!(
@@ -123,7 +121,9 @@ function Dashboard() {
             const validation = validatePath();
             switch(validation) {
               case 0:
-                chrome.runtime.sendMessage({type: START_GAME, customizations: customizations});
+                chrome.runtime.sendMessage({type: START_GAME, customizations: customizations},
+                  () => {console.log("sent from dashboard: ", customizations.track[0])}
+                );
                 // TODO: add listener for GAME_STARTED messge (if multiplayer)
                 navigate("/game");
                 break;

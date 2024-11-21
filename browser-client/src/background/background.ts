@@ -97,13 +97,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
     pathLength += game.customizations.mode.path?.connections.length ?? 0;
   }
 
-  game.gameStatus = {
-    playing: true,
-    paused: false,
-    pauseStart: 0,
-    pauseGap: 0,
-    win: null,
-  };
+
 
   // Initializing free-path
   if (game.customizations.mode.type === MODE_PATH &&
@@ -124,7 +118,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
   // Node history
   game.gameClients[player].nodeHistory = Array.from(
     { length: pathLength },
-    () => ({ clicks: 0, arriveTime: null }) 
+    () => ({ clicks: 0, leaveTime: null, delayTime: 0 }) 
   );
   
   // Edge history
@@ -137,12 +131,20 @@ function startSingleplayer(customizations: CustomizationInterface) {
 
   chrome.tabs.create({ url: game.customizations.start.link }, (newTab) => {
     // Initializing time
-    game.startTime = Date.now();
-    game.gameClients[player].nodeHistory[0].arriveTime = game.startTime;
+    game.gameStatus = {
+      startTime: Date.now(),
+      playing: true,
+      paused: false,
+      pauseStart: 0,
+      pauseGap: 0,
+      win: null,
+    };
 
     chrome.storage.local.set(
       { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer },
-      () => {}
+      () => {
+
+      }
     );
   });
 }
@@ -194,22 +196,20 @@ function handleWikipediaClick(page : string ) {
 
                     if(game.customizations.mode.path?.directed === true || game.customizations.mode.type !== MODE_PATH) {
                         if(page === nextPage.link) {
+                            game.gameClients[player].nodeHistory[currentNode].leaveTime = Date.now();
                             game.gameClients[player].currentNode++;
                             game.gameClients[player].visitedPath.push(currentArticle);
 
-                            // Updating arrive-time for the next node
-                            setNextNodeArrivedTime(currentNode);
+                           
                         }
                     } else if (game.customizations.mode.path?.directed === false) {
                         if(game.path.map((article) => article.link).includes(page) && 
                         !game.gameClients[player].visitedPath.includes(currentArticle)
                         && (page === game.customizations.end.link ? currentNode === game.path.length - 2 : true)) {
+                           game.gameClients[player].nodeHistory[currentNode].leaveTime = Date.now();
                            game.gameClients[player].currentNode++;
                            game.gameClients[player].freePath[game.gameClients[player].currentNode] = currentArticle;
-                           game.gameClients[player].visitedPath.push(currentArticle);
-
-                          // Updating arrive-time for the next node
-                          setNextNodeArrivedTime(currentNode);                        
+                           game.gameClients[player].visitedPath.push(currentArticle);                     
                         }
                     }
 
@@ -227,10 +227,9 @@ function handleWikipediaClick(page : string ) {
                         clientID: viewingPlayer,
                         gameClient: game.gameClients[viewingPlayer]
                       });
-                      console.log("Sent the message about updated game client");
                     }
                     
-                    
+      
                     // Checking if the game has been won with this click     
                     if(game.gameClients[player].currentNode === game.path.length - 1
                       && (currentArticle.link == game.customizations.end.link)) {
@@ -251,10 +250,4 @@ function handleWikipediaClick(page : string ) {
             });
         }
     }) 
-}
-
-function setNextNodeArrivedTime(currentNode: number) {
-  let nextNodeHistory = game.gameClients[player].nodeHistory[currentNode +1];
-  nextNodeHistory.arriveTime = Date.now();
-  game.gameClients[player].nodeHistory[currentNode + 1] = nextNodeHistory; 
 }
