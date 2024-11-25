@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface } from "../../utils/utils";
+import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH } from "../../utils/utils";
 import PlayerSelector from "../../components/PlayerSelector";
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameTracker from "../../components/GameTracker";
@@ -22,11 +22,13 @@ function Game() {
   const [currentPlayer, setCurrentPlayer] = useState<string>("Frank");
   const [gameStatus, setGameStatus] = useState<GameStatusInterface>(defaultGameStatus);
   const [gameClientsInformation, setGameClientsInformation] = useState<ClientGameInterface>(defaultClientGame);
-  const [gameCustomizations, setGameCustomizations] = useState<CustomizationInterface>(defaultCustomizations);
+  const [path, setPath] = useState<Article[]>([]);
 
   const currentPlayerRef = useRef<string>(currentPlayer);
   const [tracking, setTracking] = useState<string>(defaultCustomizations.track[0])
   const [countDown, setCountDown] = useState<number>(-1);
+
+  const [pathCustomizations, setPathCustomizations] = useState<{type: string, directed:boolean}>({type: MODE_NORMAL, directed:true});
 
   useEffect(() => {
     currentPlayerRef.current = currentPlayer;
@@ -67,6 +69,16 @@ function Game() {
           setCountDown(gameRes.customizations.mode.count_down?.timer ?? 0);
         }
 
+        // Retrieving path stuff
+        setPath(gameRes.path);
+        let pathInfo = {type: gameRes.customizations.mode.type, directed: true}
+        if(gameRes.customizations.mode.type === MODE_PATH) {
+          if(!gameRes.customizations.mode.path?.directed) { // TODO: make sure that when path is null, is true
+            pathInfo.directed = false;
+          }
+        }
+        setPathCustomizations(pathInfo);
+
         // Setting states
         setCurrentPlayer(viewingPlayer);
         setGameClientsInformation(gameInformation);
@@ -77,11 +89,13 @@ function Game() {
         if(message.type === UPDATED_GAME_CLIENT) {
           if(message.clientID === currentPlayerRef.current) { // TODO: separate user name from ID
             const updatedGameInformation = message.gameClient;
+            console.log("Updated game information: ", updatedGameInformation);
             setGameClientsInformation(updatedGameInformation);
           }
         } else if (message.type === UPDATED_GAME_CLIENT) {
-          //TODO: do
+          //TODO: do ???
         }
+        // TODO: add listener check for if game ends, etc.
       });
     }
   }, [isChromeExtension]);
@@ -125,7 +139,9 @@ function Game() {
         <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
           Progress
         </p>
-        <PathProgress playerID = {currentPlayer} />
+        <PathProgress gameClientInformation={gameClientsInformation} pathCustomizations={pathCustomizations} 
+        gameStatus={gameStatus} path={path}/>
+
       </div>
 
       <button

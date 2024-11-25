@@ -8,6 +8,7 @@ import {
   defaultCustomizations,
   GAME_MODE,
   MODE_COUNT_DOWN,
+  MODE_NORMAL,
   MODE_PATH,
   MULTI_PLAYER,
   Suggestion,
@@ -143,6 +144,7 @@ function ModeChoice() {
       start: startArticle,
       end: endArticle,
     };
+    console.log("New customizations: ", updatedCustomizations);
 
     if (isChromeExtension) {
       chrome.storage.local.set(
@@ -184,14 +186,14 @@ function ModeChoice() {
               <option value="" disabled>
                 Select a mode
               </option>
-              <option value="normal">Normal</option>
-              <option value="count-down">Count-Down</option>
-              <option value="path">Path</option>
+              <option value={MODE_NORMAL}>Normal</option>
+              <option value={MODE_COUNT_DOWN}>Count-Down</option>
+              <option value={MODE_PATH}>Path</option>
               <option value="random">Random</option>
             </select>
           </div>
 
-          {mode === "normal" ? (
+          {mode === MODE_NORMAL ? (
             <div className="flex flex-col mb-2">
               <ul className="flex flex-col list-disc ml-12">
                 <li className="list-item">
@@ -221,7 +223,7 @@ function ModeChoice() {
             </div>
           ) : null}
 
-          {mode === "count-down" ? (
+          {mode === MODE_COUNT_DOWN ? (
             <div className="items-center justify-center">
               <div className="flex items-center justify-center mb-2 w-auto bg-slate-200 p-1">
                 <input
@@ -267,7 +269,7 @@ function ModeChoice() {
             </div>
           ) : null}
 
-          {mode === "path" ? (
+          {mode === MODE_PATH ? (
             <div className="">
               <div className="flex items-center justify-center bg-green-200 p-1">
                 <span className="mr-2 text-blue-700 font-semibold">

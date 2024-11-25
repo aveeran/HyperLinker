@@ -127,7 +127,7 @@ export interface GameInterface {
     participants: string[];
     gameClients: ClientStatusInterface;
     gameStatus: GameStatusInterface,
-  path: Article[]
+    path: Article[]
 }
 
 export interface GameStatusInterface {

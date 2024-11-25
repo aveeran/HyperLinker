@@ -1,34 +1,44 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClientGameInterface, GameStatusInterface, TRACKING_CLICKS, TRACKING_TIME } from "../utils/utils";
 
 function GameTracker({
   gameClientInformation,
   gameStatus,
   tracking,
-  countDown,
+  countDown = -1,
 }: {
   gameClientInformation: ClientGameInterface;
   gameStatus: GameStatusInterface;
   tracking: string;
   countDown: number;
 }) {
-  const [time, setTime] = useState<number>(0);
-
+  
+  const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (tracking === TRACKING_TIME) {
+    if(countDown != -1) {
+      interval = setInterval(() => {
+        setTime((prevTime) => prevTime + 1);
+        const rawElapsedTime = Date.now() - gameStatus.startTime - (gameStatus.pauseGap ?? 0);
+        if(Math.floor(rawElapsedTime/1000) > countDown) {
+
+          // TODO: send signal, navigate to game end page
+          console.log("Count down done!");
+        }
+      }, 1000);
+
+    } else if (tracking === TRACKING_TIME) {
       interval = setInterval(() => {
         setTime((prevTime) => prevTime + 1);
       }, 1000);
     }
-
     return () => {
       if (interval) {
         clearInterval(interval);
       }
     };
-  }, [tracking]);
+  }, [tracking, countDown, gameStatus.pauseGap]);
 
   const countClicks = (): number => {
     const nodes = gameClientInformation.nodeHistory;
@@ -63,28 +73,46 @@ function GameTracker({
   };
 
   const renderCountDown = () => {
+    const rawElapsedTime = Date.now() - gameStatus.startTime - (gameStatus.pauseGap ?? 0);
+    const formattedTime = countDown - Math.floor(rawElapsedTime/1000);
+
     return (
       <div className="grid grid-cols-[100px_auto] gap-2 items-center">
         <span className="text-right font-medium">Count Down:</span>
-        <span className="text-left">{parseTime(countDown - time)}</span>
+        <span className="text-left">{parseTime(formattedTime)}</span>
       </div>
     );
   };
 
   const renderTime = () => {
-    const elapsedTime =
+    const rawTime =
       Date.now() - gameStatus.startTime - (gameStatus.pauseGap ?? 0);
+    const formattedTime = Math.floor(rawTime/1000);
 
     return (
       <div className="grid grid-cols-[100px_auto] gap-2 items-center">
         <span className="text-right font-medium">Elapsed Time:</span>
-        <span className="text-left">{parseTime(Math.floor(elapsedTime / 1000))}</span>
+        <span className="text-left">{parseTime(formattedTime)}</span>
       </div>
     );
   };
 
   const renderContent = () => {
     switch (true) {
+      case tracking === TRACKING_CLICKS && countDown != -1:
+        return (
+          <div className="flex flex-col justify-items-center gap-2">
+            {renderClicks()}
+            {renderCountDown()}
+          </div>
+        );
+      case tracking === TRACKING_TIME && countDown != -1:
+        return (
+          <div className="flex flex-col justify-items-center gap-2">
+            {renderTime()}
+            {renderCountDown()}
+          </div>
+        )
       case tracking === TRACKING_CLICKS:
         return renderClicks();
       case tracking === TRACKING_TIME:

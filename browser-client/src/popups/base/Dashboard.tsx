@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizations, GAME_MODE, GAME_STARTED, MODE_NORMAL, MODE_PATH, MULTI_PLAYER, START_GAME, UPDATED_CUSTOMIZATION } from "../../utils/utils";
+import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizations, GAME_MODE, GAME_STARTED, MODE_COUNT_DOWN, MODE_NORMAL, MODE_PATH, MULTI_PLAYER, START_GAME, UPDATED_CUSTOMIZATION } from "../../utils/utils";
 import { useMemo, useState, useEffect } from "react";
 
 const getCategory = (value: string | null) => {
@@ -247,7 +247,7 @@ function Dashboard() {
               <p className="col-span-2">{customizations.mode.type}</p>
             </div>
   
-            {customizations.mode.type === "path" ? (
+            {customizations.mode.type === MODE_PATH ? (
               <>
                 <div className="grid grid-cols-3 gap-4 p-1">
                   <strong className="text-base mr-1 col-span-1">
@@ -291,7 +291,7 @@ function Dashboard() {
               </>
             ) : null}
   
-            {customizations.mode.type === "count-down" ? (
+            {customizations.mode.type === MODE_COUNT_DOWN ? (
               <div className="grid grid-cols-3 gap-4 p-1">
                 <strong className="text-base mr-1 col-span-1">Timer</strong>
                 <p className="col-span-2">
