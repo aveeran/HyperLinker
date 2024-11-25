@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH } from "../../utils/utils";
+import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS } from "../../utils/utils";
 import PlayerSelector from "../../components/PlayerSelector";
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameTracker from "../../components/GameTracker";
@@ -24,9 +24,13 @@ function Game() {
   const [gameClientsInformation, setGameClientsInformation] = useState<ClientGameInterface>(defaultClientGame);
   const [path, setPath] = useState<Article[]>([]);
 
+
   const currentPlayerRef = useRef<string>(currentPlayer);
   const [tracking, setTracking] = useState<string>(defaultCustomizations.track[0])
   const [countDown, setCountDown] = useState<number>(-1);
+
+  const [pausable, setPausable] = useState<boolean>(true);
+  const [paused, setPaused] = useState<boolean>(false);
 
   const [pathCustomizations, setPathCustomizations] = useState<{type: string, directed:boolean}>({type: MODE_NORMAL, directed:true});
 
@@ -69,6 +73,12 @@ function Game() {
           setCountDown(gameRes.customizations.mode.count_down?.timer ?? 0);
         }
 
+        // Setting pausable
+        setPaused(gameRes.gameStatus.paused != null);
+
+        // Set paused
+        setPaused(gameRes.gameStatus.paused ?? false);
+
         // Retrieving path stuff
         setPath(gameRes.path);
         let pathInfo = {type: gameRes.customizations.mode.type, directed: true}
@@ -94,6 +104,9 @@ function Game() {
           }
         } else if (message.type === UPDATED_GAME_CLIENT) {
           //TODO: do ???
+        } else if (message.type === UPDATED_GAME_STATUS) {
+          setGameStatus(message.gameStatus);
+          console.log("Updated game status ", message.gameStatus);
         }
         // TODO: add listener check for if game ends, etc.
       });
@@ -109,6 +122,24 @@ function Game() {
     });
     setCurrentPlayer(playerID);
   };
+
+  const handleQuit = () => {
+
+  }
+
+  const handleTogglePause = () => {
+    if(isChromeExtension) {
+      if(paused) {
+        chrome.runtime.sendMessage({type: UNPAUSE}, () => {
+          setPaused(false);
+        });
+      } else {
+        chrome.runtime.sendMessage({type: PAUSE}, () => {
+          setPaused(true);
+        });
+      }
+    }
+  }
 
   return (
     <div className="pt-3 p-1">
@@ -144,13 +175,34 @@ function Game() {
 
       </div>
 
-      <button
-        onClick={() => {
-          navigate(-1);
-        }}
-      >
-        Return
-      </button>
+      <div className="flex items-center justify-center">
+        <button
+            className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2 font-custom"
+            onClick={handleQuit}
+          >
+            Quit
+          </button>
+        </div>
+
+        {pausable ? (
+          <button
+            className={`w-[25%] p-2 border-2 border-gray-200 rounded-md text-white font-custom ${
+              paused ? "bg-green-500" : "bg-gray-500"
+            }`}
+            onClick={handleTogglePause}
+          >
+            {paused ? "Unpause" : "Pause"}
+          </button>
+        ) : null}
+
+
+        <button
+          onClick={() => {
+            navigate(-1);
+          }}
+        >
+          Return
+        </button>
     </div>
   );
 }

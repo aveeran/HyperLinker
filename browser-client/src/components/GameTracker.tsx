@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClientGameInterface, GameStatusInterface, TRACKING_CLICKS, TRACKING_TIME } from "../utils/utils";
+import { ClientGameInterface, GameStatusInterface, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
 
 function GameTracker({
   gameClientInformation,
@@ -14,31 +14,63 @@ function GameTracker({
 }) {
   
   const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
+  const [paused, setPaused] = useState<boolean>(false);
+  let interval: NodeJS.Timeout | null = null;
+
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if(countDown != -1) {
-      interval = setInterval(() => {
-        setTime((prevTime) => prevTime + 1);
-        const rawElapsedTime = Date.now() - gameStatus.startTime - (gameStatus.pauseGap ?? 0);
-        if(Math.floor(rawElapsedTime/1000) > countDown) {
-
-          // TODO: send signal, navigate to game end page
-          console.log("Count down done!");
-        }
-      }, 1000);
-
-    } else if (tracking === TRACKING_TIME) {
-      interval = setInterval(() => {
-        setTime((prevTime) => prevTime + 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) {
-        clearInterval(interval);
+    if(!paused) { // only if not paused, 
+  
+      if(countDown != -1) {
+        interval = setInterval(() => {
+          setTime((prevTime) => prevTime + 1);
+          const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
+          if(Math.floor(rawElapsedTime/1000) > countDown) {
+  
+            // TODO: send signal, navigate to game end page
+            console.log("Count down done!");
+          }
+        }, 1000);
+  
+      } else if (tracking === TRACKING_TIME) {
+        interval = setInterval(() => {
+          setTime((prevTime) => prevTime + 1);
+        }, 1000);
       }
-    };
+      return () => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      };
+    }
   }, [tracking, countDown, gameStatus.pauseGap]);
+
+  useEffect(() => {
+    chrome.runtime.onMessage.addListener((message, sender, response) => {
+      if(message.type === UPDATE_PAUSE) {
+        console.log("Updating to ", message.pause);
+        if(message.pause && interval) {
+          clearInterval(interval);
+        } else if (!message.pause) {
+          if(countDown != -1) {
+            interval = setInterval(() => {
+              setTime((prevTime) => prevTime + 1);
+              const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
+              if(Math.floor(rawElapsedTime/1000) > countDown) {
+      
+                // TODO: send signal, navigate to game end page
+                console.log("Count down done!");
+              }
+            }, 1000);
+      
+          } else if (tracking === TRACKING_TIME) {
+            interval = setInterval(() => {
+              setTime((prevTime) => prevTime + 1);
+            }, 1000);
+          }
+        }
+      }
+    })
+  });
 
   const countClicks = (): number => {
     const nodes = gameClientInformation.nodeHistory;
@@ -86,7 +118,7 @@ function GameTracker({
 
   const renderTime = () => {
     const rawTime =
-      Date.now() - gameStatus.startTime - (gameStatus.pauseGap ?? 0);
+      Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000);
     const formattedTime = Math.floor(rawTime/1000);
 
     return (

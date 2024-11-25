@@ -254,3 +254,9 @@ export const WIN = "win";
 export const WIKIPEDIA_CLICK = "wikipedia_click";
 
 export const CLICK_COUNT = "click_count";
+
+export const PAUSE = "pause";
+export const UNPAUSE = "unpause";
+
+export const UPDATE_PAUSE = "update_pause";
+

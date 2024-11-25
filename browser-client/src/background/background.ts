@@ -12,13 +12,17 @@ import {
   GameInterface,
   MODE_PATH,
   MULTI_PLAYER,
+  PAUSE,
   PLAYER,
   SINGLE_PLAYER,
   START_GAME,
   TAB_ID,
+  UNPAUSE,
   UPDATE_CUSTOMIZATION,
   UPDATE_GAME_MODE,
+  UPDATE_PAUSE,
   UPDATED_GAME_CLIENT,
+  UPDATED_GAME_STATUS,
   UPDATED_VIEWING_PLAYER,
   VIEWING_PLAYER,
   WIKIPEDIA_CLICK,
@@ -50,8 +54,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case WIKIPEDIA_CLICK:
         handleWikipediaClick(message.page);
         break;
-      case UPDATED_VIEWING_PLAYER:
+    case UPDATED_VIEWING_PLAYER:
         handleUpdatedViewingPlayer(message.clientID);
+        break;
+    case PAUSE:
+        handlePause();
+        break;
+    case UNPAUSE:
+        handleUnpause();
         break;
 
   }
@@ -61,6 +71,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 function handleUpdatedViewingPlayer(clientID: string) {
   viewingPlayer = clientID;
+}
+
+function handlePause() {
+  game.gameStatus.paused = true;
+  chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: true});
+
+  pauseInterval = setInterval(() => {
+    elapsedPause++;
+  }, 1000);
+
+  if(gameMode === MULTI_PLAYER) {
+
+  } else {
+
+  }
+
+}
+
+let pauseInterval : NodeJS.Timeout | null = null;
+let elapsedPause = 0;
+
+function handleUnpause() {
+  if(pauseInterval) {
+    clearInterval(pauseInterval);
+  }
+
+  game.gameStatus.paused = false;
+  chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: false});
+
+  if(gameMode === MULTI_PLAYER) {
+
+  } else {
+
+  }
+
+  if(game.gameStatus.pauseGap != undefined) {
+    game.gameStatus.pauseGap += elapsedPause;
+  } else {
+    game.gameStatus.pauseGap = elapsedPause;
+  }
+  chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus});
+
+  elapsedPause = 0;
 }
 
 function handleCustomizationsUpdate(
