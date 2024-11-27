@@ -27,11 +27,11 @@ function WikiArticle({article} : ArticleProps) {
                 />
 
                 <a 
-                    href={article.thumbnail.source}
+                    href={article.thumbnail?.source || ""}
                     target="_blank"
                     rel="noopener noreferrer"
                 >
-                    <img src={article.thumbnail.source} className="w-32 h-32" alt="Thumbnail"/>
+                    <img src={article.thumbnail?.source || ""} className="w-32 h-32" alt="Thumbnail"/>
                 </a>
             </div>
         </div>

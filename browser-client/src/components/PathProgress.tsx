@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Article, ClientGameInterface, GameStatusInterface, MODE_PATH } from "../utils/utils";
+import { Article, ClientGameInterface, GameStatusInterface, MODE_PATH, UPDATE_PAUSE } from "../utils/utils";
 import React from "react";
 
 function PathProgress({gameClientInformation, gameStatus, pathCustomizations, path} : {gameClientInformation: ClientGameInterface,
@@ -15,9 +15,9 @@ function PathProgress({gameClientInformation, gameStatus, pathCustomizations, pa
     const [endIndex, setEndIndex] = useState<number>(path.length-1);
 
     const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
+    let interval : NodeJS.Timeout | null = null;
 
     useEffect(() => {
-      let interval : NodeJS.Timeout | null = null;
       interval = setInterval(() => {
         setTime((prevTime) => prevTime + 1);
       }, 1000);
@@ -28,6 +28,22 @@ function PathProgress({gameClientInformation, gameStatus, pathCustomizations, pa
         }
       }
     }, [])
+
+    console.log(gameStatus.paused);
+
+    useEffect(() => {
+      chrome.runtime.onMessage.addListener((message, sender, response) => {
+        if(message.type === UPDATE_PAUSE) {
+          if(message.pause && interval) {
+            clearInterval(interval);
+          } else if (!message.pause) {
+            interval = setInterval(() => {
+              setTime((prevTime) => prevTime + 1);
+            }, 1000);
+          }
+        }
+      })
+    }, []);
 
     useEffect(() => {
       if(gameClientInformation.currentNode != currentNode) {
@@ -87,6 +103,56 @@ function PathProgress({gameClientInformation, gameStatus, pathCustomizations, pa
     
         return `${formattedHours}${formattedMinutes}${formattedSeconds}`;
       }, []);
+
+
+      const renderElapsedTime = () => {
+        // const previousDelays = gameClientInformation.nodeHistory
+        //                       .slice(0, ((activeNode ?? hoveredNode) ?? 0) + 1) 
+        //                       .reduce((totalDelay, current) => totalDelay + ((current.delayTime ?? 0)*1000), 0);
+        //                       console.log("Previous delays: ", previousDelays);
+
+        
+        const prevLeave = gameClientInformation.nodeHistory[ (((activeNode ?? hoveredNode)) ?? 0) - 1]?.leaveTime;
+        const delay = gameClientInformation.nodeHistory[ (((activeNode ?? hoveredNode)) ?? 0)]?.delayTime * 1000;
+
+        console.log("Delay: ", delay);
+
+        if(gameClientInformation.nodeHistory[ ((activeNode ?? hoveredNode)) ?? 0].leaveTime != null) {
+          // if we already left, use leave time and either gameStatus.startTime or prevLeave
+          const leaveTime = (gameClientInformation.nodeHistory[ ((activeNode ?? hoveredNode)) ?? 0].leaveTime ?? 0);
+
+          if(prevLeave != null) {
+            return (
+              <>
+                {parseTime((leaveTime- prevLeave - delay)/1000)}
+              </>
+            )
+          } else {
+            return (
+              <>
+                {parseTime((leaveTime - gameStatus.startTime - delay) / 1000)}
+              </>
+            )
+
+          }
+        } else {
+          // if not left yet, worry about pausing
+          const reference: number = gameStatus.paused ? gameStatus.pauseStart ?? Date.now() : Date.now();
+          if(prevLeave != null) {
+            return (
+              <>
+                {parseTime((reference-prevLeave-delay)/1000)}
+              </>
+            );
+          } else {
+            return (
+              <>
+                {parseTime((reference-gameStatus.startTime-delay)/1000)}
+              </>
+            )
+          }
+        }
+      }
    
  
       return (
@@ -468,42 +534,7 @@ function PathProgress({gameClientInformation, gameStatus, pathCustomizations, pa
                             clicks: {gameClientInformation.nodeHistory[(activeNode ?? hoveredNode) ?? 0].clicks}
                           </li>
                           <li>
-                            elapsedTime: {
-
-                              gameClientInformation.nodeHistory[((activeNode ?? hoveredNode)) ?? 0]?.leaveTime != null ? 
-                              (<>
-                              {parseTime( 
-
-                                (
-                                (gameClientInformation.nodeHistory[ (activeNode ?? hoveredNode) ?? 0].leaveTime ?? 0 )
-                                - (gameStatus.startTime) - 
-                                gameClientInformation.nodeHistory
-                                .slice(0, (activeNode ?? hoveredNode) ?? 0) 
-                                .reduce((totalDelay, current) => totalDelay + (current.delayTime ?? 0), 0) 
-                                ) / 1000
-                                )}
-                              </>) :
-                              (
-                              gameClientInformation.nodeHistory[((activeNode ?? hoveredNode) ?? 0) - 1]?.leaveTime != null ? (
-                                <>
-                                  {parseTime(
-                                    (Date.now() -
-                                    (gameClientInformation.nodeHistory[((activeNode ?? hoveredNode) ?? 0) - 1].leaveTime ?? 0))/1000
-                                  )}
-                                </>
-                              ) : (
-                                <>
-                                {parseTime(
-                                  (
-                                  Date.now()-gameStatus.startTime-
-                                  (gameClientInformation.nodeHistory[ (activeNode ?? hoveredNode) ?? 0].delayTime)
-                                  ) / 1000
-                                )}
-                                
-                                </>
-                              )
-                            )
-                            }
+                            elapsedTime: {renderElapsedTime()}
                           </li>
                         </>
                       )

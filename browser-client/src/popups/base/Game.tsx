@@ -46,6 +46,7 @@ function Game() {
     );
   }, []);
 
+
   useEffect(() => {
     if(isChromeExtension) {
       // First log
@@ -97,6 +98,7 @@ function Game() {
 
       chrome.runtime.onMessage.addListener((message, sender, response) => {
         if(message.type === UPDATED_GAME_CLIENT) {
+          console.log(message.clientID, currentPlayerRef.current);
           if(message.clientID === currentPlayerRef.current) { // TODO: separate user name from ID
             const updatedGameInformation = message.gameClient;
             console.log("Updated game information: ", updatedGameInformation);

@@ -75,7 +75,9 @@ function handleUpdatedViewingPlayer(clientID: string) {
 
 function handlePause() {
   game.gameStatus.paused = true;
+  game.gameStatus.pauseStart = Date.now();
   chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: true});
+  chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus})
 
   pauseInterval = setInterval(() => {
     elapsedPause++;
@@ -106,11 +108,19 @@ function handleUnpause() {
 
   }
 
+  // setting delay for game
   if(game.gameStatus.pauseGap != undefined) {
     game.gameStatus.pauseGap += elapsedPause;
   } else {
     game.gameStatus.pauseGap = elapsedPause;
   }
+
+  // TODO: this only works for singleplayer currently
+  // setting delay for current node
+  const currentNode = game.gameClients[player].currentNode;
+  game.gameClients[player].nodeHistory[currentNode].delayTime += elapsedPause;
+  game.gameStatus.paused = false;
+  chrome.runtime.sendMessage({type: UPDATED_GAME_CLIENT, clientID: player, gameClient: game.gameClients[player]}) // TODO: complex pause in multi-player
   chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus});
 
   elapsedPause = 0;
