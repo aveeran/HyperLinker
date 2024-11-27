@@ -169,6 +169,8 @@ function startSingleplayer(customizations: CustomizationInterface) {
       { length: pathLength },
       () => ({ title: "???", link: "www.wikipedia.org" })
     );
+    game.gameClients[player].freePath[0] = customizations.start;
+    game.gameClients[player].freePath[pathLength-1] = customizations.end;
   }
 
   // Game Path

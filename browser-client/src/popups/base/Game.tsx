@@ -82,12 +82,14 @@ function Game() {
 
         // Retrieving path stuff
         setPath(gameRes.path);
+        console.log(gameRes.customizations.mode.path);
         let pathInfo = {type: gameRes.customizations.mode.type, directed: true}
         if(gameRes.customizations.mode.type === MODE_PATH) {
           if(!gameRes.customizations.mode.path?.directed) { // TODO: make sure that when path is null, is true
             pathInfo.directed = false;
           }
         }
+        console.log("bruh: ", pathInfo);
         setPathCustomizations(pathInfo);
 
         // Setting states
