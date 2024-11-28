@@ -249,14 +249,14 @@ export const CHOSEN = "chosen";
 
 export const GAME = "game";
 
-export const TAB_ID = "tab_id";
+export const TAB_ID = "tab-id";
 export const WIN = "win";
-export const WIKIPEDIA_CLICK = "wikipedia_click";
+export const WIKIPEDIA_CLICK = "wikipedia-click";
 
-export const CLICK_COUNT = "click_count";
+export const CLICK_COUNT = "click-count";
 
 export const PAUSE = "pause";
 export const UNPAUSE = "unpause";
 
 export const UPDATE_PAUSE = "update_pause";
-
+export const GET_TAB_ID = "get_tab_id";

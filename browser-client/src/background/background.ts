@@ -10,6 +10,7 @@ import {
   GAME,
   GAME_MODE,
   GameInterface,
+  GET_TAB_ID,
   MODE_PATH,
   MULTI_PLAYER,
   PAUSE,
@@ -63,6 +64,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case UNPAUSE:
         handleUnpause();
         break;
+    case GET_TAB_ID:
+        sendTabId(sender, sendResponse);
 
   }
 
@@ -212,6 +215,14 @@ function startSingleplayer(customizations: CustomizationInterface) {
       }
     );
   });
+}
+
+function sendTabId(sender : chrome.runtime.MessageSender, response : (response: {tabId: number |null}) => void) : void {
+  if(sender.tab) {
+    response({ tabId: sender.tab.id ?? null});
+  } else {
+    response({ tabId: null})
+  }
 }
 
 // ONLY AFTER GAME_STARTED and MODE === MULTI_PLAYER
