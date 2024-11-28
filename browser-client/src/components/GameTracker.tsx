@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClientGameInterface, GameStatusInterface, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
+import { ClientGameInterface, FINISH_SINGLEPLAYER_GAME, GameStatusInterface, SINGLEPLAYER_TIME_FINISHED, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
 
 function GameTracker({
   gameClientInformation,
@@ -57,8 +57,10 @@ function GameTracker({
               const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
               if(Math.floor(rawElapsedTime/1000) > countDown) {
       
-                // TODO: send signal, navigate to game end page
-                console.log("Count down done!");
+                chrome.runtime.sendMessage({
+                  type: FINISH_SINGLEPLAYER_GAME,
+                  cause: SINGLEPLAYER_TIME_FINISHED
+                });
               }
             }, 1000);
       

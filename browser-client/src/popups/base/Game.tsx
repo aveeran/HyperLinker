@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS } from "../../utils/utils";
+import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS, FINISH_SINGLEPLAYER_GAME, DONE_SINGLEPLAYER, QUIT_SINGLEPLAYER } from "../../utils/utils";
 import PlayerSelector from "../../components/PlayerSelector";
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameTracker from "../../components/GameTracker";
@@ -89,7 +89,6 @@ function Game() {
             pathInfo.directed = false;
           }
         }
-        console.log("bruh: ", pathInfo);
         setPathCustomizations(pathInfo);
 
         // Setting states
@@ -103,16 +102,16 @@ function Game() {
           console.log(message.clientID, currentPlayerRef.current);
           if(message.clientID === currentPlayerRef.current) { // TODO: separate user name from ID
             const updatedGameInformation = message.gameClient;
-            console.log("Updated game information: ", updatedGameInformation);
             setGameClientsInformation(updatedGameInformation);
           }
-        } else if (message.type === UPDATED_GAME_CLIENT) {
-          //TODO: do ???
         } else if (message.type === UPDATED_GAME_STATUS) {
           setGameStatus(message.gameStatus);
-          console.log("Updated game status ", message.gameStatus);
+        } else if (message.type === DONE_SINGLEPLAYER) {
+          navigate('/gameEnd');
         }
         // TODO: add listener check for if game ends, etc.
+
+        // TODO: CLEAN UP LISTENER
       });
     }
   }, [isChromeExtension]);
@@ -128,6 +127,11 @@ function Game() {
   };
 
   const handleQuit = () => {
+    chrome.runtime.sendMessage({
+      type: FINISH_SINGLEPLAYER_GAME,
+      cause: QUIT_SINGLEPLAYER
+    });
+
 
   }
 
@@ -180,14 +184,6 @@ function Game() {
       </div>
 
       <div className="flex items-center justify-center">
-        <button
-            className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2 font-custom"
-            onClick={handleQuit}
-          >
-            Quit
-          </button>
-        </div>
-
         {pausable ? (
           <button
             className={`w-[25%] p-2 border-2 border-gray-200 rounded-md text-white font-custom ${
@@ -199,6 +195,12 @@ function Game() {
           </button>
         ) : null}
 
+        <button
+            className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2 font-custom"
+            onClick={handleQuit}
+          >
+            Quit
+          </button>
 
         <button
           onClick={() => {
@@ -207,6 +209,7 @@ function Game() {
         >
           Return
         </button>
+        </div>
     </div>
   );
 }

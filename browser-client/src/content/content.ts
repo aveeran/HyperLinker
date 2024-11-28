@@ -111,6 +111,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 document.addEventListener("click", (event: MouseEvent) => {
+    
     const target = event.target as HTMLElement;
     if(playing && target.tagName === "A") {
         const anchor = target as HTMLAnchorElement;
@@ -124,18 +125,19 @@ document.addEventListener("click", (event: MouseEvent) => {
             } else {
                 const targetPagePath = new URL(anchor.href).pathname;
                 const articlePage = targetPagePath.replace("/wiki/", "");
-                if(noDates && checkDate(articlePage)) { // TODO: replace with dates
+
+                if(noDates && checkDate(articlePage)) { 
                     event.preventDefault();
                     alert("Cannot visit pages related to dates!");
                     return;
                 }
 
-                if(countSamePageLink || (!countSamePageLink && currentPagePath !== targetPagePath)) { // TODO: replace with count same page link
+                if(countSamePageLink || (!countSamePageLink && currentPagePath !== targetPagePath)) { 
                     chrome.runtime.sendMessage({
                         type: "wikipedia_click",
                         page: anchor.href
                     });
-                }
+                } 
 
                 if(!useBack && currentPagePath !== targetPagePath) { // TODO: replace with back
                     history.pushState(null, "", anchor.href);

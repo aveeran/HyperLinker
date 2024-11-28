@@ -251,7 +251,7 @@ export const GAME = "game";
 
 export const TAB_ID = "tab-id";
 export const WIN = "win";
-export const WIKIPEDIA_CLICK = "wikipedia-click";
+export const WIKIPEDIA_CLICK = "wikipedia_click";
 
 export const CLICK_COUNT = "click-count";
 
@@ -260,3 +260,12 @@ export const UNPAUSE = "unpause";
 
 export const UPDATE_PAUSE = "update_pause";
 export const GET_TAB_ID = "get_tab_id";
+
+export const FINISH_SINGLEPLAYER_GAME = "finish_singleplayer_game";
+export const SINGLEPLAYER_WIN = "singleplayer_win"; // TODO: idk maybe we can optimize this and also add a sub-field for winning player ID
+export const QUIT_SINGLEPLAYER = "quit_singleplayer" // TODO: deal with when one player leaves, the connection stuff
+export const SINGLEPLAYER_CLEAR_END = "singleplayer_clear_end";
+export const SINGLEPLAYER_TIME_FINISHED = "singleplayer_time_finished"; // TODO: can make this for multiplayer
+export const EXTERNAL_WIKI_VISIT = "external_wiki_visit";
+export const DONE_SINGLEPLAYER = "done_singleplayer";
+export const END_CAUSE = "end-cause";

@@ -7,6 +7,10 @@ import {
   defaultClientGame,
   defaultCustomizations,
   defaultGame,
+  DONE_SINGLEPLAYER,
+  END_CAUSE,
+  EXTERNAL_WIKI_VISIT,
+  FINISH_SINGLEPLAYER_GAME,
   GAME,
   GAME_MODE,
   GameInterface,
@@ -16,6 +20,7 @@ import {
   PAUSE,
   PLAYER,
   SINGLE_PLAYER,
+  SINGLEPLAYER_WIN,
   START_GAME,
   TAB_ID,
   UNPAUSE,
@@ -35,6 +40,7 @@ let gameCustomizations: CustomizationInterface = defaultCustomizations;
 let game: GameInterface = defaultGame;
 let player: string = SINGLE_PLAYER;
 let viewingPlayer: string = SINGLE_PLAYER;
+let tabId: number = -1;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -66,11 +72,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         break;
     case GET_TAB_ID:
         sendTabId(sender, sendResponse);
+        break;
+    case FINISH_SINGLEPLAYER_GAME:
+      endSingleplayerGame(message.cause);
+      break;
 
   }
 
   return false;
 });
+
+function endSingleplayerGame(cause: string) {
+
+
+  chrome.storage.local.set({[END_CAUSE] : cause}, () => {
+    chrome.runtime.sendMessage({type: DONE_SINGLEPLAYER});
+  });
+}
 
 function handleUpdatedViewingPlayer(clientID: string) {
   viewingPlayer = clientID;
@@ -211,7 +229,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
     chrome.storage.local.set(
       { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer },
       () => {
-
+        tabId = newTab.id ?? 0;
       }
     );
   });
@@ -310,7 +328,10 @@ function handleWikipediaClick(page : string ) {
                     if(game.gameClients[player].currentNode === game.path.length - 1
                       && (currentArticle.link == game.customizations.end.link)) {
                         if(gameMode === SINGLE_PLAYER) {
-                          // TODO: send message of win
+                          chrome.runtime.sendMessage({
+                            type: FINISH_SINGLEPLAYER_GAME,
+                            cause: SINGLEPLAYER_WIN
+                          })
                         } else if (gameMode === MULTI_PLAYER) {
                           
                         }
@@ -327,3 +348,17 @@ function handleWikipediaClick(page : string ) {
         }
     }) 
 }
+
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if(details.url.includes("wikipedia.org")) {
+    if(game.gameStatus.playing) {
+      if(details.tabId != tabId) {
+        // TODO: now how do we do it
+        chrome.runtime.sendMessage({
+          type: FINISH_SINGLEPLAYER_GAME,
+          cause: EXTERNAL_WIKI_VISIT
+        });
+      }
+    }
+  }
+});

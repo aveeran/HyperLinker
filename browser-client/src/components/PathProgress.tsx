@@ -44,7 +44,6 @@ function PathProgress({
     };
   }, []);
 
-  console.log(gameStatus.paused);
 
   useEffect(() => {
     chrome.runtime.onMessage.addListener((message, sender, response) => {
@@ -100,10 +99,6 @@ function PathProgress({
     setActiveNode(null);
   };
 
-  const debugLog = (value: any) => {
-    console.log(value);
-    return value;
-  };
 
   const parseTime = useCallback((seconds: number) => {
     seconds = Math.floor(seconds);
@@ -353,145 +348,6 @@ function PathProgress({
     );
   }
 
-  function NodeHistoryPanel({
-    activeNode,
-    hoveredNode,
-    isDirected,
-    isPath,
-    freePath,
-    path,
-    currentNode,
-    gameClientInformation,
-    renderElapsedTime,
-  }: {
-    activeNode: number | null;
-    hoveredNode: number | null;
-    isDirected: boolean;
-    isPath: boolean;
-    freePath: Article[];
-    path: Article[];
-    currentNode: number;
-    gameClientInformation: ClientGameInterface;
-    renderElapsedTime: () => JSX.Element;
-  }) {
-    if (activeNode === null && hoveredNode === null) return null;
-
-    const nodeIndex = activeNode ?? hoveredNode ?? 0;
-    const nodeTitle =
-      !isDirected && isPath
-        ? freePath[nodeIndex]?.title
-        : path[nodeIndex]?.title;
-    const nodeHistory = gameClientInformation.nodeHistory[nodeIndex] || {
-      clicks: 0,
-    };
-
-    return (
-      <div
-        className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
-          activeNode !== null ? "border-yellow-400" : "border-gray-400"
-        }`}
-      >
-        <h3 className="font-bold truncate">Node History for {nodeTitle}</h3>
-        <ul>
-          {currentNode >= nodeIndex ? (
-            <>
-              <li>clicks: {nodeHistory.clicks}</li>
-              <li>elapsedTime: {renderElapsedTime()}</li>
-            </>
-          ) : (
-            <p className="text-sm text-gray-700">No history to show</p>
-          )}
-        </ul>
-      </div>
-    );
-  }
-
-  function EdgeHistoryPanel({
-    activeLink,
-    hoveredLink,
-    isDirected,
-    isPath,
-    freePath,
-    path,
-    gameClientInformation,
-  }: {
-    activeLink: number | null;
-    hoveredLink: number | null;
-    isDirected: boolean;
-    isPath: boolean;
-    freePath: Article[];
-    path: Article[];
-    gameClientInformation: ClientGameInterface;
-  }) {
-    if (activeLink === null && hoveredLink === null) return null;
-
-    const linkIndex = activeLink ?? hoveredLink ?? 0;
-    const startTitle =
-      !isDirected && isPath
-        ? freePath[linkIndex]?.title
-        : path[linkIndex]?.title;
-    const endTitle =
-      !isDirected && isPath
-        ? freePath[linkIndex + 1]?.title
-        : path[linkIndex + 1]?.title;
-    const edgeHistory = gameClientInformation.edgeHistory[linkIndex] || [];
-
-    return (
-      <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-2xl m-2">
-        <h3 className="font-bold truncate">
-          Edge History for Link between {startTitle} and {endTitle}
-        </h3>
-        <ul>
-          {edgeHistory.map((entry, i) => (
-            <li key={i} className="text-sm text-gray-700">
-              <a href={entry.link} target="_blank" rel="noopener noreferrer">
-                {entry.title}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
-
-  function TargetNodePanel({
-    activeNode,
-    hoveredNode,
-    isDirected,
-    isPath,
-    freePath,
-    path,
-    endIndex,
-  }: {
-    activeNode: number | null;
-    hoveredNode: number | null;
-    isDirected: boolean;
-    isPath: boolean;
-    freePath: Article[];
-    path: Article[];
-    endIndex: number;
-  }) {
-    if (activeNode !== endIndex && hoveredNode !== endIndex) return null;
-
-    const nodeIndex = activeNode ?? hoveredNode ?? 0;
-    const nodeTitle =
-      !isDirected && isPath
-        ? freePath[nodeIndex]?.title
-        : path[nodeIndex]?.title;
-
-    return (
-      <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
-        <div
-          className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
-            activeNode !== null ? "border-yellow-400" : "border-gray-400"
-          }`}
-        >
-          <h3 className="font-bold truncate">Target Node: {nodeTitle}</h3>
-        </div>
-      </div>
-    );
-  }
-
   function renderNodeHistoryPanel(
     activeNode: number | null,
     hoveredNode: number | null,
@@ -575,36 +431,6 @@ function PathProgress({
     );
   }
 
-  function renderTargetNodePanel(
-    activeNode: number | null,
-    hoveredNode: number | null,
-    isDirected: boolean,
-    isPath: boolean,
-    freePath: Article[],
-    path: Article[],
-    endIndex: number
-  ): JSX.Element | null {
-    if (activeNode !== endIndex && hoveredNode !== endIndex) return null;
-
-    const nodeIndex = activeNode ?? hoveredNode ?? 0;
-    const nodeTitle =
-      !isDirected && isPath
-        ? freePath[nodeIndex]?.title
-        : path[nodeIndex]?.title;
-
-    return (
-      <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
-        <div
-          className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
-            activeNode !== null ? "border-yellow-400" : "border-gray-400"
-          }`}
-        >
-          <h3 className="font-bold truncate">Target Node: {nodeTitle}</h3>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center">
       <div className="flex flex-col gap-4 p-2">
@@ -612,8 +438,6 @@ function PathProgress({
 
         {!isDirected && isPath && RenderFreePath()}
       </div>
-
-      <div className="mt-4 p-2 border border-gray-300 bg-white rounded shadow-lg m-2">
         {renderNodeHistoryPanel(
           activeNode,
           hoveredNode,
@@ -635,17 +459,6 @@ function PathProgress({
           path,
           gameClientInformation
         )}
-      </div>
-
-      {renderTargetNodePanel(
-        activeNode,
-        hoveredNode,
-        isDirected,
-        isPath,
-        gameClientInformation.freePath,
-        path,
-        endIndex
-      )}
     </div>
   );
 }
