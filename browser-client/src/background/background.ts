@@ -362,3 +362,5 @@ chrome.webNavigation.onCommitted.addListener((details) => {
     }
   }
 });
+
+console.log("on new device");
