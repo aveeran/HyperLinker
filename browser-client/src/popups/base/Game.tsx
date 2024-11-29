@@ -36,6 +36,7 @@ function Game() {
 
   useEffect(() => {
     currentPlayerRef.current = currentPlayer;
+    // TODO: maybe re-fetch game information here? for multiplayer
   }, [currentPlayer]);
 
   const isChromeExtension = useMemo<boolean>(() => {
@@ -63,7 +64,7 @@ function Game() {
 
         // Retrieving game client information for player being viewed
         const viewingPlayer: string = result[VIEWING_PLAYER];
-        const gameInformation: ClientGameInterface = gameRes.gameClients[viewingPlayer];
+        const gameInformation: ClientGameInterface = gameRes.gameClients[viewingPlayer]; // TODO: in multiplayer, how to update game info when switching viewing
 
         // Retrieving tracking mode
         const gameTracking: string = gameRes.customizations.track[0];
@@ -152,7 +153,7 @@ function Game() {
   return (
     <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
-      <div className="border-gray-400 border-2 border-solid p-1.5 mo-3 bg-slate-100">
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
         <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
           Singleplayer
         </p>

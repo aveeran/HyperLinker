@@ -59,6 +59,7 @@ function PathProgress({
     });
   }, []);
 
+  console.log("Debug: ", gameClientInformation, currentNode);
   useEffect(() => {
     if (gameClientInformation.currentNode != currentNode) {
       setCurrentNode(gameClientInformation.currentNode);
