@@ -84,10 +84,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 function endSingleplayerGame(cause: string) {
 
+  game.gameStatus.playing = false;
 
-  chrome.storage.local.set({[END_CAUSE] : cause}, () => {
-    chrome.runtime.sendMessage({type: DONE_SINGLEPLAYER});
-  });
+  // TODO: in multiplayer, have to do this for every player I guess...?
+  let currentNode: number = game.gameClients[player].currentNode;
+  game.gameClients[player].nodeHistory[currentNode].leaveTime = Date.now();
+
+  // so we have to store
+
+  chrome.storage.local.set({[GAME]: game, [END_CAUSE]: cause});
+  
+  // chrome.storage.local.set({[GAME] : game}, () => {
+  //   chrome.storage.local.set({[END_CAUSE] : cause}, () => {
+
+  //     // TODO: this is the message that might be missed
+  //     // TODO: USE PORTS!!!!
+  //     chrome.runtime.sendMessage({type: DONE_SINGLEPLAYER});
+  //   });
+  // })
 }
 
 function handleUpdatedViewingPlayer(clientID: string) {
@@ -227,7 +241,9 @@ function startSingleplayer(customizations: CustomizationInterface) {
     };
 
     chrome.storage.local.set(
-      { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer },
+      { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer, 
+        [END_CAUSE]: undefined
+       },
       () => {
         tabId = newTab.id ?? 0;
       }
@@ -328,10 +344,7 @@ function handleWikipediaClick(page : string ) {
                     if(game.gameClients[player].currentNode === game.path.length - 1
                       && (currentArticle.link == game.customizations.end.link)) {
                         if(gameMode === SINGLE_PLAYER) {
-                          chrome.runtime.sendMessage({
-                            type: FINISH_SINGLEPLAYER_GAME,
-                            cause: SINGLEPLAYER_WIN
-                          })
+                          endSingleplayerGame(SINGLEPLAYER_WIN);
                         } else if (gameMode === MULTI_PLAYER) {
                           
                         }
@@ -353,14 +366,8 @@ chrome.webNavigation.onCommitted.addListener((details) => {
   if(details.url.includes("wikipedia.org")) {
     if(game.gameStatus.playing) {
       if(details.tabId != tabId) {
-        // TODO: now how do we do it
-        chrome.runtime.sendMessage({
-          type: FINISH_SINGLEPLAYER_GAME,
-          cause: EXTERNAL_WIKI_VISIT
-        });
+        endSingleplayerGame(EXTERNAL_WIKI_VISIT)
       }
     }
   }
 });
-
-console.log("on new device");

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS, FINISH_SINGLEPLAYER_GAME, DONE_SINGLEPLAYER, QUIT_SINGLEPLAYER } from "../../utils/utils";
+import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS, FINISH_SINGLEPLAYER_GAME, DONE_SINGLEPLAYER, QUIT_SINGLEPLAYER, END_CAUSE } from "../../utils/utils";
 import PlayerSelector from "../../components/PlayerSelector";
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameTracker from "../../components/GameTracker";
@@ -51,7 +51,10 @@ function Game() {
   useEffect(() => {
     if(isChromeExtension) {
       // First log
-      chrome.storage.local.get([GAME, VIEWING_PLAYER, GAME_MODE], (result) => {
+      chrome.storage.local.get([GAME, VIEWING_PLAYER, GAME_MODE, END_CAUSE], (result) => {
+        if(result[END_CAUSE] != undefined) {
+          navigate('/gameEnd');
+        }
         const gameRes: GameInterface = result[GAME];
 
         // Stroing game status
@@ -83,7 +86,6 @@ function Game() {
 
         // Retrieving path stuff
         setPath(gameRes.path);
-        console.log(gameRes.customizations.mode.path);
         let pathInfo = {type: gameRes.customizations.mode.type, directed: true}
         if(gameRes.customizations.mode.type === MODE_PATH) {
           if(!gameRes.customizations.mode.path?.directed) { // TODO: make sure that when path is null, is true
@@ -100,20 +102,32 @@ function Game() {
 
       chrome.runtime.onMessage.addListener((message, sender, response) => {
         if(message.type === UPDATED_GAME_CLIENT) {
-          console.log(message.clientID, currentPlayerRef.current);
           if(message.clientID === currentPlayerRef.current) { // TODO: separate user name from ID
             const updatedGameInformation = message.gameClient;
             setGameClientsInformation(updatedGameInformation);
           }
         } else if (message.type === UPDATED_GAME_STATUS) {
           setGameStatus(message.gameStatus);
-        } else if (message.type === DONE_SINGLEPLAYER) {
-          navigate('/gameEnd');
-        }
+        } 
+        // else if (message.type === DONE_SINGLEPLAYER) {
+        //   navigate('/gameEnd');
+        // }
         // TODO: add listener check for if game ends, etc.
 
         // TODO: CLEAN UP LISTENER
       });
+
+      const handleDataChanged = (changes : {[key: string] : chrome.storage.StorageChange}) => {
+        const storedEndCause = changes[END_CAUSE];
+        if(storedEndCause.newValue !== undefined)  {
+          navigate('/gameEnd');
+        }
+      }
+
+      chrome.storage.local.onChanged.addListener(handleDataChanged);
+      return () => {
+        chrome.storage.local.onChanged.removeListener(handleDataChanged);
+      }
     }
   }, [isChromeExtension]);
 

@@ -34,7 +34,6 @@ function Dashboard() {
                 const storedCustomizations = result[CUSTOMIZATIONS];
                 if(storedCustomizations) {
                     setCustomizations(storedCustomizations);
-                    console.log("See the customizations: ", storedCustomizations);
                 }
                 // If multiplayer, then update when customizations updated
 

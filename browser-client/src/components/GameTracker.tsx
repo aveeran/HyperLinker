@@ -26,8 +26,10 @@ function GameTracker({
           const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
           if(Math.floor(rawElapsedTime/1000) > countDown) {
   
-            // TODO: send signal, navigate to game end page
-            console.log("Count down done!");
+            chrome.runtime.sendMessage({
+              type: FINISH_SINGLEPLAYER_GAME,
+              cause: SINGLEPLAYER_TIME_FINISHED
+            });
           }
         }, 1000);
   
@@ -47,7 +49,6 @@ function GameTracker({
   useEffect(() => {
     chrome.runtime.onMessage.addListener((message, sender, response) => {
       if(message.type === UPDATE_PAUSE) {
-        console.log("Updating to ", message.pause);
         if(message.pause && interval) {
           clearInterval(interval);
         } else if (!message.pause) {

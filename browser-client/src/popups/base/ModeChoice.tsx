@@ -144,7 +144,6 @@ function ModeChoice() {
       start: startArticle,
       end: endArticle,
     };
-    console.log("New customizations: ", updatedCustomizations);
 
     if (isChromeExtension) {
       chrome.storage.local.set(

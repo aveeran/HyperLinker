@@ -49,6 +49,7 @@ function GameStat() {
     );
   }, []);
 
+
   useEffect(() => {
     if (isChromeExtension) {
       chrome.storage.local.get([GAME, VIEWING_PLAYER, END_CAUSE], (result) => {
@@ -60,10 +61,12 @@ function GameStat() {
         const storedPlayerIDs = gameRes.participants;
         setPlayerIDs(storedPlayerIDs);
 
+        const storedGameStatus = gameRes.gameStatus;
+        setGameStatus(storedGameStatus);
+
         const viewingPlayer: string = result[VIEWING_PLAYER];
         setCurrentPlayer(viewingPlayer);
-        console.log("Set current player to: ", viewingPlayer);
-
+        currentPlayerRef.current = viewingPlayer;
         setPath(gameRes.path);
 
         let pathInfo = {type: gameRes.customizations.mode.type, directed: true}
@@ -88,13 +91,12 @@ function GameStat() {
     currentPlayerRef.current = playerID;
   };
 
-  console.log("Current player: ", currentPlayerRef.current);
   return (
     <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
       <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
         <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
-          Singleplayer
+          Singleplayer 
         </p>
         <p className="text-center font-medium text-base p-1 mb-1">
             {cause}

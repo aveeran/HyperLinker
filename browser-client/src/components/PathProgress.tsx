@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Article,
   ClientGameInterface,
+  defaultClientGame,
+  defaultGame,
   GameStatusInterface,
   MODE_PATH,
   UPDATE_PAUSE,
@@ -26,6 +28,10 @@ function PathProgress({
   const [currentNode, setCurrentNode] = useState<number>(0);
   const [endIndex, setEndIndex] = useState<number>(path.length - 1);
 
+  if(gameClientInformation === undefined) {
+    gameClientInformation = defaultClientGame;
+  }
+
   let isPath = pathCustomizations.type == MODE_PATH;
   let isDirected = pathCustomizations.directed;
 
@@ -33,33 +39,36 @@ function PathProgress({
   let interval: NodeJS.Timeout | null = null;
 
   useEffect(() => {
-    interval = setInterval(() => {
-      setTime((prevTime) => prevTime + 1);
-    }, 1000);
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, []);
+    if(gameStatus.playing) {
+      interval = setInterval(() => {
+        setTime((prevTime) => prevTime + 1);
+      }, 1000);
+  
+      return () => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      };
+    }
+  }, [gameStatus.playing]);
 
 
   useEffect(() => {
-    chrome.runtime.onMessage.addListener((message, sender, response) => {
-      if (message.type === UPDATE_PAUSE) {
-        if (message.pause && interval) {
-          clearInterval(interval);
-        } else if (!message.pause) {
-          interval = setInterval(() => {
-            setTime((prevTime) => prevTime + 1);
-          }, 1000);
-        }
-      }
-    });
-  }, []);
+    if(gameStatus.playing) {
+      chrome.runtime.onMessage.addListener((message, sender, response) => {
+        if (message.type === UPDATE_PAUSE) {
+          if (message.pause && interval) {
+            clearInterval(interval);
+          } else if (!message.pause) {
+            interval = setInterval(() => {
+              setTime((prevTime) => prevTime + 1);
+            }, 1000);
+          }
+        } 
+      });
+    }
+  }, [gameStatus.playing]);
 
-  console.log("Debug: ", gameClientInformation, currentNode);
   useEffect(() => {
     if (gameClientInformation.currentNode != currentNode) {
       setCurrentNode(gameClientInformation.currentNode);
@@ -116,13 +125,9 @@ function PathProgress({
   }, []);
 
   const renderElapsedTime = () => {
-    const prevLeave =
-      gameClientInformation.nodeHistory[(activeNode ?? hoveredNode ?? 0) - 1]
-        ?.leaveTime;
-    const delay =
-      gameClientInformation.nodeHistory[activeNode ?? hoveredNode ?? 0]
-        ?.delayTime * 1000;
-
+    const prevLeave = gameClientInformation.nodeHistory[(activeNode ?? hoveredNode ?? 0) - 1]?.leaveTime;
+    const delay = gameClientInformation.nodeHistory[activeNode ?? hoveredNode ?? 0]?.delayTime * 1000;
+    
     if (
       gameClientInformation.nodeHistory[activeNode ?? hoveredNode ?? 0]
         .leaveTime != null
@@ -134,7 +139,7 @@ function PathProgress({
 
       if (prevLeave != null) {
         return <>{parseTime((leaveTime - prevLeave - delay) / 1000)}</>;
-      } else {
+      } else {        
         return (
           <>{parseTime((leaveTime - gameStatus.startTime - delay) / 1000)}</>
         );
@@ -144,9 +149,12 @@ function PathProgress({
       const reference: number = gameStatus.paused
         ? gameStatus.pauseStart ?? Date.now()
         : Date.now();
+
       if (prevLeave != null) {
+
         return <>{parseTime((reference - prevLeave - delay) / 1000)}</>;
       } else {
+
         return (
           <>{parseTime((reference - gameStatus.startTime - delay) / 1000)}</>
         );
