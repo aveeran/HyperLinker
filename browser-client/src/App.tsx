@@ -12,7 +12,11 @@ import GameStat from './popups/base/GameStat.tsx';
 function App() {
 
   return (
-    <Router>
+    <Router 
+    future={{
+      v7_relativeSplatPath: true,
+      v7_startTransition: true,
+  }}>
       <div className="w-[400px] border-black border-solid border-[3px] rounded-md pt-1">
         <RouterTracker/>
         <Routes>

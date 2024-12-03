@@ -28,15 +28,19 @@ function PathProgress({
   const [currentNode, setCurrentNode] = useState<number>(0);
   const [endIndex, setEndIndex] = useState<number>(path.length - 1);
 
-  if(gameClientInformation === undefined) {
+  if(!gameClientInformation) {
     gameClientInformation = defaultClientGame;
   }
+
+  const nodeHistory = gameClientInformation?.nodeHistory || [];
 
   let isPath = pathCustomizations.type == MODE_PATH;
   let isDirected = pathCustomizations.directed;
 
   const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
   let interval: NodeJS.Timeout | null = null;
+
+ 
 
   useEffect(() => {
     if(gameStatus.playing) {
@@ -70,10 +74,10 @@ function PathProgress({
   }, [gameStatus.playing]);
 
   useEffect(() => {
-    if (gameClientInformation.currentNode != currentNode) {
-      setCurrentNode(gameClientInformation.currentNode);
+    if (gameClientInformation?.currentNode != currentNode) {
+      setCurrentNode(gameClientInformation?.currentNode);
     }
-  }, [gameClientInformation.currentNode, currentNode]);
+  }, [gameClientInformation?.currentNode, currentNode]);
 
   const handleMouseEnterNode = (index: number) => {
     setHoveredNode(index);
@@ -125,16 +129,16 @@ function PathProgress({
   }, []);
 
   const renderElapsedTime = () => {
-    const prevLeave = gameClientInformation.nodeHistory[(activeNode ?? hoveredNode ?? 0) - 1]?.leaveTime;
-    const delay = gameClientInformation.nodeHistory[activeNode ?? hoveredNode ?? 0]?.delayTime * 1000;
+    const prevLeave = nodeHistory[(activeNode ?? hoveredNode ?? 0) - 1]?.leaveTime;
+    const delay = nodeHistory[activeNode ?? hoveredNode ?? 0]?.delayTime * 1000;
     
     if (
-      gameClientInformation.nodeHistory[activeNode ?? hoveredNode ?? 0]
+      nodeHistory[activeNode ?? hoveredNode ?? 0]
         .leaveTime != null
     ) {
       // if we already left, use leave time and either gameStatus.startTime or prevLeave
       const leaveTime =
-        gameClientInformation.nodeHistory[activeNode ?? hoveredNode ?? 0]
+        nodeHistory[activeNode ?? hoveredNode ?? 0]
           .leaveTime ?? 0;
 
       if (prevLeave != null) {
@@ -171,7 +175,7 @@ function PathProgress({
       rowIndex % 2 === 0
         ? index + rowIndex * rowLength
         : rowIndex * rowLength + (rowLength - index - 1);
-    const isVisited = gameClientInformation.visitedPath.some(
+    const isVisited = gameClientInformation?.visitedPath.some(
       (visitedArticle: Article) =>
         visitedArticle.title === step.title && visitedArticle.link === step.link
     );
@@ -208,12 +212,12 @@ function PathProgress({
     const isActive = activeLink === linkIndex;
     const isHovered = hoveredLink === linkIndex;
     const isVisited =
-      gameClientInformation.visitedPath.some(
+      gameClientInformation?.visitedPath.some(
         (visitedArticle) =>
           visitedArticle.title === path[linkIndex]?.title &&
           visitedArticle.link === path[linkIndex]?.link
       ) &&
-      gameClientInformation.visitedPath.some(
+      gameClientInformation?.visitedPath.some(
         (visitedArticle) =>
           visitedArticle.title === path[linkIndex + 1]?.title &&
           visitedArticle.link === path[linkIndex + 1]?.link
@@ -258,22 +262,22 @@ function PathProgress({
     const isHovered = hoveredLink === connectorIndex;
     const isVisited =
       rowIndex % 2 === 0
-        ? gameClientInformation.visitedPath.some(
+        ? gameClientInformation?.visitedPath.some(
             (visitedArticle) =>
               visitedArticle.title === path[2].title &&
               visitedArticle.link === path[2].link
           ) &&
-          gameClientInformation.visitedPath.some(
+          gameClientInformation?.visitedPath.some(
             (visitedArticle) =>
               visitedArticle.title === path[3].title &&
               visitedArticle.link === path[3].link
           )
-        : gameClientInformation.visitedPath.some(
+        : gameClientInformation?.visitedPath.some(
             (visitedArticle) =>
               visitedArticle.title === path[5].title &&
               visitedArticle.link === path[5].link
           ) &&
-          gameClientInformation.visitedPath.some(
+          gameClientInformation?.visitedPath.some(
             (visitedArticle) =>
               visitedArticle.title === path[6].title &&
               visitedArticle.link === path[6].link
@@ -330,7 +334,7 @@ function PathProgress({
     const rowLength = 3;
 
     // Group the free path into rows
-    const rows = gameClientInformation.freePath.reduce<Array<Array<Article>>>(
+    const rows = gameClientInformation?.freePath.reduce<Array<Array<Article>>>(
       (acc, step, index) => {
         const rowIndex = Math.floor(index / rowLength);
         if (!acc[rowIndex]) acc[rowIndex] = [];
@@ -375,7 +379,7 @@ function PathProgress({
       !isDirected && isPath
         ? freePath[nodeIndex]?.title
         : path[nodeIndex]?.title;
-    const nodeHistory = gameClientInformation.nodeHistory[nodeIndex] || {
+    const innerNodeHistory = nodeHistory[nodeIndex] || {
       clicks: 0,
     };
 
@@ -389,7 +393,7 @@ function PathProgress({
         <ul>
           {currentNode >= nodeIndex ? (
             <>
-              <li>clicks: {nodeHistory.clicks}</li>
+              <li>clicks: {innerNodeHistory.clicks}</li>
               <li>elapsedTime: {renderElapsedTime()}</li>
             </>
           ) : (
@@ -420,7 +424,7 @@ function PathProgress({
       !isDirected && isPath
         ? freePath[linkIndex + 1]?.title
         : path[linkIndex + 1]?.title;
-    const edgeHistory = gameClientInformation.edgeHistory[linkIndex] || [];
+    const edgeHistory = gameClientInformation?.edgeHistory[linkIndex] || [];
 
     return (
       <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-2xl m-2">
@@ -452,7 +456,7 @@ function PathProgress({
           hoveredNode,
           isDirected,
           isPath,
-          gameClientInformation.freePath,
+          gameClientInformation?.freePath,
           path,
           currentNode,
           gameClientInformation,
@@ -464,7 +468,7 @@ function PathProgress({
           hoveredLink,
           isDirected,
           isPath,
-          gameClientInformation.freePath,
+          gameClientInformation?.freePath,
           path,
           gameClientInformation
         )}
