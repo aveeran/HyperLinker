@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS, FINISH_SINGLEPLAYER_GAME, DONE_SINGLEPLAYER, QUIT_SINGLEPLAYER, END_CAUSE } from "../../utils/utils";
+import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS, FINISH_SINGLEPLAYER_GAME, QUIT_SINGLEPLAYER, END_CAUSE } from "../../utils/utils";
 import PlayerSelector from "../../components/PlayerSelector";
 import { useEffect, useMemo, useRef, useState } from "react";
 import GameTracker from "../../components/GameTracker";
@@ -47,12 +47,11 @@ function Game() {
     );
   }, []);
 
-
   useEffect(() => {
     if(isChromeExtension) {
       // First log
       chrome.storage.local.get([GAME, VIEWING_PLAYER, GAME_MODE, END_CAUSE], (result) => {
-        if(result[END_CAUSE] != undefined) {
+        if(result[END_CAUSE] != null) {
           navigate('/gameEnd');
         }
         const gameRes: GameInterface = result[GAME];
@@ -109,17 +108,12 @@ function Game() {
         } else if (message.type === UPDATED_GAME_STATUS) {
           setGameStatus(message.gameStatus);
         } 
-        // else if (message.type === DONE_SINGLEPLAYER) {
-        //   navigate('/gameEnd');
-        // }
-        // TODO: add listener check for if game ends, etc.
-
-        // TODO: CLEAN UP LISTENER
       });
 
       const handleDataChanged = (changes : {[key: string] : chrome.storage.StorageChange}) => {
         const storedEndCause = changes[END_CAUSE];
-        if(storedEndCause.newValue !== undefined)  {
+
+        if(storedEndCause && storedEndCause.newValue != null)  {
           navigate('/gameEnd');
         }
       }
@@ -146,8 +140,6 @@ function Game() {
       type: FINISH_SINGLEPLAYER_GAME,
       cause: QUIT_SINGLEPLAYER
     });
-
-
   }
 
   const handleTogglePause = () => {
@@ -219,7 +211,7 @@ function Game() {
 
         <button
           onClick={() => {
-            navigate(-1);
+            navigate('/');
           }}
         >
           Return

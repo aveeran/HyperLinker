@@ -1,15 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Article,
+    CLICK_COUNT,
+    CustomizationInterface,
+    defaultCustomizations,
     defaultGame,
     defaultGameStatus,
   END_CAUSE,
+  EXTERNAL_WIKI_VISIT,
   GAME,
   GameInterface,
   GameStatusInterface,
+  MODE_COUNT_DOWN,
   MODE_NORMAL,
   MODE_PATH,
   MULTI_PLAYER,
+  QUIT_SINGLEPLAYER,
+  SINGLEPLAYER_TIME_FINISHED,
+  SINGLEPLAYER_WIN,
+  TAB_ID,
   UPDATED_VIEWING_PLAYER,
   VIEWING_PLAYER,
 } from "../../utils/utils";
@@ -40,6 +49,7 @@ function GameStat() {
     "I was once",
   ]);
   const [gameInformation, setGameInformation] = useState<GameInterface>(defaultGame);
+  const [gameCustomizations, setGameCustomizations] = useState<CustomizationInterface>(defaultCustomizations);
 
   const isChromeExtension = useMemo<boolean>(() => {
     return !!(
@@ -57,6 +67,9 @@ function GameStat() {
 
         const gameRes: GameInterface = result[GAME];
         setGameInformation(gameRes);
+
+        const storedCustomizations: CustomizationInterface = gameRes.customizations;
+        setGameCustomizations(storedCustomizations);
 
         const storedPlayerIDs = gameRes.participants;
         setPlayerIDs(storedPlayerIDs);
@@ -91,6 +104,45 @@ function GameStat() {
     currentPlayerRef.current = playerID;
   };
 
+  const renderCause = () => {
+    let msg = "err"
+    let color = "";
+    switch(cause) {
+      case SINGLEPLAYER_WIN:
+        msg = "Singleplayer Win";
+        color = "bg-green-400";
+        break;
+      case QUIT_SINGLEPLAYER:
+        msg = "Singleplayer Quit";
+        color = "bg-red-400";
+        break;
+      case EXTERNAL_WIKI_VISIT:
+        msg = "External Wikipedia Visit";
+        color = "bg-red-400";
+        break;
+      case SINGLEPLAYER_TIME_FINISHED:
+        msg = "Countdown Finished";
+        color = "bg-red-400";
+    }
+    return (
+      <p className={`text-center font-medium text-base p-1 mb-1 ${color} `}>
+        {msg}
+      </p>
+    )
+  }
+
+  const done = () => {
+    // resetting the fields
+    chrome.storage.local.set({
+      [GAME]: defaultGame,
+      [END_CAUSE]: null,
+      [TAB_ID]: null,
+      [CLICK_COUNT]: 0
+    }, () => {
+      navigate('/dashboard');
+    })
+  }
+
   return (
     <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
@@ -98,11 +150,7 @@ function GameStat() {
         <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
           Singleplayer 
         </p>
-        <p className="text-center font-medium text-base p-1 mb-1">
-            {cause}
-        </p>
-
-
+        {renderCause()}
 
         {tempMode === MULTI_PLAYER ? (
           <div>
@@ -119,6 +167,86 @@ function GameStat() {
           </div>
         ) : null}
 
+        <p className="text-center font-medium text-base p-1 mb-1 bg-slate-200">
+          Game Customizations
+        </p>
+
+        <div className="mx-h-36 overflow-y-auto">
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Start Article</strong>
+            <p className="col-span-2">{gameCustomizations.start.title}</p>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">End Article</strong>
+            <p className="col-span-2">{gameCustomizations.end.title}</p>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Tracking</strong>
+            <p className="col-span-2">{gameCustomizations.track[0]}</p>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Restrictions</strong>
+            <p className="col-span-2">{gameCustomizations.restrictions.join(" · ")}</p>
+          </div>
+
+          <div className="group relative grid grid-cols-3 gap-4 p-1">
+            <strong className="text-base mr-1 col-span-1">Mode</strong>
+            <p className="col-span-2">{gameCustomizations.mode.type}</p>
+          </div>
+
+          {
+            gameCustomizations.mode.type === MODE_PATH ? (
+              <>
+              <div className="grid grid-cols-3 gap-4 p-1">
+                  <strong className="text-base mr-1 col-span-1">
+                    Path Length
+                  </strong>
+                  <p className="col-span-2">
+                    {gameCustomizations.mode.path?.pathLength}
+                  </p>
+                </div>  
+
+                <div className="grid grid-cols-3 gap-4 p-1">
+                  <strong className="text-base mr-1 col-span-1 text-center">
+                    Intermediate Articles
+                  </strong>
+
+                  {
+                    gameCustomizations.mode.path?.connections.length ?? 0 > 0 ? (
+                      <p className="col-span-2">
+                        {gameCustomizations.mode.path?.connections.join(", ")}
+                      </p>
+                    ) : null
+                  }
+                </div> 
+
+                <div className="grid grid-cols-3 gap-4 p-1">
+                  <strong className="text-base mr-1 col-span-1">Directed</strong>
+                  <p className="col-span-2">
+                    {gameCustomizations.mode.path?.directed ? "true" : "false"}
+                  </p>
+                </div>                      
+              </>
+            ) : null
+          }
+
+          {
+            gameCustomizations.mode.type === MODE_COUNT_DOWN ? (
+              <>
+              <div className="grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1">Timer</strong>
+                <p className="col-span-2">
+                  {gameCustomizations.mode.count_down?.timer}
+                </p>
+              </div>
+              </>
+            ) : null
+          }
+        </div>
+
         <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
           Progress
         </p>
@@ -126,7 +254,7 @@ function GameStat() {
         <PathProgress gameClientInformation={gameInformation.gameClients[currentPlayerRef.current]} pathCustomizations={pathCustomizations} 
         gameStatus={gameStatus} path={path}/>
       </div>
-      <button onClick={() => navigate(-1)}>Bruh</button>
+      <button onClick={done}>Continue</button>
     </div>
   );
 }
