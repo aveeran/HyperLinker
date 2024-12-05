@@ -209,19 +209,19 @@ function GameStat() {
                   </p>
                 </div>  
 
-                <div className="grid grid-cols-3 gap-4 p-1">
-                  <strong className="text-base mr-1 col-span-1 text-center">
-                    Intermediate Articles
-                  </strong>
 
                   {
                     gameCustomizations.mode.path?.connections.length ?? 0 > 0 ? (
-                      <p className="col-span-2">
-                        {gameCustomizations.mode.path?.connections.join(", ")}
-                      </p>
+                      <div className="grid grid-cols-3 gap-4 p-1">
+                        <strong className="text-base mr-1 col-span-1 text-center">
+                          Intermediate Articles
+                        </strong>
+                        <p className="col-span-2">
+                          {gameCustomizations.mode.path?.connections.join(", ")}
+                        </p>
+                      </div> 
                     ) : null
                   }
-                </div> 
 
                 <div className="grid grid-cols-3 gap-4 p-1">
                   <strong className="text-base mr-1 col-span-1">Directed</strong>

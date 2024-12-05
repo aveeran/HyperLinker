@@ -133,16 +133,19 @@ export interface GameInterface {
 export interface GameStatusInterface {
   startTime: number;
   playing: boolean;
-  paused?: boolean;
-  pauseStart?: number;
-  pauseGap?: number;
+  paused: boolean;
+  pauseStart: number;
+  pauseGap: number;
   win: string | null
 }
 
 export const defaultGameStatus: GameStatusInterface = {
   startTime: 0,
   playing: false,
-  win: null
+  win: null,
+  paused: false,
+  pauseStart: 0,
+  pauseGap: 0
 }
 
 export const defaultGame: GameInterface = {
@@ -156,7 +159,10 @@ export const defaultGame: GameInterface = {
     gameStatus: {
       startTime: 0,
       playing: false,
-      win: null
+      win: null,
+      paused: false,
+      pauseStart: 0,
+      pauseGap: 0
     },
     path: []
     
@@ -248,6 +254,7 @@ export const AVAILABLE = "available";
 export const CHOSEN = "chosen";
 
 export const GAME = "game";
+export const GAME_CUSTOMIZATIONS = "game-customizations";
 
 export const TAB_ID = "tab-id";
 export const WIN = "win";

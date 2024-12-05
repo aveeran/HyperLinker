@@ -40,8 +40,6 @@ function PathProgress({
   const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
   let interval: NodeJS.Timeout | null = null;
 
- 
-
   useEffect(() => {
     if(gameStatus.playing) {
       interval = setInterval(() => {

@@ -12,6 +12,7 @@ import {
   EXTERNAL_WIKI_VISIT,
   FINISH_SINGLEPLAYER_GAME,
   GAME,
+  GAME_CUSTOMIZATIONS,
   GAME_MODE,
   GameInterface,
   GET_TAB_ID,
@@ -35,12 +36,7 @@ import {
   WIN,
 } from "../utils/utils";
 
-let gameMode: string = SINGLE_PLAYER;
-let gameCustomizations: CustomizationInterface = defaultCustomizations;
-let game: GameInterface = defaultGame;
-let player: string = SINGLE_PLAYER;
-let viewingPlayer: string = SINGLE_PLAYER;
-let tabId: number = -1;
+// TODO: extra provisions for gameMode
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -51,12 +47,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleGameModeUpdate(message.game_mode);
       break;
     case START_GAME:
-      if (gameMode === SINGLE_PLAYER) {
-        startSingleplayer(message.customizations);
-      } else if (gameMode === MULTI_PLAYER) {
-        // TODO: get start time from server
-        startMultiplayer();
-      }
+      chrome.storage.local.get([GAME_MODE], (result) => {
+        let gameMode: string = result[GAME_MODE] || SINGLE_PLAYER;
+        if (gameMode === SINGLE_PLAYER) {
+          startSingleplayer(message.customizations);
+        } else if (gameMode === MULTI_PLAYER) {
+          // TODO: get start time from server
+          startMultiplayer();
+        }
+      });
       break;
     case WIKIPEDIA_CLICK:
         handleWikipediaClick(message.page);
@@ -72,57 +71,60 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         break;
     case GET_TAB_ID:
         sendTabId(sender, sendResponse);
-        break;
+        return true;
     case FINISH_SINGLEPLAYER_GAME:
       endSingleplayerGame(message.cause);
       break;
 
   }
-
-  return false;
 });
+
+// TODO: bruh we have to move this all into persistent storage, otherwise if the bg script goes inactive then
 
 function endSingleplayerGame(cause: string) {
 
-  game.gameStatus.playing = false;
+  chrome.storage.local.get([GAME, PLAYER], (result) => {  
+      let game : GameInterface = result[GAME];
+      let player : string = result[PLAYER];
 
-  // TODO: in multiplayer, have to do this for every player I guess...?
-  let currentNode: number = game.gameClients[player].currentNode;
-  game.gameClients[player].nodeHistory[currentNode].leaveTime = Date.now();
+      game.gameStatus.playing = false;
+    
+      // TODO: in multiplayer, have to do this for every player I guess...?
+      let currentNode: number = game.gameClients[player].currentNode;
 
-  // so we have to store
+      game.gameClients[player].nodeHistory[currentNode].leaveTime = Date.now();
+        
+      chrome.storage.local.set({[GAME]: game, [END_CAUSE]: cause});
+  });
 
-  chrome.storage.local.set({[GAME]: game, [END_CAUSE]: cause});
-  
-  // chrome.storage.local.set({[GAME] : game}, () => {
-  //   chrome.storage.local.set({[END_CAUSE] : cause}, () => {
-
-  //     // TODO: this is the message that might be missed
-  //     // TODO: USE PORTS!!!!
-  //     chrome.runtime.sendMessage({type: DONE_SINGLEPLAYER});
-  //   });
-  // })
 }
 
 function handleUpdatedViewingPlayer(clientID: string) {
-  viewingPlayer = clientID;
+  // viewingPlayer = clientID;
+  chrome.storage.local.set({[VIEWING_PLAYER]: clientID});
 }
 
 function handlePause() {
-  game.gameStatus.paused = true;
-  game.gameStatus.pauseStart = Date.now();
-  chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: true});
-  chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus})
+  chrome.storage.local.get([GAME, GAME_MODE], (result)=> {
+    let game : GameInterface = result[GAME];
+    let gameMode: string = result[GAME_MODE];
 
-  pauseInterval = setInterval(() => {
-    elapsedPause++;
-  }, 1000);
-
-  if(gameMode === MULTI_PLAYER) {
-
-  } else {
-
-  }
+    game.gameStatus.paused = true;
+    game.gameStatus.pauseStart = Date.now();
+    chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus})
+    chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: true});
+  
+    pauseInterval = setInterval(() => {
+      elapsedPause++;
+    }, 1000);
+  
+    if(gameMode === MULTI_PLAYER) {
+  
+    } else {
+  
+    }
+    chrome.storage.local.set({[GAME]: game});
+  });
 
 }
 
@@ -130,125 +132,154 @@ let pauseInterval : NodeJS.Timeout | null = null;
 let elapsedPause = 0;
 
 function handleUnpause() {
-  if(pauseInterval) {
-    clearInterval(pauseInterval);
-  }
+  chrome.storage.local.get([GAME, GAME_MODE, PLAYER], (result) => {
+    let game: GameInterface = result[GAME];
+    let player: string = result[PLAYER];
+    let gameMode: string = result[GAME_MODE];
 
-  game.gameStatus.paused = false;
-  chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: false});
+    console.log("player is: ", player);
 
-  if(gameMode === MULTI_PLAYER) {
+    if(pauseInterval) {
+      clearInterval(pauseInterval);
+    }
+  
+    game.gameStatus.paused = false;
+    
+    if(gameMode === MULTI_PLAYER) {
+      
+    } else {
+  
+    }
+  
+    // setting delay for game
+    if(game.gameStatus.pauseGap != undefined) {
+      game.gameStatus.pauseGap += elapsedPause;
+    } else {
+      game.gameStatus.pauseGap = elapsedPause;
+    }
+    
+    // TODO: this only works for singleplayer currently
+    // setting delay for current node
+    const currentNode = game.gameClients[player].currentNode;
+    game.gameClients[player].nodeHistory[currentNode].delayTime += elapsedPause;
+    game.gameStatus.paused = false;
 
-  } else {
+    
+    chrome.runtime.sendMessage({type: UPDATED_GAME_CLIENT, clientID: player, gameClient: game.gameClients[player]}) // TODO: complex pause in multi-player
+    chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus});
+    chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: false});
+  
+    elapsedPause = 0;
+    chrome.storage.local.set({[GAME]: game});
 
-  }
-
-  // setting delay for game
-  if(game.gameStatus.pauseGap != undefined) {
-    game.gameStatus.pauseGap += elapsedPause;
-  } else {
-    game.gameStatus.pauseGap = elapsedPause;
-  }
-
-  // TODO: this only works for singleplayer currently
-  // setting delay for current node
-  const currentNode = game.gameClients[player].currentNode;
-  game.gameClients[player].nodeHistory[currentNode].delayTime += elapsedPause;
-  game.gameStatus.paused = false;
-  chrome.runtime.sendMessage({type: UPDATED_GAME_CLIENT, clientID: player, gameClient: game.gameClients[player]}) // TODO: complex pause in multi-player
-  chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus});
-
-  elapsedPause = 0;
+  });
+  // since interval active, background script will not go inactive so no need for persistence
 }
 
 function handleCustomizationsUpdate(
   updatedCustomizations: CustomizationInterface
 ) {
-  gameCustomizations = updatedCustomizations;
-  if (gameMode === MULTI_PLAYER) {
-    // TODO: socket.io message
-  }
+
+  // TODO: need persistence for this
+  chrome.storage.local.set({[GAME_CUSTOMIZATIONS]: updatedCustomizations}, () => {
+    chrome.storage.local.get([GAME_MODE], (result) => {
+      let gameMode: string = result[GAME_MODE];
+      if (gameMode === MULTI_PLAYER) {
+        // TODO: socket.io message
+      }
+
+    })
+
+  })
 }
 
 function handleGameModeUpdate(updatedGameMode: string) {
-  gameMode = updatedGameMode;
-  chrome.storage.local.set({[GAME_MODE]: gameMode});
+  chrome.storage.local.get([GAME_MODE], (result) => {
+    let gameMode: string = updatedGameMode;
+    chrome.storage.local.set({[GAME_MODE]: gameMode});
+  
+    if (gameMode === MULTI_PLAYER) {
+      // TODO: player = id
+    } else if (gameMode === SINGLE_PLAYER) {
+      // TODO: disconnet from room
+    }
 
-  if (gameMode === MULTI_PLAYER) {
-    // TODO: player = id
-  } else if (gameMode === SINGLE_PLAYER) {
-    // TODO: disconnet from room
-  }
+  })
 }
 
 function startSingleplayer(customizations: CustomizationInterface) {
-  game.participants = [player];
-  game.gameClients = {
-    [player]: defaultClientGame,
-  };
+  chrome.storage.local.get([GAME, PLAYER, TAB_ID, VIEWING_PLAYER], (result) => {
+    let game: GameInterface = result[GAME] || defaultClientGame;
+    let player: string = result[PLAYER] || SINGLE_PLAYER;
+    let viewingPlayer: string = result[VIEWING_PLAYER] || SINGLE_PLAYER;
+    // let tabId: number = result[TAB_ID];
 
-  // Set up game
-  game.customizations = customizations;
-  // Calculating path length to determine what to put in histories
-  let pathLength = 2;
-  if (game.customizations.mode.type === MODE_PATH) {
-    pathLength += game.customizations.mode.path?.connections.length ?? 0;
-  }
-
-
-
-  // Initializing free-path
-  if (game.customizations.mode.type === MODE_PATH &&
-    !game.customizations.mode.path?.directed) {
-    game.gameClients[player].freePath = Array.from(
-      { length: pathLength },
-      () => ({ title: "???", link: "www.wikipedia.org" })
-    );
-    game.gameClients[player].freePath[0] = customizations.start;
-    game.gameClients[player].freePath[pathLength-1] = customizations.end;
-  }
-
-  // Game Path
-  game.path = [
-    game.customizations.start,
-    ...(game.customizations.mode.type === MODE_PATH ? (game.customizations.mode.path?.connections ?? []) : []),
-    game.customizations.end
-  ];
-
-  // Node history
-  game.gameClients[player].nodeHistory = Array.from(
-    { length: pathLength },
-    () => ({ clicks: 0, leaveTime: null, delayTime: 0 }) 
-  );
-  
-  // Edge history
-  game.gameClients[player].edgeHistory = Array.from(
-    { length: pathLength - 1 },
-    () => []
-  );
-
-  game.gameClients[player].visitedPath = [game.customizations.start];
-
-  chrome.tabs.create({ url: game.customizations.start.link }, (newTab) => {
-    // Initializing time
-    game.gameStatus = {
-      startTime: Date.now(),
-      playing: true,
-      paused: false,
-      pauseStart: 0,
-      pauseGap: 0,
-      win: null,
+    game.participants = [player];
+    game.gameClients = {
+      [player]: defaultClientGame,
     };
-
-    chrome.storage.local.set(
-      { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer, 
-        [END_CAUSE]: undefined
-       },
-      () => {
-        tabId = newTab.id ?? 0;
-      }
+  
+    // Set up game
+    game.customizations = customizations;
+    // Calculating path length to determine what to put in histories
+    let pathLength = 2;
+    if (game.customizations.mode.type === MODE_PATH) {
+      pathLength += game.customizations.mode.path?.connections.length ?? 0;
+    }
+  
+  
+  
+    // Initializing free-path
+    if (game.customizations.mode.type === MODE_PATH &&
+      !game.customizations.mode.path?.directed) {
+      game.gameClients[player].freePath = Array.from(
+        { length: pathLength },
+        () => ({ title: "???", link: "www.wikipedia.org" })
+      );
+      game.gameClients[player].freePath[0] = customizations.start;
+      game.gameClients[player].freePath[pathLength-1] = customizations.end;
+    }
+  
+    // Game Path
+    game.path = [
+      game.customizations.start,
+      ...(game.customizations.mode.type === MODE_PATH ? (game.customizations.mode.path?.connections ?? []) : []),
+      game.customizations.end
+    ];
+  
+    // Node history
+    game.gameClients[player].nodeHistory = Array.from(
+      { length: pathLength },
+      () => ({ clicks: 0, leaveTime: null, delayTime: 0 }) 
     );
-  });
+    
+    // Edge history
+    game.gameClients[player].edgeHistory = Array.from(
+      { length: pathLength - 1 },
+      () => []
+    );
+  
+    game.gameClients[player].visitedPath = [game.customizations.start];
+    game.gameClients[player].currentNode = 0;
+  
+    chrome.tabs.create({ url: game.customizations.start.link }, (newTab) => {
+      // Initializing time
+      game.gameStatus = {
+        startTime: Date.now(),
+        playing: true,
+        paused: false,
+        pauseStart: 0,
+        pauseGap: 0,
+        win: null,
+      };
+  
+      chrome.storage.local.set(
+        { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer, 
+          [END_CAUSE]: undefined, [PLAYER]: SINGLE_PLAYER
+         }
+      );
+    });
+  })
 }
 
 function sendTabId(sender : chrome.runtime.MessageSender, response : (response: {tabId: number |null}) => void) : void {
@@ -269,7 +300,12 @@ function handlePauseSingleplayer() {}
 function handleUnpauseSingleplayer() {}
 
 function handleWikipediaClick(page : string ) {
-    chrome.storage.local.get([CLICK_COUNT], (result) => {
+    chrome.storage.local.get([CLICK_COUNT, GAME, PLAYER, VIEWING_PLAYER, GAME_MODE], (result) => {
+      let game: GameInterface = result[GAME];
+      let player: string = result[PLAYER];
+      let viewingPlayer: string = result[VIEWING_PLAYER];
+      let gameMode: string = result[GAME_MODE];
+      
         if(game.gameStatus.playing) {
 
             // Retrieve and implement clicks
@@ -292,10 +328,13 @@ function handleWikipediaClick(page : string ) {
                       link: page
                     };
 
-                    console.log("Visited new page: ", currentArticle.title, " ", currentArticle.link);
+                    console.log("Visited new page: ", currentArticle.title, " ", currentArticle.link, " current node: ", currentNode);
 
                     // Updating edge history
                     let currentEdgeHistory = game.gameClients[player].edgeHistory[currentNode];
+                    if(!currentEdgeHistory) {
+                      currentEdgeHistory = []
+                    }
                     currentEdgeHistory.push({title: pageTitle, link: page});
                     game.gameClients[player].edgeHistory[currentNode] = currentEdgeHistory;
 
@@ -364,10 +403,15 @@ function handleWikipediaClick(page : string ) {
 
 chrome.webNavigation.onCommitted.addListener((details) => {
   if(details.url.includes("wikipedia.org")) {
-    if(game.gameStatus.playing) {
-      if(details.tabId != tabId) {
-        endSingleplayerGame(EXTERNAL_WIKI_VISIT)
+    chrome.storage.local.get([GAME, TAB_ID], (result) => {
+      let game: GameInterface = result[GAME];
+      let tabId: number = result[TAB_ID];
+
+      if(game.gameStatus.playing) {
+        if(details.tabId != tabId) {
+          endSingleplayerGame(EXTERNAL_WIKI_VISIT)
+        }
       }
-    }
+    })
   }
 });

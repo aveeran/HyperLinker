@@ -26,6 +26,10 @@ chrome.storage.local.get(["game", "tab-id"], (result) => {
 
         // Get tab ID of current tab
         chrome.runtime.sendMessage({type: "get_tab_id"}, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("bruh:", chrome.runtime.lastError.message);
+                return;
+              }
             
             // If current tab is still original tab, enforce restrictions
             if(response && response.tabId && storedID) {

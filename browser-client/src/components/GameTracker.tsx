@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClientGameInterface, FINISH_SINGLEPLAYER_GAME, GameStatusInterface, SINGLEPLAYER_TIME_FINISHED, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
+import { ClientGameInterface, defaultClientGame, FINISH_SINGLEPLAYER_GAME, GameStatusInterface, SINGLEPLAYER_TIME_FINISHED, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
 
 function GameTracker({
   gameClientInformation,
@@ -14,11 +14,14 @@ function GameTracker({
 }) {
   
   const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
-  const [paused, setPaused] = useState<boolean>(false);
   let interval: NodeJS.Timeout | null = null;
 
+  if(!gameClientInformation) {
+    gameClientInformation = defaultClientGame;
+  }
+
   useEffect(() => {
-    if(!paused) { // only if not paused, 
+    if(!gameStatus.paused) { // only if not paused, 
   
       if(countDown != -1) {
         interval = setInterval(() => {
@@ -44,7 +47,7 @@ function GameTracker({
         }
       };
     }
-  }, [tracking, countDown, gameStatus.pauseGap]);
+  }, [tracking, countDown, gameStatus.pauseGap, gameStatus.paused]);
 
   useEffect(() => {
     chrome.runtime.onMessage.addListener((message, sender, response) => {
@@ -76,7 +79,7 @@ function GameTracker({
   });
 
   const countClicks = (): number => {
-    const nodes = gameClientInformation.nodeHistory;
+    const nodes = gameClientInformation?.nodeHistory || [];
     let clickCount = 0;
 
     for (let i = 0; i < nodes.length; i++) {
@@ -120,8 +123,17 @@ function GameTracker({
   };
 
   const renderTime = () => {
-    const rawTime =
+    let rawTime = 0;
+    if(!gameStatus.paused) {
+      rawTime =
       Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000);
+    } else {
+      rawTime = 0;
+      /*
+      use current node, get leave time (or use gameStart), then add delay (local node or total)
+      */
+      
+    }
     const formattedTime = Math.floor(rawTime/1000);
 
     return (

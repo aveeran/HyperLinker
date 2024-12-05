@@ -316,7 +316,7 @@ function Dashboard() {
         <div className="flex justify-center mb-3">
           <button
             className="flex bg-gray-400 text-white px-4 py-2 rounded mr-2 font-custom"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
           >
             Back
           </button>
