@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClientGameInterface, defaultClientGame, FINISH_SINGLEPLAYER_GAME, GameStatusInterface, SINGLEPLAYER_TIME_FINISHED, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
+import { ClientGameInterface, defaultClientGame, FINISH_SINGLEPLAYER_GAME, GameStatusInterface, NodeHistoryInterface, SINGLEPLAYER_TIME_FINISHED, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
 
 function GameTracker({
   gameClientInformation,
@@ -127,12 +127,8 @@ function GameTracker({
     if(!gameStatus.paused) {
       rawTime =
       Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000);
-    } else {
-      rawTime = 0;
-      /*
-      use current node, get leave time (or use gameStart), then add delay (local node or total)
-      */
-      
+    } else {      
+      rawTime = gameStatus.pauseStart - gameStatus.startTime - (gameStatus.pauseGap*1000);      
     }
     const formattedTime = Math.floor(rawTime/1000);
 
