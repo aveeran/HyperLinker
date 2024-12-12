@@ -1,13 +1,47 @@
 import { useNavigate } from "react-router-dom";
-import { ClientGameInterface, defaultClientGame, defaultCustomizations, GAME, GAME_MODE, GameInterface, ClientStatusInterface, MODE_COUNT_DOWN, MULTI_PLAYER, PLAYER, SINGLE_PLAYER, UPDATED_GAME_CLIENT, UPDATED_VIEWING_PLAYER, VIEWING_PLAYER, GameStatusInterface, defaultGameStatus, CustomizationInterface, MODE_NORMAL, Article, MODE_PATH, UNPAUSE, PAUSE, UPDATED_GAME_STATUS, FINISH_SINGLEPLAYER_GAME, QUIT_SINGLEPLAYER, END_CAUSE } from "../../utils/utils";
-import PlayerSelector from "../../components/PlayerSelector";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ClientGameInterface,
+  defaultClientGame,
+  defaultCustomizations,
+  GAME,
+  GAME_MODE,
+  GameInterface,
+  ClientStatusInterface,
+  MODE_COUNT_DOWN,
+  MULTI_PLAYER,
+  PLAYER,
+  SINGLE_PLAYER,
+  UPDATED_GAME_CLIENT,
+  UPDATED_VIEWING_PLAYER,
+  VIEWING_PLAYER,
+  GameStatusInterface,
+  defaultGameStatus,
+  CustomizationInterface,
+  MODE_NORMAL,
+  Article,
+  MODE_PATH,
+  UNPAUSE,
+  PAUSE,
+  UPDATED_GAME_STATUS,
+  FINISH_SINGLEPLAYER_GAME,
+  QUIT_SINGLEPLAYER,
+  END_CAUSE,
+  PLAYER_SELECTOR,
+  TRACKING_INFORMATION,
+  PATH_PROGRESS
+} from "../../utils/utils";
+import PlayerSelector from "../../components/PlayerSelector";
 import GameTracker from "../../components/GameTracker";
 import PathProgress from "../../components/PathProgress";
+
+
 
 function Game() {
   const tempMode = MULTI_PLAYER;
   const navigate = useNavigate();
+
+  const [maximizedWidget, setMaximizedWidget] = useState<string | null>(null);
   const [playerIDs, setPlayerIDs] = useState<string[]>([
     "Bob",
     "Frank",
@@ -20,115 +54,93 @@ function Game() {
     "I was once",
   ]);
   const [currentPlayer, setCurrentPlayer] = useState<string>("Frank");
-  const [gameStatus, setGameStatus] = useState<GameStatusInterface>(defaultGameStatus);
-  const [gameClientsInformation, setGameClientsInformation] = useState<ClientGameInterface>(defaultClientGame);
+  const [gameStatus, setGameStatus] = useState<GameStatusInterface>(
+    defaultGameStatus
+  );
+  const [gameClientsInformation, setGameClientsInformation] = useState<ClientGameInterface>(
+    defaultClientGame
+  );
   const [path, setPath] = useState<Article[]>([]);
-
-
-  const currentPlayerRef = useRef<string>(currentPlayer);
-  const [tracking, setTracking] = useState<string>(defaultCustomizations.track[0])
+  const [tracking, setTracking] = useState<string>(defaultCustomizations.track[0]);
   const [countDown, setCountDown] = useState<number>(-1);
-
   const [pausable, setPausable] = useState<boolean>(true);
   const [paused, setPaused] = useState<boolean>(false);
+  const [pathCustomizations, setPathCustomizations] = useState<{
+    type: string;
+    directed: boolean;
+  }>({ type: MODE_NORMAL, directed: true });
 
-  const [pathCustomizations, setPathCustomizations] = useState<{type: string, directed:boolean}>({type: MODE_NORMAL, directed:true});
+  const currentPlayerRef = useRef<string>(currentPlayer);
 
   useEffect(() => {
     currentPlayerRef.current = currentPlayer;
-    // TODO: maybe re-fetch game information here? for multiplayer
   }, [currentPlayer]);
 
   const isChromeExtension = useMemo<boolean>(() => {
-    return !!(
-      typeof chrome !== "undefined" &&
-      chrome.storage &&
-      chrome.storage.local
-    );
+    return !!(typeof chrome !== "undefined" && chrome.storage && chrome.storage.local);
   }, []);
 
   useEffect(() => {
-    if(isChromeExtension) {
+    if (isChromeExtension) {
       chrome.storage.local.get([GAME, VIEWING_PLAYER, GAME_MODE, END_CAUSE], (result) => {
-        if(result[END_CAUSE] != null) {
-          navigate('/gameEnd');
+        if (result[END_CAUSE] != null) {
+          navigate("/gameEnd");
         }
         const gameRes: GameInterface = result[GAME];
-
-        // Stroing game status
-        const storedGameStatus = gameRes.gameStatus;
-        setGameStatus(storedGameStatus);
-
-        // Storing player IDs
-        const storedPlayerIDs = gameRes.participants;
-        setPlayerIDs(storedPlayerIDs);
-
-        // Retrieving game client information for player being viewed
+        setGameStatus(gameRes.gameStatus);
+        setPlayerIDs(gameRes.participants);
         const viewingPlayer: string = result[VIEWING_PLAYER];
-        const gameInformation: ClientGameInterface = gameRes.gameClients[viewingPlayer]; // TODO: in multiplayer, how to update game info when switching viewing
-
-        // Retrieving tracking mode
+        const gameInformation: ClientGameInterface = gameRes.gameClients[viewingPlayer];
         const gameTracking: string = gameRes.customizations.track[0];
-
-        // Retrieving count-down (if possible)
         const mode = gameRes.customizations.mode.type;
-        if(mode===MODE_COUNT_DOWN) {
+        if (mode === MODE_COUNT_DOWN) {
           setCountDown(gameRes.customizations.mode.count_down?.timer ?? 0);
         }
-
-        // Setting pausable
-        setPaused(gameRes.gameStatus.paused != null);
-
-        // Set paused
+        setPausable(gameRes.gameStatus.paused != null);
         setPaused(gameRes.gameStatus.paused ?? false);
-
-        // Retrieving path stuff
         setPath(gameRes.path);
-        let pathInfo = {type: gameRes.customizations.mode.type, directed: true}
-        if(gameRes.customizations.mode.type === MODE_PATH) {
-          if(!gameRes.customizations.mode.path?.directed) { // TODO: make sure that when path is null, is true
+        let pathInfo = { type: gameRes.customizations.mode.type, directed: true };
+        if (gameRes.customizations.mode.type === MODE_PATH) {
+          if (!gameRes.customizations.mode.path?.directed) {
             pathInfo.directed = false;
           }
         }
         setPathCustomizations(pathInfo);
-
-        // Setting states
         setCurrentPlayer(viewingPlayer);
         setGameClientsInformation(gameInformation);
         setTracking(gameTracking);
       });
 
-      chrome.runtime.onMessage.addListener((message, sender, response) => {
-        if(message.type === UPDATED_GAME_CLIENT) {
-          if(message.clientID === currentPlayerRef.current) { // TODO: separate user name from ID
+      chrome.runtime.onMessage.addListener((message) => {
+        if (message.type === UPDATED_GAME_CLIENT) {
+          if (message.clientID === currentPlayerRef.current) {
             const updatedGameInformation = message.gameClient;
             setGameClientsInformation(updatedGameInformation);
           }
         } else if (message.type === UPDATED_GAME_STATUS) {
           setGameStatus(message.gameStatus);
-        } 
+        }
       });
 
-      const handleDataChanged = (changes : {[key: string] : chrome.storage.StorageChange}) => {
+      const handleDataChanged = (changes: { [key: string]: chrome.storage.StorageChange }) => {
         const storedEndCause = changes[END_CAUSE];
-
-        if(storedEndCause && storedEndCause.newValue != null)  {
-          navigate('/gameEnd');
+        if (storedEndCause && storedEndCause.newValue != null) {
+          navigate("/gameEnd");
         }
-      }
+      };
 
       chrome.storage.local.onChanged.addListener(handleDataChanged);
       return () => {
         chrome.storage.local.onChanged.removeListener(handleDataChanged);
-      }
+      };
     }
   }, [isChromeExtension]);
 
   const updateCurrentPlayer = (playerID: string) => {
-    chrome.storage.local.set({[VIEWING_PLAYER]: playerID}, () => {
+    chrome.storage.local.set({ [VIEWING_PLAYER]: playerID }, () => {
       chrome.runtime.sendMessage({
         type: UPDATED_VIEWING_PLAYER,
-        clientID: playerID
+        clientID: playerID,
       });
     });
     setCurrentPlayer(playerID);
@@ -137,60 +149,143 @@ function Game() {
   const handleQuit = () => {
     chrome.runtime.sendMessage({
       type: FINISH_SINGLEPLAYER_GAME,
-      cause: QUIT_SINGLEPLAYER
+      cause: QUIT_SINGLEPLAYER,
     });
-  }
+  };
 
   const handleTogglePause = () => {
-    if(isChromeExtension) {
-      if(paused) {
-        chrome.runtime.sendMessage({type: UNPAUSE}, () => {
+    if (isChromeExtension) {
+      if (paused) {
+        chrome.runtime.sendMessage({ type: UNPAUSE }, () => {
           setPaused(false);
         });
       } else {
-        chrome.runtime.sendMessage({type: PAUSE}, () => {
+        chrome.runtime.sendMessage({ type: PAUSE }, () => {
           setPaused(true);
         });
       }
     }
-  }
+  };
+
+  const handleMaximize = (widget: string) => {
+    setMaximizedWidget((prev) => (prev === widget ? null : widget));
+  };
 
   return (
     <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
       <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
-        <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
-          Singleplayer
-        </p>
-        {tempMode === MULTI_PLAYER ? (
-          <div>
-            <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
-              Player Selection
-            </p>
-            <div className="flex justify-center items-center">
-              <PlayerSelector
-                onDataChange={updateCurrentPlayer}
-                playerIDs={playerIDs}
-                currentPlayer={currentPlayer}
-              />
-            </div>
-          </div>
-        ) : null}
-        <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
-          Tracking
-        </p>
-        <GameTracker gameClientInformation={gameClientsInformation} gameStatus={gameStatus}
-        tracking={tracking} countDown={countDown}/>
-        <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
-          Progress
-        </p>
-        <PathProgress gameClientInformation={gameClientsInformation} pathCustomizations={pathCustomizations} 
-        gameStatus={gameStatus} path={path}/>
+      <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">{tempMode}</p>
 
+      <div>
+        
+        <div className={`flex items-center justify-between ${maximizedWidget === PLAYER_SELECTOR ? 
+            "bg-yellow-200" : "bg-slate-200"}`}>
+
+          <p className="text-xl font-medium text-center flex-grow">PLAYER SELECTOR</p>
+
+          <button className="relative right-2" onClick={() => handleMaximize(PLAYER_SELECTOR)}>
+            {maximizedWidget === PLAYER_SELECTOR ? "-" : "+"}
+          </button>
+        </div>
+
+        {
+          maximizedWidget === PLAYER_SELECTOR ? (
+            <PlayerSelector onDataChange={updateCurrentPlayer} playerIDs={playerIDs} currentPlayer={currentPlayer}/>
+          ) : null
+        }
       </div>
 
+      <div>
+        <div className={`flex items-center justify-between ${maximizedWidget === TRACKING_INFORMATION ? 
+            "bg-yellow-200" : "bg-slate-200"}`}>
+          <p className="text-xl font-medium text-center flex-grow">TRACKING INFORMATION</p>
+          <button className="relative right-2" onClick={() => handleMaximize(TRACKING_INFORMATION)}>
+          {maximizedWidget === TRACKING_INFORMATION ? "-" : "+"}
+          </button>
+        </div>
+        {maximizedWidget === TRACKING_INFORMATION ? (
+           <GameTracker
+           gameClientInformation={gameClientsInformation}
+           gameStatus={gameStatus}
+           tracking={tracking}
+           countDown={countDown}
+         />
+        ) : null}
+      </div>
+
+      <div>
+        <div className={`flex items-center justify-between ${maximizedWidget === PATH_PROGRESS ? 
+            "bg-yellow-200" : "bg-slate-200"}`}>
+          <p className="text-xl font-medium text-center flex-grow">PATH PROGRESS</p>
+          <button className="relative right-2" onClick={() => handleMaximize(PATH_PROGRESS)}>
+          {maximizedWidget === PATH_PROGRESS ? "-" : "+"}
+          </button>
+        </div>
+        {
+          maximizedWidget === PATH_PROGRESS ? 
+          (<PathProgress
+            gameClientInformation={gameClientsInformation}
+            pathCustomizations={pathCustomizations}
+            gameStatus={gameStatus}
+            path={path}
+          />) : null
+        }
+      </div>
+
+
+          {/* <button
+            className={`w-full p-2 text-left ${maximizedWidget === "PlayerSelector" ? "bg-gray-200" : "bg-white"}`}
+            onClick={() => handleMaximize("PlayerSelector")}
+          >
+            Player Selector
+          </button>
+          {maximizedWidget === PLAYER_SELECTOR && (
+            <PlayerSelector
+              onDataChange={updateCurrentPlayer}
+              playerIDs={playerIDs}
+              currentPlayer={currentPlayer}
+            />
+          )}
+  
+        <div className="mb-2">
+          <button
+            className={`w-full p-2 text-left ${maximizedWidget === "GameTracker" ? "bg-gray-200" : "bg-white"}`}
+            onClick={() => handleMaximize("GameTracker")}
+          >
+            Game Tracker
+          </button>
+          {maximizedWidget === TRACKING_INFORMATION && (
+            <GameTracker
+              gameClientInformation={gameClientsInformation}
+              gameStatus={gameStatus}
+              tracking={tracking}
+              countDown={countDown}
+            />
+          )}
+        </div>
+        <div className="mb-2">
+          <button
+            className={`w-full p-2 text-left ${maximizedWidget === "PathProgress" ? "bg-gray-200" : "bg-white"}`}
+            onClick={() => handleMaximize("PathProgress")}
+          >
+            Path Progress
+          </button>
+          {maximizedWidget === PATH_PROGRESS && (
+            <PathProgress
+              gameClientInformation={gameClientsInformation}
+              pathCustomizations={pathCustomizations}
+              gameStatus={gameStatus}
+              path={path}
+            />
+          )}
+        </div> */}
+      </div>
+
+
+
       <div className="flex items-center justify-center">
-        {pausable ? (
+        {pausable && (
           <button
             className={`w-[25%] p-2 border-2 border-gray-200 rounded-md text-white font-custom ${
               paused ? "bg-green-500" : "bg-gray-500"
@@ -199,23 +294,15 @@ function Game() {
           >
             {paused ? "Unpause" : "Pause"}
           </button>
-        ) : null}
-
+        )}
         <button
-            className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2 font-custom"
-            onClick={handleQuit}
-          >
-            Quit
-          </button>
-
-        <button
-          onClick={() => {
-            navigate('/');
-          }}
+          className="w-[25%] bg-red-800 p-2 border-2 border-gray-200 rounded-md text-white mr-2 font-custom"
+          onClick={handleQuit}
         >
-          Return
+          Quit
         </button>
-        </div>
+        <button onClick={() => navigate("/")}>Return</button>
+      </div>
     </div>
   );
 }

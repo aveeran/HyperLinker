@@ -276,3 +276,7 @@ export const SINGLEPLAYER_TIME_FINISHED = "singleplayer_time_finished"; // TODO:
 export const EXTERNAL_WIKI_VISIT = "external_wiki_visit";
 export const DONE_SINGLEPLAYER = "done_singleplayer";
 export const END_CAUSE = "end-cause";
+
+export const PLAYER_SELECTOR = "player-selector";
+export const TRACKING_INFORMATION = "tracking-information";
+export const PATH_PROGRESS = "path-progress";

@@ -315,7 +315,13 @@ function PathProgress({
       acc[rowIndex].push(step);
       return acc;
     }, []);
+    
+     // Reverse every other row
+     rows.forEach((row, index) => {
+      if (index % 2 === 1) row.reverse();
+    });
 
+    
     return (
       <>
         {rows.map((row, rowIndex) => (
