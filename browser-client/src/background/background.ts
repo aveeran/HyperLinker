@@ -2,12 +2,7 @@ import {
   Article,
     CLICK_COUNT,
   CustomizationInterface,
-  CUSTOMIZATIONS,
-  defaultArticle,
   defaultClientGame,
-  defaultCustomizations,
-  defaultGame,
-  DONE_SINGLEPLAYER,
   END_CAUSE,
   EXTERNAL_WIKI_VISIT,
   FINISH_SINGLEPLAYER_GAME,
@@ -75,8 +70,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case FINISH_SINGLEPLAYER_GAME:
       endSingleplayerGame(message.cause);
       break;
-
   }
+  sendResponse({required:true})
 });
 
 // TODO: bruh we have to move this all into persistent storage, otherwise if the bg script goes inactive then
@@ -95,6 +90,7 @@ function endSingleplayerGame(cause: string) {
       game.gameClients[player].nodeHistory[currentNode].leaveTime = Date.now();
         
       chrome.storage.local.set({[GAME]: game, [END_CAUSE]: cause});
+      
   });
 
 }
@@ -278,6 +274,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
           [END_CAUSE]: undefined, [PLAYER]: SINGLE_PLAYER
          }
       );
+
     });
   })
 }

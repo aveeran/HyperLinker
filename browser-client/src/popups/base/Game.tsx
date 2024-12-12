@@ -49,7 +49,6 @@ function Game() {
 
   useEffect(() => {
     if(isChromeExtension) {
-      // First log
       chrome.storage.local.get([GAME, VIEWING_PLAYER, GAME_MODE, END_CAUSE], (result) => {
         if(result[END_CAUSE] != null) {
           navigate('/gameEnd');
