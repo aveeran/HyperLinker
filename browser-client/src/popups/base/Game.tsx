@@ -175,121 +175,70 @@ function Game() {
     <div className="pt-3 p-1">
       <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
       <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
-      <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">{tempMode}</p>
+        <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">{tempMode}</p>
 
-      <div>
-        
-        <div className={`flex items-center justify-between ${maximizedWidget === PLAYER_SELECTOR ? 
+        <div>
+
+          <div className={`flex items-center justify-between ${maximizedWidget === PLAYER_SELECTOR ?
             "bg-yellow-200" : "bg-slate-200"}`}>
 
-          <p className="text-xl font-medium text-center flex-grow">PLAYER SELECTOR</p>
+            <p className="text-xl font-medium text-center flex-grow">PLAYER SELECTOR</p>
 
-          <button className="relative right-2" onClick={() => handleMaximize(PLAYER_SELECTOR)}>
-            {maximizedWidget === PLAYER_SELECTOR ? "-" : "+"}
-          </button>
+            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center" onClick={() => handleMaximize(PLAYER_SELECTOR)}>
+              {maximizedWidget === PLAYER_SELECTOR ? "-" : "+"}
+            </button>
+          </div>
+
+          {
+            maximizedWidget === PLAYER_SELECTOR ? (
+              <PlayerSelector onDataChange={updateCurrentPlayer} playerIDs={playerIDs} currentPlayer={currentPlayer} />
+            ) : null
+          }
         </div>
 
-        {
-          maximizedWidget === PLAYER_SELECTOR ? (
-            <PlayerSelector onDataChange={updateCurrentPlayer} playerIDs={playerIDs} currentPlayer={currentPlayer}/>
-          ) : null
-        }
-      </div>
-
-      <div>
-        <div className={`flex items-center justify-between ${maximizedWidget === TRACKING_INFORMATION ? 
+        <div>
+          <div className={`flex items-center justify-between ${maximizedWidget === TRACKING_INFORMATION ?
             "bg-yellow-200" : "bg-slate-200"}`}>
-          <p className="text-xl font-medium text-center flex-grow">TRACKING INFORMATION</p>
-          <button className="relative right-2" onClick={() => handleMaximize(TRACKING_INFORMATION)}>
-          {maximizedWidget === TRACKING_INFORMATION ? "-" : "+"}
-          </button>
-        </div>
-        {maximizedWidget === TRACKING_INFORMATION ? (
-           <GameTracker
-           gameClientInformation={gameClientsInformation}
-           gameStatus={gameStatus}
-           tracking={tracking}
-           countDown={countDown}
-         />
-        ) : null}
-      </div>
-
-      <div>
-        <div className={`flex items-center justify-between ${maximizedWidget === PATH_PROGRESS ? 
-            "bg-yellow-200" : "bg-slate-200"}`}>
-          <p className="text-xl font-medium text-center flex-grow">PATH PROGRESS</p>
-          <button className="relative right-2" onClick={() => handleMaximize(PATH_PROGRESS)}>
-          {maximizedWidget === PATH_PROGRESS ? "-" : "+"}
-          </button>
-        </div>
-        {
-          maximizedWidget === PATH_PROGRESS ? 
-          (<PathProgress
-            gameClientInformation={gameClientsInformation}
-            pathCustomizations={pathCustomizations}
-            gameStatus={gameStatus}
-            path={path}
-          />) : null
-        }
-      </div>
-
-
-          {/* <button
-            className={`w-full p-2 text-left ${maximizedWidget === "PlayerSelector" ? "bg-gray-200" : "bg-white"}`}
-            onClick={() => handleMaximize("PlayerSelector")}
-          >
-            Player Selector
-          </button>
-          {maximizedWidget === PLAYER_SELECTOR && (
-            <PlayerSelector
-              onDataChange={updateCurrentPlayer}
-              playerIDs={playerIDs}
-              currentPlayer={currentPlayer}
-            />
-          )}
-  
-        <div className="mb-2">
-          <button
-            className={`w-full p-2 text-left ${maximizedWidget === "GameTracker" ? "bg-gray-200" : "bg-white"}`}
-            onClick={() => handleMaximize("GameTracker")}
-          >
-            Game Tracker
-          </button>
-          {maximizedWidget === TRACKING_INFORMATION && (
+            <p className="text-xl font-medium text-center flex-grow">TRACKING INFORMATION</p>
+            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center" onClick={() => handleMaximize(TRACKING_INFORMATION)}>
+              {maximizedWidget === TRACKING_INFORMATION ? "-" : "+"}
+            </button>
+          </div>
+          {maximizedWidget === TRACKING_INFORMATION ? (
             <GameTracker
               gameClientInformation={gameClientsInformation}
               gameStatus={gameStatus}
               tracking={tracking}
               countDown={countDown}
             />
-          )}
+          ) : null}
         </div>
-        <div className="mb-2">
-          <button
-            className={`w-full p-2 text-left ${maximizedWidget === "PathProgress" ? "bg-gray-200" : "bg-white"}`}
-            onClick={() => handleMaximize("PathProgress")}
-          >
-            Path Progress
-          </button>
-          {maximizedWidget === PATH_PROGRESS && (
-            <PathProgress
-              gameClientInformation={gameClientsInformation}
-              pathCustomizations={pathCustomizations}
-              gameStatus={gameStatus}
-              path={path}
-            />
-          )}
-        </div> */}
+
+        <div>
+          <div className={`flex items-center justify-between ${maximizedWidget === PATH_PROGRESS ?
+            "bg-yellow-200" : "bg-slate-200"}`}>
+            <p className="text-xl font-medium text-center flex-grow">PATH PROGRESS</p>
+            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center align-middle" onClick={() => handleMaximize(PATH_PROGRESS)}>
+              {maximizedWidget === PATH_PROGRESS ? "-" : "+"}
+            </button>
+          </div>
+          {
+            maximizedWidget === PATH_PROGRESS ?
+              (<PathProgress
+                gameClientInformation={gameClientsInformation}
+                pathCustomizations={pathCustomizations}
+                gameStatus={gameStatus}
+                path={path}
+              />) : null
+          }
+        </div>
       </div>
-
-
 
       <div className="flex items-center justify-center">
         {pausable && (
           <button
-            className={`w-[25%] p-2 border-2 border-gray-200 rounded-md text-white font-custom ${
-              paused ? "bg-green-500" : "bg-gray-500"
-            }`}
+            className={`w-[25%] p-2 border-2 border-gray-200 rounded-md text-white font-custom ${paused ? "bg-green-500" : "bg-gray-500"
+              }`}
             onClick={handleTogglePause}
           >
             {paused ? "Unpause" : "Pause"}
