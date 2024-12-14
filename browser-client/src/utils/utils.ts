@@ -280,3 +280,4 @@ export const END_CAUSE = "end-cause";
 export const PLAYER_SELECTOR = "player-selector";
 export const TRACKING_INFORMATION = "tracking-information";
 export const PATH_PROGRESS = "path-progress";
+export const CUSTOMIZATION_INFO = "customization-info";

@@ -21,6 +21,10 @@ import {
   TAB_ID,
   UPDATED_VIEWING_PLAYER,
   VIEWING_PLAYER,
+  PLAYER_SELECTOR,
+  TRACKING_INFORMATION,
+  PATH_PROGRESS,
+  CUSTOMIZATION_INFO
 } from "../../utils/utils";
 import PlayerSelector from "../../components/PlayerSelector";
 import PathProgress from "../../components/PathProgress";
@@ -28,6 +32,7 @@ import { useNavigate } from "react-router-dom";
 
 function GameStat() {
   const tempMode = MULTI_PLAYER;
+  const [maximizedWidget, setMaximizedWidget] = useState<string | null>(null);
   const [cause, setCause] = useState<string>();
   const [currentPlayer, setCurrentPlayer] = useState<string>("Frank");
   const [pathCustomizations, setPathCustomizations] = useState<{type: string, directed:boolean}>({type: MODE_NORMAL, directed:true});
@@ -143,35 +148,13 @@ function GameStat() {
     })
   }
 
-  return (
-    <div className="pt-3 p-1">
-      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
-      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
-        <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
-          Singleplayer 
-        </p>
-        {renderCause()}
+  const handleMaximize = (widget: string) => {
+    setMaximizedWidget((prev) => (prev === widget ? null : widget));
+  }
 
-        {tempMode === MULTI_PLAYER ? (
-          <div>
-            <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
-              Player Selection
-            </p>
-            <div className="flex justify-center items-center">
-              <PlayerSelector
-                onDataChange={updateCurrentPlayer}
-                playerIDs={playerIDs}
-                currentPlayer={currentPlayer}
-              />
-            </div>
-          </div>
-        ) : null}
-
-        <p className="text-center font-medium text-base p-1 mb-1 bg-slate-200">
-          Game Customizations
-        </p>
-
-        <div className="mx-h-36 overflow-y-auto">
+  const renderCustomizations = () => {
+    return (
+      <div className="mx-h-36 overflow-y-auto">
           <div className="group relative grid grid-cols-3 gap-4 p-1">
             <strong className="text-base mr-1 col-span-1">Start Article</strong>
             <p className="col-span-2">{gameCustomizations.start.title}</p>
@@ -214,10 +197,10 @@ function GameStat() {
                     gameCustomizations.mode.path?.connections.length ?? 0 > 0 ? (
                       <div className="grid grid-cols-3 gap-4 p-1">
                         <strong className="text-base mr-1 col-span-1 text-center">
-                          Intermediate Articles
+                          Connections
                         </strong>
                         <p className="col-span-2">
-                          {gameCustomizations.mode.path?.connections.join(", ")}
+                          {gameCustomizations.mode.path?.connections.map((article) => article.title).join(", ")}
                         </p>
                       </div> 
                     ) : null
@@ -246,13 +229,81 @@ function GameStat() {
             ) : null
           }
         </div>
+    )
+  }
 
-        <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
-          Progress
+  return (
+    <div className="pt-3 p-1">
+      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
+        <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">
+          Singleplayer 
         </p>
-        
-        <PathProgress gameClientInformation={gameInformation.gameClients[currentPlayerRef.current]} pathCustomizations={pathCustomizations} 
-        gameStatus={gameStatus} path={path}/>
+        {renderCause()}
+
+        {/* {tempMode === MULTI_PLAYER ? (
+          <div>
+            <p className="text-xl font-medium text-center bg-slate-200 p-1 mb-1">
+              Player Selection
+            </p>
+            <div className="flex justify-center items-center">
+              <PlayerSelector
+                onDataChange={updateCurrentPlayer}
+                playerIDs={playerIDs}
+                currentPlayer={currentPlayer}
+              />
+            </div>
+          </div>
+        ) : null} */}
+
+        <div>
+          <div className={`flex items-center justify-between ${maximizedWidget === PLAYER_SELECTOR ?
+            "bg-yellow-200" : "bg-slate-200"}`}>
+
+            <p className="text-xl font-medium text-center flex-grow">PLAYER SELECTOR</p>
+
+            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center" onClick={() => handleMaximize(PLAYER_SELECTOR)}>
+              {maximizedWidget === PLAYER_SELECTOR ? "-" : "+"}
+            </button>
+          </div>
+          {
+            maximizedWidget === PLAYER_SELECTOR ? (
+              <PlayerSelector onDataChange={updateCurrentPlayer} playerIDs={playerIDs} currentPlayer={currentPlayer} />
+            ) : null
+          }
+        </div>
+
+        <div>
+          <div className={`flex items-center justify-between ${maximizedWidget === CUSTOMIZATION_INFO ?
+            "bg-yellow-200" : "bg-slate-200"
+          }`}>
+
+            <p className="text-xl font-medium text-center flex-grow">GAME CUSTOMIZATIONS</p>
+            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center" onClick={() => handleMaximize(CUSTOMIZATION_INFO)}>
+              {maximizedWidget === CUSTOMIZATION_INFO ? "-" : "+"}
+            </button>
+          </div>
+            {maximizedWidget === CUSTOMIZATION_INFO && renderCustomizations()}
+        </div>
+
+        <div>
+          <div className={`flex items-center justify-between ${maximizedWidget === PATH_PROGRESS ?
+            "bg-yellow-200" : "bg-slate-200"}`}>
+            <p className="text-xl font-medium text-center flex-grow">PATH PROGRESS</p>
+            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center align-middle" onClick={() => handleMaximize(PATH_PROGRESS)}>
+              {maximizedWidget === PATH_PROGRESS ? "-" : "+"}
+            </button>
+          </div>
+          {
+            maximizedWidget === PATH_PROGRESS ?
+              (<PathProgress
+                gameClientInformation={gameInformation.gameClients[currentPlayerRef.current]}
+                pathCustomizations={pathCustomizations}
+                gameStatus={gameStatus}
+                path={path}
+              />) : null
+          }
+        </div>
       </div>
       <button onClick={done}>Continue</button>
     </div>
