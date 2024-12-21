@@ -11,6 +11,11 @@ function SearchableDropdown({onDataChange, index = 0, temp=defaultArticle} : {on
     const [isTyping, setIsTyping] = useState<boolean>(false);
 
     useEffect(() => {
+      setQuery(temp.title);
+      setSuggestions([temp]);
+    }, [temp]);
+
+    useEffect(() => {
         if(isTyping && query.length > 0) {
             if(test) {
                 fetchSuggestions(query);
@@ -93,14 +98,15 @@ function SearchableDropdown({onDataChange, index = 0, temp=defaultArticle} : {on
     return (
         <div onBlur={handleBlur}>
           <div className="relative">
+            
               <input
                 type="text"
                 value={query}
                 onChange={handleInputChange}
                 className="p-2 border rounded w-full"
                 placeholder="Search Wikipedia..."
-                
               />
+
               {isDropdownVisible && suggestions.length > 0 && (
                 <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded mt-1 max-h-60 overflow-y-auto">
                   {suggestions.map((suggestion, index) => (
@@ -114,6 +120,7 @@ function SearchableDropdown({onDataChange, index = 0, temp=defaultArticle} : {on
                   ))}
                 </ul>
               )}
+
             </div>
         </div>
     );

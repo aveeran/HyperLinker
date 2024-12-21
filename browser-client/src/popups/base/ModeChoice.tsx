@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import React from "react";
 import {
   Article,
   CustomizationInterface,
@@ -27,8 +28,9 @@ function ModeChoice() {
   const [endArticle, setEndArticle] = useState<Article>(defaultArticle);
   const [pathLength, setPathLength] = useState<number>(0);
   const [isPathDirected, setIsPathDirected] = useState<boolean>(false);
-  const [pathArticles, setPathArticles] = useState<Article[]>([]);
+  const [pathArticles, setPathArticles] = useState<(Article)[]>([]);
   const [timer, setTimer] = useState<number>(0);
+  const [currIdx, setCurrIdx] = useState<number>(0);
 
   const updateStartArticle = (value: Suggestion) =>
     setStartArticle(value.article);
@@ -55,11 +57,11 @@ function ModeChoice() {
 
         // If multiplayer, then update when customizations updated
 
-        if(result[GAME_MODE] === MULTI_PLAYER) {
-          const handleMessage = (message: {type: string; customizations: CustomizationInterface},
+        if (result[GAME_MODE] === MULTI_PLAYER) {
+          const handleMessage = (message: { type: string; customizations: CustomizationInterface },
             sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
           ) => {
-            if(message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+            if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
               setCustomizationStates(message.customizations);
             }
           }
@@ -81,6 +83,7 @@ function ModeChoice() {
     if (updatedCustomizations) {
       setCustomizations(updatedCustomizations);
       setMode(updatedCustomizations.mode.type);
+
       setStartArticle(updatedCustomizations.start);
       setEndArticle(updatedCustomizations.end);
       setPathLength(updatedCustomizations.mode.path?.pathLength ?? 0);
@@ -100,17 +103,19 @@ function ModeChoice() {
   };
 
   const handlePathLength = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value, 10);
+    let value = parseInt(event.target.value, 10);
     if (value > 8) {
-      setPathLength(8);
-    } else {
-      setPathLength(value);
+      value = 8;
     }
 
-    while (pathArticles.length > value - 2) {
-      pathArticles.pop(); // TODO: ???
+    if (value > pathLength) {
+      let extendedPathArticles: (Article)[] = pathArticles.concat(new Array(value - pathLength).fill({ title: "", link: "" }));
+      setPathArticles(extendedPathArticles);
+    } else {
+      let shortenedPathArticles: (Article)[] = pathArticles.slice(0, value - 2);
+      setPathArticles(shortenedPathArticles);
     }
-    setPathArticles([...pathArticles]);
+    setPathLength(value);
   };
 
   const handleTimer = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,28 +165,124 @@ function ModeChoice() {
     handleBack();
   };
 
-  return (
-    <div className="pt-3 p-1">
-      <h1 className="text-4xl text-center font-custom mb-3">HyperLinker</h1>
-      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
-        <p className="font-medium text-xl text-center bg-sky-200 p-1 mb-1">
-          Singleplayer
+  const handleClickNode = (nodeIndex: number) => {
+    setCurrIdx(nodeIndex);
+  }
+  function generateNode(rowIndex: number, step: Article, index: number, rowLength: number) {
+    const nodeIndex =
+      rowIndex % 2 === 0
+        ? index + rowIndex * rowLength
+        : rowIndex * rowLength + (rowLength - index - 1);
+
+    const isSelected = nodeIndex === currIdx;
+
+    return (
+      <div
+        key={nodeIndex}
+        className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer p-2 ${isSelected
+            ? "bg-blue-500 text-white border-green-400 shadow-gray-400 drop-shadow-2xl"
+            : "bg-white border-gray-300"
+          }`}
+        onClick={() => handleClickNode(nodeIndex)}
+        title={step.title}
+      >
+        <p className="truncate text-sm" aria-label={step.title}>
+          {step.title}
         </p>
+      </div>
+    );
+  }
+
+  function generateRow(row: Article[], rowIndex: number, rowLength: number) {
+    return (
+      <div
+        className={`flex items-center gap-4 ${rowIndex % 2 === 0 ? "justify-left" : "justify-end"}`}
+        key={`row-${rowIndex}`}
+      >
+        {row.map((step, index) => (
+          <React.Fragment key={`node-${rowIndex}-${index}`}>
+            {generateNode(rowIndex, step, index, rowLength)}
+            {index < row.length - 1 && generateLink(rowIndex, index, rowLength)}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+
+  function generateVerticalConnector(rowIndex: number) {
+    return (
+      <div
+        key={`connector-${rowIndex}`}
+        className={`flex ${rowIndex % 2 === 0 ? "justify-end mr-5" : "justify-start ml-5"
+          } my-2`}
+      >
+        <div className="w-2 h-8 bg-gray-200"></div>
+      </div>
+    );
+  }
+
+  function generateLink(rowIndex: number, index: number, rowLength: number) {
+    const linkIndex =
+      rowIndex % 2 === 0
+        ? index + rowIndex * rowLength
+        : rowIndex * rowLength + (rowLength - index - 1) - 1;
+    return (
+      <div
+        key={`link-${linkIndex}`}
+        className="h-2 w-8 bg-gray-300 mx-1"
+      ></div>
+    );
+  }
+
+  function renderPath() {
+    const rowLength = 3;
+
+    const path = [startArticle, ...pathArticles, endArticle];
+
+    console.log("path: ", path);
+
+    const rows = path.reduce<Array<Array<Article>>>((acc, step, index) => {
+      const rowIndex = Math.floor(index / rowLength);
+      if (!acc[rowIndex]) acc[rowIndex] = [];
+      acc[rowIndex].push(step);
+      return acc;
+    }, []);
+
+    rows.forEach((row, index) => {
+      if (index % 2 === 1) row.reverse();
+    });
+
+    return (
+      <div className="p-1 inline-block">
+        {rows.map((row, rowIndex) => (
+          <React.Fragment key={`row-fragment-${rowIndex}`}>
+            {generateRow(row, rowIndex, rowLength)}
+            {rowIndex < rows.length - 1 && generateVerticalConnector(rowIndex)}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+
+ 
+  return (
+    <div className="p-1">
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-1 bg-slate-100">
         <p className="text-center font-medium text-base bg-slate-200">
           Customizations
         </p>
-        <hr className="border-t-1 border-black m-3" />
+        <hr className="border-t-1 border-black m-1" />
 
-        <p className="text-center font-medium text-base bg-purple-200 mt-2 mb-2">
+        <p className="text-center font-medium text-base bg-purple-200 mt-1 mb-1">
           Mode
         </p>
 
         <div className="">
-          <div className="bg-yellow-200 p-1 mb-2">
+          <div className="p-1 mb-1">
             <select
               value={mode}
               onChange={handleModeChange}
-              className="block mx-auto p-2 border rounded"
+              className="block mx-auto p-1 border rounded"
             >
               <option value="" disabled>
                 Select a mode
@@ -269,14 +370,12 @@ function ModeChoice() {
             </div>
           ) : null}
 
-          {mode === MODE_PATH ? (
-            <div className="">
-              <div className="flex items-center justify-center bg-green-200 p-1">
-                <span className="mr-2 text-blue-700 font-semibold">
-                  Path Length
-                </span>
-                <input
-                  className="text-center border rounded p-2"
+          {mode === MODE_PATH && (
+            <div>
+
+              <div className="group relative grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1">Path Length</strong>
+                <input className="text-center border rounded p-2 h-8"
                   type="number"
                   value={pathLength}
                   onChange={handlePathLength}
@@ -284,76 +383,52 @@ function ModeChoice() {
                   step="1"
                   max="8"
                   placeholder="2"
-                  aria-label="Positive integer input"
-                />
+                  aria-label="Positive integer input" />
               </div>
 
-              <div className="bg-green-200 flex mt-2 mb-2 justify-center">
-                <label htmlFor="directed" className="">
-                  <input
-                    type="checkbox"
-                    id="directed"
-                    value="directed"
-                    checked={isPathDirected}
-                    onChange={handleOptionChange}
-                    className="mr-2"
+              <div className="group relative grid grid-cols-3 gap-4 p-1">
+                <strong className="text-base mr-1 col-span-1">Directed</strong>
+                <input className="mr-2"
+                  type="checkbox"
+                  id="directed"
+                  value="directed"
+                  checked={isPathDirected}
+                  onChange={handleOptionChange} />
+              </div>
+
+              <p className="text-center font-medium text-base bg-purple-200 mt-2 mb-2">
+                Mode
+              </p>
+              <div>
+
+
+                <div className="flex flex-col items-center">
+                  {renderPath()}
+                </div>
+
+                {
+                            /*
+                  IT KEEPS FUCKING SHIFTING
+                            */
+                }
+                <div className="w-full flex justify-center items-center">
+                  <SearchableDropdown
+                    onDataChange={updatePathArticles}
+                    index={
+                      currIdx === 0 ? 0 : 
+                      (currIdx === pathLength-1 ? pathLength-1 : currIdx-1)
+                    }
+                    temp={
+                      currIdx === 0 ? startArticle : 
+                      (currIdx === pathLength-1 ? endArticle : pathArticles[currIdx-1])                    
+                    }
                   />
-                  <span className="font-semibold">Directed Path</span>
-                </label>
+                </div>
+
               </div>
 
-              <div className="items-center justify-center mb-2">
-                <p className="text-center mb-2 bg-green-200 p-1 text-blue-700 font-semibold">
-                  Path
-                </p>
-
-                <ul className="flex flex-col list-disc ml-12 max-h-36 overflow-y-auto">
-                  <li className="mb-2 items-center justify-center list-item">
-                    <div className="flex items-center">
-                      <p className="w-[15%] font-medium">Start</p>
-                      <div className="">
-                        <SearchableDropdown
-                          onDataChange={updateStartArticle}
-                          temp={startArticle}
-                        />
-                      </div>
-                    </div>
-                  </li>
-
-                  {Array.from({ length: pathLength - 2 }, (_, index) => (
-                    <li
-                      key={index}
-                      className="mb-2 items-center justify-center list-item"
-                    >
-                      <div className="flex items-center">
-                        <p className="w-[15%] font-medium">{index + 2}</p>
-                        <div className="">
-                          <SearchableDropdown
-                            key={index}
-                            onDataChange={updatePathArticles}
-                            index={index}
-                            temp={pathArticles[index]}
-                          />
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-
-                  <li className="mb-2 items-center justify-center list-item">
-                    <div className="flex items-center">
-                      <p className="w-[15%] font-medium">End</p>
-                      <div className="">
-                        <SearchableDropdown
-                          onDataChange={updateEndArticle}
-                          temp={endArticle}
-                        />
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
             </div>
-          ) : null}
+          )}
 
           {mode === "random" ? <div></div> : null}
         </div>

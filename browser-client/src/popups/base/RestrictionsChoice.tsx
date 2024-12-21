@@ -128,12 +128,7 @@ function RestrictionsChoice() {
 
   return (
     <div className="pt-3 p-1">
-      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
-
       <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
-        <p className="text-xl text-center font-medium bg-blue-200 p-1 mb-1">
-          Singleplayer
-        </p>
         <p className="text-center font-medium text-base bg-slate-200 ">
           Customizations
         </p>

@@ -83,12 +83,16 @@ export const defaultCustomizations: CustomizationInterface = {
     mode: {
         type: "path",
         path: {
-          pathLength: 3,
+          pathLength: 9,
           directed: true,
           connections: [
-            {title:"a", link:"b"},
-            {title:"a", link:"b"},
-            {title:"a", link:"b"}
+            {title: "aaa", link:"bb"},
+            {title: "aaa", link:"bb"},
+            {title: "aaa", link:"bb"},
+            {title: "aaa", link:"bb"},
+            {title: "aaa", link:"bb"},
+            {title: "aaa", link:"bb"},
+            {title: "aaa", link:"bb"},
 
             /*
               {
@@ -103,11 +107,11 @@ export const defaultCustomizations: CustomizationInterface = {
         }
     },
     start: {
-        title: "",
+        title: "c",
         link: "",
     },
     end: {
-        title: "",
+        title: "d",
         link: "",
     },
     track: [TRACKING_CLICKS],
