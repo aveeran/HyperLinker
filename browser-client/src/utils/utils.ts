@@ -83,9 +83,13 @@ export const defaultCustomizations: CustomizationInterface = {
     mode: {
         type: "path",
         path: {
-          pathLength: 2,
+          pathLength: 3,
           directed: true,
           connections: [
+            {title:"a", link:"b"},
+            {title:"a", link:"b"},
+            {title:"a", link:"b"}
+
             /*
               {
                 title: String,

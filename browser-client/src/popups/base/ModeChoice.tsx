@@ -171,7 +171,8 @@ function ModeChoice() {
           Customizations
         </p>
         <hr className="border-t-1 border-black m-3" />
-        <p className="text-center font-medium text-base bg-slate-200 mt-2 mb-2">
+
+        <p className="text-center font-medium text-base bg-purple-200 mt-2 mb-2">
           Mode
         </p>
 
