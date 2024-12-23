@@ -29,7 +29,9 @@ import {
   END_CAUSE,
   PLAYER_SELECTOR,
   TRACKING_INFORMATION,
-  PATH_PROGRESS
+  PATH_PROGRESS,
+  defaultGame,
+  GAME_WIDGET_MAXIMIZED
 } from "../../utils/utils";
 import PlayerSelector from "../../components/PlayerSelector";
 import GameTracker from "../../components/GameTracker";
@@ -41,7 +43,7 @@ function Game() {
   const tempMode = MULTI_PLAYER;
   const navigate = useNavigate();
 
-  const [maximizedWidget, setMaximizedWidget] = useState<string | null>(null);
+  const [maximizedWidget, setMaximizedWidget] = useState<string[]>([TRACKING_INFORMATION, PATH_PROGRESS]);
   const [playerIDs, setPlayerIDs] = useState<string[]>([
     "Bob",
     "Frank",
@@ -54,12 +56,8 @@ function Game() {
     "I was once",
   ]);
   const [currentPlayer, setCurrentPlayer] = useState<string>("Frank");
-  const [gameStatus, setGameStatus] = useState<GameStatusInterface>(
-    defaultGameStatus
-  );
-  const [gameClientsInformation, setGameClientsInformation] = useState<ClientGameInterface>(
-    defaultClientGame
-  );
+  const [gameStatus, setGameStatus] = useState<GameStatusInterface>(defaultGameStatus);
+  const [gameClientsInformation, setGameClientsInformation] = useState<ClientGameInterface>(defaultClientGame);
   const [path, setPath] = useState<Article[]>([]);
   const [tracking, setTracking] = useState<string>(defaultCustomizations.track[0]);
   const [countDown, setCountDown] = useState<number>(-1);
@@ -82,10 +80,14 @@ function Game() {
 
   useEffect(() => {
     if (isChromeExtension) {
-      chrome.storage.local.get([GAME, VIEWING_PLAYER, GAME_MODE, END_CAUSE], (result) => {
+      chrome.storage.local.get([GAME, VIEWING_PLAYER, GAME_MODE, END_CAUSE, GAME_WIDGET_MAXIMIZED], (result) => {
+
         if (result[END_CAUSE] != null) {
-          navigate("/gameEnd");
+          chrome.storage.local.set({[GAME_WIDGET_MAXIMIZED] : []}, () => {
+            navigate("/gameEnd");
+          });
         }
+
         const gameRes: GameInterface = result[GAME];
         setGameStatus(gameRes.gameStatus);
         setPlayerIDs(gameRes.participants);
@@ -109,6 +111,9 @@ function Game() {
         setCurrentPlayer(viewingPlayer);
         setGameClientsInformation(gameInformation);
         setTracking(gameTracking);
+
+        const storedMaximizedWidgets : string[] = result[GAME_WIDGET_MAXIMIZED] || [];
+        setMaximizedWidget(storedMaximizedWidgets);
       });
 
       chrome.runtime.onMessage.addListener((message) => {
@@ -125,7 +130,9 @@ function Game() {
       const handleDataChanged = (changes: { [key: string]: chrome.storage.StorageChange }) => {
         const storedEndCause = changes[END_CAUSE];
         if (storedEndCause && storedEndCause.newValue != null) {
-          navigate("/gameEnd");
+          chrome.storage.local.set({[GAME_WIDGET_MAXIMIZED] : []}, () => {
+            navigate("/gameEnd");
+          });
         }
       };
 
@@ -133,6 +140,30 @@ function Game() {
       return () => {
         chrome.storage.local.onChanged.removeListener(handleDataChanged);
       };
+    } else {
+        const gameRes: GameInterface = defaultGame;
+        setGameStatus(gameRes.gameStatus);
+        setPlayerIDs(gameRes.participants);
+        const viewingPlayer: string = SINGLE_PLAYER;
+        const gameInformation: ClientGameInterface = gameRes.gameClients[viewingPlayer];
+        const gameTracking: string = gameRes.customizations.track[0];
+        const mode = gameRes.customizations.mode.type;
+        if (mode === MODE_COUNT_DOWN) {
+          setCountDown(gameRes.customizations.mode.count_down?.timer ?? 0);
+        }
+        setPausable(gameRes.gameStatus.paused != null);
+        setPaused(gameRes.gameStatus.paused ?? false);
+        setPath(gameRes.path);
+        let pathInfo = { type: gameRes.customizations.mode.type, directed: true };
+        if (gameRes.customizations.mode.type === MODE_PATH) {
+          if (!gameRes.customizations.mode.path?.directed) {
+            pathInfo.directed = false;
+          }
+        }
+        setPathCustomizations(pathInfo);
+        setCurrentPlayer(viewingPlayer);
+        setGameClientsInformation(gameInformation);
+        setTracking(gameTracking);
     }
   }, [isChromeExtension]);
 
@@ -168,72 +199,98 @@ function Game() {
   };
 
   const handleMaximize = (widget: string) => {
-    setMaximizedWidget((prev) => (prev === widget ? null : widget));
+    // Compute the new value for maximizedWidget outside of setState
+    let newMaximizedWidget;
+  
+    if (maximizedWidget.includes(widget)) {
+      newMaximizedWidget = maximizedWidget.filter((item) => item !== widget);
+    } else if (maximizedWidget.length < 2) {
+      newMaximizedWidget = [...maximizedWidget, widget];
+    } else {
+      newMaximizedWidget = [...maximizedWidget.slice(1), widget];
+    }
+
+    chrome.storage.local.set({ [GAME_WIDGET_MAXIMIZED] : newMaximizedWidget}, () => {
+      setMaximizedWidget(newMaximizedWidget);
+    });
   };
 
-  return (
-    <div className="pt-3 p-1">
-      <p className="text-4xl text-center mb-3 font-custom">HyperLinker</p>
-      <div className="border-gray-400 border-2 border-solid p-1.5 m-3 bg-slate-100">
-        <p className="text-xl font-medium text-center bg-sky-200 p-1 mb-1">{tempMode}</p>
+  // TODO: remove when just singleplayer
+  function renderPlayerSelector() {
+    return (
+      <div className="mb-1">
+        <div className={`flex items-center justify-between ${maximizedWidget.includes(PLAYER_SELECTOR) ?
+          "bg-blue-500 border-green-400 border-2 border-solid text-white" : "bg-slate-200"}`}>
 
-        <div>
+          <p className="text-base font-medium text-center flex-grow p-1 mb-1">PLAYER SELECTOR</p>
 
-          <div className={`flex items-center justify-between ${maximizedWidget === PLAYER_SELECTOR ?
-            "bg-yellow-200" : "bg-slate-200"}`}>
-
-            <p className="text-xl font-medium text-center flex-grow">PLAYER SELECTOR</p>
-
-            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center" onClick={() => handleMaximize(PLAYER_SELECTOR)}>
-              {maximizedWidget === PLAYER_SELECTOR ? "-" : "+"}
-            </button>
-          </div>
-
-          {
-            maximizedWidget === PLAYER_SELECTOR ? (
-              <PlayerSelector onDataChange={updateCurrentPlayer} playerIDs={playerIDs} currentPlayer={currentPlayer} />
-            ) : null
-          }
+          <button
+           className="pb-1 h-5 relative right-2 flex items-center justify-center"
+            onClick={() => handleMaximize(PLAYER_SELECTOR)}>
+            {maximizedWidget.includes(PLAYER_SELECTOR) ? "▲" : "▼"}
+          </button>
         </div>
 
-        <div>
-          <div className={`flex items-center justify-between ${maximizedWidget === TRACKING_INFORMATION ?
-            "bg-yellow-200" : "bg-slate-200"}`}>
-            <p className="text-xl font-medium text-center flex-grow">TRACKING INFORMATION</p>
-            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center" onClick={() => handleMaximize(TRACKING_INFORMATION)}>
-              {maximizedWidget === TRACKING_INFORMATION ? "-" : "+"}
-            </button>
-          </div>
-          {maximizedWidget === TRACKING_INFORMATION ? (
-            <GameTracker
-              gameClientInformation={gameClientsInformation}
-              gameStatus={gameStatus}
-              tracking={tracking}
-              countDown={countDown}
-            />
-          ) : null}
-        </div>
-
-        <div>
-          <div className={`flex items-center justify-between ${maximizedWidget === PATH_PROGRESS ?
-            "bg-yellow-200" : "bg-slate-200"}`}>
-            <p className="text-xl font-medium text-center flex-grow">PATH PROGRESS</p>
-            <button className="pb-1 h-5 relative right-2 border-2 border-slate-300 rounded flex items-center justify-center align-middle" onClick={() => handleMaximize(PATH_PROGRESS)}>
-              {maximizedWidget === PATH_PROGRESS ? "-" : "+"}
-            </button>
-          </div>
-          {
-            maximizedWidget === PATH_PROGRESS ?
-              (<PathProgress
-                gameClientInformation={gameClientsInformation}
-                pathCustomizations={pathCustomizations}
-                gameStatus={gameStatus}
-                path={path}
-              />) : null
-          }
-        </div>
+        {
+          maximizedWidget.includes(PLAYER_SELECTOR) ? (
+            <PlayerSelector onDataChange={updateCurrentPlayer} playerIDs={playerIDs} currentPlayer={currentPlayer} />
+          ) : null
+        }
       </div>
+    )
+  }
 
+  function renderTrackingInformation() {
+    return (
+      <div className="mb-1">
+        <div className={`flex items-center justify-between ${maximizedWidget.includes(TRACKING_INFORMATION) ?
+          "bg-blue-500 border-green-400 border-2 border-solid text-white" : "bg-slate-200"} mb-1`}>
+          <p className="text-base font-medium text-center flex-grow p-1">TRACKING INFORMATION</p>
+          <button 
+          className="pb-1 h-5 relative right-2 flex items-center justify-center" 
+          onClick={() => handleMaximize(TRACKING_INFORMATION)}>
+            {maximizedWidget.includes(TRACKING_INFORMATION) ? "▲" : "▼"}
+          </button>
+        </div>
+        {maximizedWidget.includes(TRACKING_INFORMATION) ? (
+          <GameTracker
+            gameClientInformation={gameClientsInformation}
+            gameStatus={gameStatus}
+            tracking={tracking}
+            countDown={countDown}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
+  function renderPathProgress() {
+    return (
+      <div className="">
+        <div className={`flex items-center justify-between ${maximizedWidget.includes(PATH_PROGRESS) ?
+          "bg-blue-500 border-green-400 border-2 border-solid text-white" : "bg-slate-200"} mb-1`}>
+          <p className="text-base font-medium text-center flex-grow p-1">PATH PROGRESS</p>
+          <button 
+          className="pb-1 h-5 relative right-2 flex items-center justify-center align-middle" 
+          onClick={() => handleMaximize(PATH_PROGRESS)}>
+            {maximizedWidget.includes(PATH_PROGRESS) ? "▲" : "▼"}
+          </button>
+        </div>
+        {
+          maximizedWidget.includes(PATH_PROGRESS) ?
+            (<PathProgress
+              gameClientInformation={gameClientsInformation}
+              pathCustomizations={pathCustomizations}
+              gameStatus={gameStatus}
+              path={path}
+            />) : null
+        }
+      </div>
+    )
+  }
+
+  function renderUtilityButtons() {
+    return (
       <div className="flex items-center justify-center">
         {pausable && (
           <button
@@ -252,6 +309,20 @@ function Game() {
         </button>
         <button onClick={() => navigate("/")}>Return</button>
       </div>
+
+    )
+  }
+
+
+  return (
+    <div className="">
+      <p className="text-xl text-center mb-1 font-custom">HyperLinker</p>
+      <div className="border-gray-400 border-2 border-solid p-1.5 m-1 bg-slate-100">
+        {tempMode === MULTI_PLAYER && renderPlayerSelector()}
+        {renderTrackingInformation()}
+        {renderPathProgress()}
+      </div>
+      {renderUtilityButtons()}
     </div>
   );
 }

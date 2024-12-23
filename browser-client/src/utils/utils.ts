@@ -81,19 +81,11 @@ export interface CustomizationInterface {
 
 export const defaultCustomizations: CustomizationInterface = {
     mode: {
-        type: "path",
+        type: "count_down",
         path: {
-          pathLength: 9,
+          pathLength: 2,
           directed: true,
           connections: [
-            {title: "aaa", link:"bb"},
-            {title: "aaa", link:"bb"},
-            {title: "aaa", link:"bb"},
-            {title: "aaa", link:"bb"},
-            {title: "aaa", link:"bb"},
-            {title: "aaa", link:"bb"},
-            {title: "aaa", link:"bb"},
-
             /*
               {
                 title: String,
@@ -103,7 +95,7 @@ export const defaultCustomizations: CustomizationInterface = {
           ],
         },
         count_down: {
-          timer: 0,
+          timer: 63,
         }
     },
     start: {
@@ -172,7 +164,14 @@ export const defaultGame: GameInterface = {
       pauseStart: 0,
       pauseGap: 0
     },
-    path: []
+    path: [
+      {
+        title: "a", link: "b"
+      },
+      {
+        title:"c", link:"d"
+      }
+    ]
     
   }
 
@@ -289,3 +288,7 @@ export const PLAYER_SELECTOR = "player-selector";
 export const TRACKING_INFORMATION = "tracking-information";
 export const PATH_PROGRESS = "path-progress";
 export const CUSTOMIZATION_INFO = "customization-info";
+
+export const GAME_WIDGET_MAXIMIZED = "game-widget-maximized";
+export const GAME_END_PLAYER_SELECTOR_MAXIMIZED = "game-end-player-selector-maximized";
+export const GAME_END_WIDGET_MAXIMIZED = "game-end-widget-maximized";

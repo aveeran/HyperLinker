@@ -270,9 +270,8 @@ function Dashboard() {
 
               {
                 (customizations.mode.path?.pathLength ?? 0) > 2 && (
-                  <div className="grid grid-cols-3 gap-4">
-                    <strong className="text-base mr-1 col-span-1 text-center">Connections
-                    </strong>
+                  <div className="grid grid-cols-3 gap-4 p-1">
+                    <strong className="text-base mr-1 col-span-1">Connections</strong>
 
                     <p className="col-span-2">
                       {customizations.mode.path?.connections.map(link => link.title).join(", ")}

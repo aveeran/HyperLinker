@@ -92,7 +92,7 @@ function TrackerChoice() {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/dashboard');
   };
   return (
     <div className="pt-3 p-1">

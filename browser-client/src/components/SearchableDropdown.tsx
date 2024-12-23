@@ -14,7 +14,7 @@ function SearchableDropdown({onDataChange, index = 0, temp=defaultArticle} : {on
       setQuery(temp.title);
       setSuggestions([temp]);
     }, [temp]);
-
+    
     useEffect(() => {
         if(isTyping && query.length > 0) {
             if(test) {

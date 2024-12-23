@@ -28,7 +28,7 @@ function PathProgress({
   const [currentNode, setCurrentNode] = useState<number>(0);
   const [endIndex, setEndIndex] = useState<number>(path.length - 1);
 
-  if(!gameClientInformation) {
+  if (!gameClientInformation) {
     gameClientInformation = defaultClientGame;
   }
 
@@ -41,11 +41,11 @@ function PathProgress({
   let interval: NodeJS.Timeout | null = null;
 
   useEffect(() => {
-    if(gameStatus.playing) {
+    if (gameStatus.playing) {
       interval = setInterval(() => {
         setTime((prevTime) => prevTime + 1);
       }, 1000);
-  
+
       return () => {
         if (interval) {
           clearInterval(interval);
@@ -56,7 +56,7 @@ function PathProgress({
 
 
   useEffect(() => {
-    if(gameStatus.playing) {
+    if (gameStatus.playing) {
       chrome.runtime.onMessage.addListener((message, sender, response) => {
         if (message.type === UPDATE_PAUSE) {
           if (message.pause && interval) {
@@ -66,7 +66,7 @@ function PathProgress({
               setTime((prevTime) => prevTime + 1);
             }, 1000);
           }
-        } 
+        }
       });
     }
   }, [gameStatus.playing]);
@@ -127,21 +127,21 @@ function PathProgress({
   }, []);
 
   const renderElapsedTime = () => {
-    const prevLeave = nodeHistory[(activeNode ?? hoveredNode ?? 0) - 1]?.leaveTime;
-    const delay = nodeHistory[activeNode ?? hoveredNode ?? 0]?.delayTime * 1000;
-    
+    const prevLeave = nodeHistory[(activeNode ?? 0) - 1]?.leaveTime;
+    const delay = nodeHistory[activeNode ?? 0]?.delayTime * 1000;
+
     if (
-      nodeHistory[activeNode ?? hoveredNode ?? 0]
+      nodeHistory[activeNode ?? 0]
         .leaveTime != null
     ) {
       // if we already left, use leave time and either gameStatus.startTime or prevLeave
       const leaveTime =
-        nodeHistory[activeNode ?? hoveredNode ?? 0]
+        nodeHistory[activeNode ?? 0]
           .leaveTime ?? 0;
 
       if (prevLeave != null) {
         return <>{parseTime((leaveTime - prevLeave - delay) / 1000)}</>;
-      } else {        
+      } else {
         return (
           <>{parseTime((leaveTime - gameStatus.startTime - delay) / 1000)}</>
         );
@@ -183,19 +183,17 @@ function PathProgress({
     return (
       <div
         key={nodeIndex}
-        className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer p-2 ${
-          isVisited
-            ? "bg-blue-500 text-white border-green-400"
-            : "bg-white border-gray-300"
-        } ${
-          isActive ? "border-yellow-400 shadow-gray-400 drop-shadow-2xl" : ""
-        } ${isHovered ? "shadow-gray-400 drop-shadow-2xl" : ""}`}
+        className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer ${isVisited
+          ? "bg-blue-500 text-white border-green-400"
+          : "bg-white border-gray-300"
+          } ${isActive ? "border-yellow-400 shadow-gray-400 drop-shadow-2xl" : ""
+          } ${isHovered ? "shadow-gray-400 drop-shadow-2xl" : ""}`}
         onMouseEnter={() => handleMouseEnterNode(nodeIndex)}
         onMouseLeave={handleMouseLeaveNode}
         onClick={() => handleClickNode(nodeIndex)}
         title={step.title}
       >
-        <p className="truncate text-sm" aria-label={step.title}>
+        <p className="truncate text-xs" aria-label={step.title}>
           {step.title}
         </p>
       </div>
@@ -224,11 +222,10 @@ function PathProgress({
     return (
       <div
         key={`link-${linkIndex}`}
-        className={`h-2 w-8 ${isVisited ? "bg-green-500" : "bg-gray-300"} ${
-          isActive
-            ? "border-2 border-green-400 shadow-gray-600 drop-shadow-xl"
-            : ""
-        } ${isHovered ? "shadow-gray-600 drop-shadow-xl" : ""}`}
+        className={`h-2 w-8 ${isVisited ? "bg-green-500" : "bg-gray-300"} ${isActive
+          ? "border-2 border-green-400 shadow-gray-600 drop-shadow-xl"
+          : ""
+          } ${isHovered ? "shadow-gray-600 drop-shadow-xl" : ""}`}
         onMouseEnter={() => handleMouseEnterLink(linkIndex)}
         onMouseLeave={handleMouseLeaveLink}
         onClick={() => handleClickLink(linkIndex)}
@@ -239,9 +236,8 @@ function PathProgress({
   function generateRow(row: Article[], rowIndex: number, rowLength: number) {
     return (
       <div
-        className={`flex items-center gap-4 ${
-          rowIndex === 1 ? "justify-end" : ""
-        }`}
+        className={`flex items-center gap-4 ${rowIndex === 1 ? "justify-end" : ""
+          }`}
         key={`row-${rowIndex}`}
       >
         {row.map((step, index) => (
@@ -261,45 +257,42 @@ function PathProgress({
     const isVisited =
       rowIndex % 2 === 0
         ? gameClientInformation?.visitedPath.some(
-            (visitedArticle) =>
-              visitedArticle.title === path[2].title &&
-              visitedArticle.link === path[2].link
-          ) &&
-          gameClientInformation?.visitedPath.some(
-            (visitedArticle) =>
-              visitedArticle.title === path[3].title &&
-              visitedArticle.link === path[3].link
-          )
+          (visitedArticle) =>
+            visitedArticle.title === path[2].title &&
+            visitedArticle.link === path[2].link
+        ) &&
+        gameClientInformation?.visitedPath.some(
+          (visitedArticle) =>
+            visitedArticle.title === path[3].title &&
+            visitedArticle.link === path[3].link
+        )
         : gameClientInformation?.visitedPath.some(
-            (visitedArticle) =>
-              visitedArticle.title === path[5].title &&
-              visitedArticle.link === path[5].link
-          ) &&
-          gameClientInformation?.visitedPath.some(
-            (visitedArticle) =>
-              visitedArticle.title === path[6].title &&
-              visitedArticle.link === path[6].link
-          );
+          (visitedArticle) =>
+            visitedArticle.title === path[5].title &&
+            visitedArticle.link === path[5].link
+        ) &&
+        gameClientInformation?.visitedPath.some(
+          (visitedArticle) =>
+            visitedArticle.title === path[6].title &&
+            visitedArticle.link === path[6].link
+        );
 
     return (
       <div
         key={`connector-${rowIndex}`}
-        className={`flex ${
-          rowIndex % 2 === 0 ? "justify-end" : "justify-start"
-        }`}
+        className={`flex ${rowIndex % 2 === 0 ? "justify-end" : "justify-start"
+          }`}
         style={{ width: "100%" }}
         onMouseEnter={() => handleMouseEnterLink(connectorIndex)}
         onMouseLeave={handleMouseLeaveLink}
         onClick={() => handleClickLink(connectorIndex)}
       >
         <div
-          className={`w-2 h-8 ${isVisited ? "bg-green-500" : "bg-gray-300"} ${
-            rowIndex % 2 === 0 ? "mr-5" : "ml-5"
-          } ${
-            isActive
+          className={`w-2 h-8 ${isVisited ? "bg-green-500" : "bg-gray-300"} ${rowIndex % 2 === 0 ? "mr-5" : "ml-5"
+            } ${isActive
               ? "border-2 border-green-400 shadow-gray-400 drop-shadow-xl"
               : ""
-          } ${isHovered ? "shadow-gray-400 drop-shadow-xl" : ""}`}
+            } ${isHovered ? "shadow-gray-400 drop-shadow-xl" : ""}`}
         ></div>
       </div>
     );
@@ -315,13 +308,13 @@ function PathProgress({
       acc[rowIndex].push(step);
       return acc;
     }, []);
-    
-     // Reverse every other row
-     rows.forEach((row, index) => {
+
+    // Reverse every other row
+    rows.forEach((row, index) => {
       if (index % 2 === 1) row.reverse();
     });
 
-    
+
     return (
       <>
         {rows.map((row, rowIndex) => (
@@ -355,6 +348,23 @@ function PathProgress({
 
     return (
       <>
+
+        <div className="group relative grid grid-cols-4 gap-4 p-1 items-center ">
+          <strong className="text-sm mr-1 col-span-2">Possible articles</strong>
+          <p className="col-span-2 text-sm">
+            {
+              path
+                .filter((article: Article) =>
+                  !gameClientInformation?.freePath.some((freeArticle: Article) =>
+                    freeArticle.title === article.title && freeArticle.link === article.link
+                  )
+                )
+                .map((article: Article) => article.title)
+                .join(", ")
+            }
+          </p>
+        </div>
+
         {rows.map((row, rowIndex) => (
           <React.Fragment key={`free-path-row-${rowIndex}`}>
             {generateRow(row, rowIndex, rowLength)}
@@ -367,7 +377,6 @@ function PathProgress({
 
   function renderNodeHistoryPanel(
     activeNode: number | null,
-    hoveredNode: number | null,
     isDirected: boolean,
     isPath: boolean,
     freePath: Article[],
@@ -376,9 +385,9 @@ function PathProgress({
     gameClientInformation: ClientGameInterface,
     renderElapsedTime: () => JSX.Element
   ): JSX.Element | null {
-    if (activeNode === null && hoveredNode === null) return null;
+    if (activeNode === null) return null;
 
-    const nodeIndex = activeNode ?? hoveredNode ?? 0;
+    const nodeIndex = activeNode ?? 0;
     const nodeTitle =
       !isDirected && isPath
         ? freePath[nodeIndex]?.title
@@ -389,9 +398,8 @@ function PathProgress({
 
     return (
       <div
-        className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${
-          activeNode !== null ? "border-yellow-400" : "border-gray-400"
-        }`}
+        className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${activeNode !== null ? "border-yellow-400" : "border-gray-400"
+          }`}
       >
         <h3 className="font-bold truncate">Node History for {nodeTitle}</h3>
         <ul>
@@ -410,16 +418,15 @@ function PathProgress({
 
   function renderEdgeHistoryPanel(
     activeLink: number | null,
-    hoveredLink: number | null,
     isDirected: boolean,
     isPath: boolean,
     freePath: Article[],
     path: Article[],
     gameClientInformation: ClientGameInterface
   ): JSX.Element | null {
-    if (activeLink === null && hoveredLink === null) return null;
+    if (activeLink === null) return null;
 
-    const linkIndex = activeLink ?? hoveredLink ?? 0;
+    const linkIndex = activeLink ?? 0;
     const startTitle =
       !isDirected && isPath
         ? freePath[linkIndex]?.title
@@ -455,27 +462,25 @@ function PathProgress({
 
         {!isDirected && isPath && RenderFreePath()}
       </div>
-        {renderNodeHistoryPanel(
-          activeNode,
-          hoveredNode,
-          isDirected,
-          isPath,
-          gameClientInformation?.freePath,
-          path,
-          currentNode,
-          gameClientInformation,
-          renderElapsedTime
-        )}
+      {renderNodeHistoryPanel(
+        activeNode,
+        isDirected,
+        isPath,
+        gameClientInformation?.freePath,
+        path,
+        currentNode,
+        gameClientInformation,
+        renderElapsedTime
+      )}
 
-        {renderEdgeHistoryPanel(
-          activeLink,
-          hoveredLink,
-          isDirected,
-          isPath,
-          gameClientInformation?.freePath,
-          path,
-          gameClientInformation
-        )}
+      {renderEdgeHistoryPanel(
+        activeLink,
+        isDirected,
+        isPath,
+        gameClientInformation?.freePath,
+        path,
+        gameClientInformation
+      )}
     </div>
   );
 }

@@ -20,6 +20,10 @@ function GameTracker({
     gameClientInformation = defaultClientGame;
   }
 
+  const isChromeExtension = useMemo<boolean>(() => {
+    return !!(typeof chrome !== "undefined" && chrome.storage && chrome.storage.local);
+  }, []);
+
   useEffect(() => {
     if(!gameStatus.paused) { // only if not paused, 
   
@@ -28,11 +32,13 @@ function GameTracker({
           setTime((prevTime) => prevTime + 1);
           const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
           if(Math.floor(rawElapsedTime/1000) > countDown) {
-  
-            chrome.runtime.sendMessage({
-              type: FINISH_SINGLEPLAYER_GAME,
-              cause: SINGLEPLAYER_TIME_FINISHED
-            });
+
+            if(isChromeExtension) {
+              chrome.runtime.sendMessage({
+                type: FINISH_SINGLEPLAYER_GAME,
+                cause: SINGLEPLAYER_TIME_FINISHED
+              });
+            }
           }
         }, 1000);
   
@@ -50,32 +56,34 @@ function GameTracker({
   }, [tracking, countDown, gameStatus.pauseGap, gameStatus.paused]);
 
   useEffect(() => {
-    chrome.runtime.onMessage.addListener((message, sender, response) => {
-      if(message.type === UPDATE_PAUSE) {
-        if(message.pause && interval) {
-          clearInterval(interval);
-        } else if (!message.pause) {
-          if(countDown != -1) {
-            interval = setInterval(() => {
-              setTime((prevTime) => prevTime + 1);
-              const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
-              if(Math.floor(rawElapsedTime/1000) > countDown) {
-      
-                chrome.runtime.sendMessage({
-                  type: FINISH_SINGLEPLAYER_GAME,
-                  cause: SINGLEPLAYER_TIME_FINISHED
-                });
-              }
-            }, 1000);
-      
-          } else if (tracking === TRACKING_TIME) {
-            interval = setInterval(() => {
-              setTime((prevTime) => prevTime + 1);
-            }, 1000);
+    if(isChromeExtension) {
+      chrome.runtime.onMessage.addListener((message, sender, response) => {
+        if(message.type === UPDATE_PAUSE) {
+          if(message.pause && interval) {
+            clearInterval(interval);
+          } else if (!message.pause) {
+            if(countDown != -1) {
+              interval = setInterval(() => {
+                setTime((prevTime) => prevTime + 1);
+                const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
+                if(Math.floor(rawElapsedTime/1000) > countDown) {
+        
+                  chrome.runtime.sendMessage({
+                    type: FINISH_SINGLEPLAYER_GAME,
+                    cause: SINGLEPLAYER_TIME_FINISHED
+                  });
+                }
+              }, 1000);
+        
+            } else if (tracking === TRACKING_TIME) {
+              interval = setInterval(() => {
+                setTime((prevTime) => prevTime + 1);
+              }, 1000);
+            }
           }
         }
-      }
-    })
+      });
+    }
   });
 
   const countClicks = (): number => {
@@ -166,7 +174,7 @@ function GameTracker({
     }
   };
 
-  return <div className="flex flex-col items-center mb-1">{renderContent()}</div>;
+  return <div className="flex flex-col items-center mb-1 bg-gray-50">{renderContent()}</div>;
 }
 
 export default GameTracker;
