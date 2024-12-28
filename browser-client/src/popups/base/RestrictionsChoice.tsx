@@ -8,7 +8,7 @@ import {
   defaultCustomizations,
   defaultRestrictions,
   GAME_MODE,
-  MULTI_PLAYER,
+  GamePlayMode,
   SOURCE,
   TILE,
   UPDATE_CUSTOMIZATION,
@@ -39,26 +39,26 @@ function RestrictionsChoice() {
         if (storedCustomizations) {
           setCustomizationStates(storedCustomizations);
         }
-         // If multiplayer, then update when customizations updated
+        // If multiplayer, then update when customizations updated
 
-         if(result[GAME_MODE] === MULTI_PLAYER) {
-            const handleMessage = (message: {type: string; customizations: CustomizationInterface},
-              sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
-            ) => {
-              if(message.type === UPDATED_CUSTOMIZATION && message.customizations) {
-                setCustomizationStates(message.customizations);
-              }
-            }
-            chrome.runtime.onMessage.addListener(handleMessage);
-  
-            return () => {
-              chrome.runtime.onMessage.removeListener(handleMessage);
+        if (result[GAME_MODE] === GamePlayMode.MultiPlayer) {
+          const handleMessage = (message: { type: string; customizations: CustomizationInterface },
+            sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
+          ) => {
+            if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+              setCustomizationStates(message.customizations);
             }
           }
-         
+          chrome.runtime.onMessage.addListener(handleMessage);
+
+          return () => {
+            chrome.runtime.onMessage.removeListener(handleMessage);
+          }
+        }
+
       });
     } else {
-        setCustomizationStates(defaultCustomizations);
+      setCustomizationStates(defaultCustomizations);
     }
   }, [isChromeExtension]);
 
@@ -77,12 +77,12 @@ function RestrictionsChoice() {
     }
   };
 
-  const handleDragStart = (e : React.DragEvent<HTMLDivElement>, restriction: string, sourceWidget: typeof AVAILABLE | typeof CHOSEN) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, restriction: string, sourceWidget: typeof AVAILABLE | typeof CHOSEN) => {
     e.dataTransfer.setData(TILE, restriction);
     e.dataTransfer.setData(SOURCE, sourceWidget);
   };
 
-  const handleDrop = (e : React.DragEvent<HTMLDivElement>, destinationWidget: typeof AVAILABLE | typeof CHOSEN) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, destinationWidget: typeof AVAILABLE | typeof CHOSEN) => {
     // TODO: potential issue: async duplicate
     e.preventDefault();
     const tile = e.dataTransfer.getData(TILE);
@@ -97,7 +97,7 @@ function RestrictionsChoice() {
     }
   };
 
-  const handleDragOver = (e : React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 

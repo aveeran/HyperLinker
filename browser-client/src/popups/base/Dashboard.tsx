@@ -1,6 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizations, GAME_MODE, GAME_STARTED, MODE_COUNT_DOWN, MODE_NORMAL, MODE_PATH, MULTI_PLAYER, START_GAME, UPDATED_CUSTOMIZATION } from "../../utils/utils";
+import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizations, GAME_MODE, GAME_STARTED, 
+  Mode, 
+  GamePlayMode, 
+  MyKeys, 
+  START_GAME, 
+  UPDATED_CUSTOMIZATION, 
+  SingleplayerEvents} from "../../utils/utils";
 import { useMemo, useState, useEffect } from "react";
+import { useChromeStorage } from "../../hooks/useChromeStorage";
+import { useCustomizationListener } from "../../hooks/useCustomizationListener";
+import { CustomizationPanel } from "../../components/CustomizationPanel";
+import { CustomizationValidationResult, validateCustomizations } from "../../validation/validateCustomizations";
 
 const getCategory = (value: string | null) => {
   for (const [key, values] of Object.entries(dashboardKey)) {
@@ -11,8 +21,8 @@ const getCategory = (value: string | null) => {
   return null;
 }
 
-
 function Dashboard() {
+  console.log("Re-render");
   // TODO: add listener for game started, possibly add 'ready' feature in the future
   const [customizations, setCustomizations] = useState<CustomizationInterface>(defaultCustomizations);
   const [pathError, setPathError] = useState<string | null>(null);
@@ -27,35 +37,42 @@ function Dashboard() {
   }, []);
 
 
-  // Initializing customizations
+  // STEP 1: Define keys to retrieve & default values
+  const keys: MyKeys[] = useMemo(() => [CUSTOMIZATIONS, GAME_MODE], []);
+  const defaultValues = useMemo(() => ({
+    [CUSTOMIZATIONS]: defaultCustomizations,
+    [GAME_MODE]: GamePlayMode.SinglePlayer,
+  }), []);
+
+  // STEP 2: Use the custom hook to retrieve data from Chrome storage
+  const storageData = useChromeStorage<MyKeys>(isChromeExtension, keys, defaultValues);
+
+  // STEP 3: Whenever storageData changes, sync local state
   useEffect(() => {
-    if (isChromeExtension) {
-      chrome.storage.local.get([CUSTOMIZATIONS, GAME_MODE], (result) => {
-        const storedCustomizations = result[CUSTOMIZATIONS];
-        if (storedCustomizations) {
-          setCustomizations(storedCustomizations);
-        }
-        // If multiplayer, then update when customizations updated
-
-        if (result[GAME_MODE] === MULTI_PLAYER) {
-          const handleMessage = (message: { type: string; customizations: CustomizationInterface },
-            sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
-          ) => {
-            if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
-              setCustomizations(message.customizations);
-            }
-          }
-          chrome.runtime.onMessage.addListener(handleMessage);
-
-          return () => {
-            chrome.runtime.onMessage.removeListener(handleMessage);
-          }
-        }
-      });
-    } else {
+    console.log("isChromeExtension:", isChromeExtension);
+    console.log("storageData:", storageData);
+    console.log("Effect triggered");
+    if(!isChromeExtension) {
       setCustomizations(defaultCustomizations);
+      return;
     }
-  }, [isChromeExtension]);
+
+    const storedCustomizations = storageData[CUSTOMIZATIONS] as CustomizationInterface;
+    setCustomizations(storedCustomizations);
+  }, [isChromeExtension, storageData]);
+
+   // 4) Use the gameMode from storage to decide if we should listen for updates
+   const storedGameMode = storageData[GAME_MODE] as string;
+
+  //  const shouldListen = isChromeExtension && storedGameMode === GamePlayMode.MultiPlayer;
+ 
+  //  useCustomizationListener(
+  //    (updated: CustomizationInterface) => {
+  //      setCustomizations(updated);
+  //    },
+  //    shouldListen
+  //  );
+ 
 
   const handleEdit = (value: string | null) => {
     const categoryKey = getCategory(value);
@@ -66,84 +83,15 @@ function Dashboard() {
     }
   }
 
-  // TODO: figure out how to transit path error message later
-  const validatePath = () => {
-    if (isChromeExtension) {
-
-
-      const mode = customizations.mode.type;
-      if (mode === MODE_NORMAL || mode == MODE_PATH) {
-        // ensuring that the articles themselves are valid
-        const pathLength = customizations.mode.path?.pathLength;
-
-        // validating start article
-        const startArticle = customizations.start;
-        if (!startArticle.link) {
-          return 1;
-        }
-
-        // validating connecting articles
-        const connectionPath = customizations.mode.path?.connections;
-        const connectionPathLength = (connectionPath?.length ?? 0) + 2;
-        // what even is this one
-        if (pathLength != connectionPathLength) {
-          return 2;
-        }
-
-        for (let i = 0; i < (connectionPath?.length ?? 0); i++) {
-          if (connectionPath?.[i]?.link === "") {
-            return 3;
-          }
-        }
-
-        // validating end article
-        const endArticle = { title: customizations.end.title, link: customizations.end.link };
-
-        if (!endArticle.link) {
-          return 4;
-        }
-
-        // validating no duplicates
-        const path = [startArticle, ...(connectionPath || []), endArticle];
-        const objectStrings = path.map(item => JSON.stringify(item));
-        const hasDuplicates = new Set(objectStrings).size !== objectStrings.length;
-        if (hasDuplicates) {
-          return 5;
-        }
-      }
-    }
-    return 0;
-  }
-
   const handleSubmit = () => {
     if (isChromeExtension) {
-      const validation = validatePath();
-      switch (validation) {
-        case 0:
-          chrome.runtime.sendMessage({ type: START_GAME, customizations: customizations },
-            () => { console.log("sent from dashboard: ", customizations.track[0]) }
-          );
-          // TODO: add listener for GAME_STARTED messge (if multiplayer)
-          navigate("/game");
-          break;
-        case 1:
-          setPathError("Invalid path. The start article has not been set with a valid article from the suggestions.")
-          break;
-        case 2: // Same behavior as case 3
-        case 3:
-          setPathError("Invalid path. At least one intermediate article has not been set with a valid article from the suggestions.")
-          break;
-        case 4:
-          setPathError("Invalid path. The end article has not been set with a valid article from the suggestions.");
-          break;
-        case 5:
-          setPathError("Invalid path. Currently, repeated articles are not supported.")
-          break;
-        default:
-          setPathError("There was an unidentified error");
+      const validation: CustomizationValidationResult = validateCustomizations(customizations);
+      if(validation.isValid) {
+        chrome.runtime.sendMessage({type: START_GAME, customizations: customizations})
+        navigate('/game');
+      } else {
+        setPathError(validation?.errorMessage ?? "Error");
       }
-    } else {
-      navigate("/game");
     }
   }
 
@@ -175,133 +123,11 @@ function Dashboard() {
 
       <hr className="border-t-1 border-black m-3" />
 
-      <div>
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">Start Article</strong>
-          <p className="col-span-2">{customizations.start.title}</p>
-          <button
-            data-key="start"
-            className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-            onClick={(e) => {
-              const target = e.target as HTMLElement;
-              handleEdit(target.getAttribute("data-key"))
-            }}
-          >
-            Edit
-          </button>
-        </div>
+      <CustomizationPanel
+      customizations={customizations}
+      handleEdit={handleEdit}
+      />
 
-        <div key="end" className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">End Article</strong>
-          <p className="col-span-2">{customizations.end.title}</p>
-          <button
-            data-key="end"
-            className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-            onClick={(e) => {
-              const target = e.target as HTMLElement;
-              handleEdit(target.getAttribute("data-key"))
-            }}
-          >
-            Edit
-          </button>
-        </div>
-
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">Tracking</strong>
-          <p className="col-span-2">{customizations.track[0]}</p>
-          <button
-            data-key="track"
-            className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-            onClick={(e) => {
-              const target = e.target as HTMLElement;
-              handleEdit(target.getAttribute("data-key"))
-            }}
-          >
-            Edit
-          </button>
-        </div>
-
-        <div className="group relative grid grid-cols-3 gap-4 p-1">
-          <strong className="text-base mr-1 col-span-1">Restrictions</strong>
-          <p className="col-span-2">
-            {customizations.restrictions.join(" · ")}
-          </p>
-          <button
-            data-key="restrictions"
-            className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-            onClick={(e) => {
-              const target = e.target as HTMLElement;
-              handleEdit(target.getAttribute("data-key"))
-            }}
-          >
-            Edit
-          </button>
-        </div>
-      </div>
-
-      <div className="">
-        <p className="text-center font-bold text-base bg-sky-200">Mode</p>
-        <div className="group relative">
-          <button
-            data-key="mode"
-            className="font-custom absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500 text-white px-2 py-1 text-sm rounded"
-            onClick={(e) => {
-              const target = e.target as HTMLElement;
-              handleEdit(target.getAttribute("data-key"))
-            }}
-          >
-            Edit
-          </button>
-          <div className="grid grid-cols-3 gap-4 p-1">
-            <strong className="text-base mr-1 col-span-1">Type</strong>
-            <p className="col-span-2">{customizations.mode.type}</p>
-          </div>
-
-          {customizations.mode.type === MODE_PATH ? (
-            <>
-              <div className="grid grid-cols-3 gap-4 p-1">
-                <strong className="text-base mr-1 col-span-1">
-                  Path Length
-                </strong>
-                <p className="col-span-2">
-                  {customizations.mode.path?.pathLength}
-                </p>
-              </div>
-
-              {
-                (customizations.mode.path?.pathLength ?? 0) > 2 && (
-                  <div className="grid grid-cols-3 gap-4 p-1">
-                    <strong className="text-base mr-1 col-span-1">Connections</strong>
-
-                    <p className="col-span-2">
-                      {customizations.mode.path?.connections.map(link => link.title).join(", ")}
-                    </p>
-                  </div>
-                )
-              }
-
-              <div className="grid grid-cols-3 gap-4 p-1">
-                <strong className="text-base mr-1 col-span-1">Directed</strong>
-                <p className="col-span-2">
-                  {customizations.mode.path?.directed ? "true" : "false"}
-                </p>
-              </div>
-            </>
-          ) : null}
-
-          {customizations.mode.type === MODE_COUNT_DOWN ? (
-            <div className="grid grid-cols-3 gap-4 p-1">
-              <strong className="text-base mr-1 col-span-1">Timer</strong>
-              <p className="col-span-2">
-                {customizations.mode.count_down?.timer}
-              </p>
-            </div>
-          ) : null}
-        </div>
-
-
-
-      </div>
     </div>
 
     <div className="flex justify-center mb-3">

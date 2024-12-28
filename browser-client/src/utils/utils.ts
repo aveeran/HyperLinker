@@ -1,51 +1,185 @@
-export const RESET: string = "reset";
-export const GAME_MODE: string = "mode";
-export const SINGLE_PLAYER: string = "singleplayer";
-export const MULTI_PLAYER: string = "multiplayer";
-export const LAST_ACTIVE_ROUTE: string = "last_active_route";
-export const CUSTOMIZATIONS: string = "customizations";
-export const MODE_NORMAL: string = "normal";
-export const MODE_PATH: string = "path";
-export const MODE_COUNT_DOWN: string = "count_down";
-export const START_GAME: string = "start_game";
-export const GAME_STARTED: string = "game_started";
+export const RESET: string = "reset" as const;
 
-export const UPDATE_CUSTOMIZATION: string = "update_customization";
-export const UPDATED_CUSTOMIZATION: string = "updated_customization";
-export const UPDATED_GAME_CLIENT: string = "updated_game_client";
+export const GAME_MODE: string = "mode" as const;
 
-export const UPDATE_GAME_MODE: string = "update_game_mode";
-export const PLAYER: string = "player";
-export const VIEWING_PLAYER: string = "viewing_player";
-export const UPDATED_VIEWING_PLAYER: string = "updated_viewing_player";
-export const UPDATED_GAME_STATUS: string = "updated_game_status";
+// turn into enum
+export enum GamePlayMode {
+  SinglePlayer = "singleplayer",
+  MultiPlayer = "multiplayer",
+}
+
+export const LAST_ACTIVE_ROUTE: string = "last_active_route" as const;
+export const CUSTOMIZATIONS: string = "customizations" as const;
+
+// turn into enum
+export enum Mode {
+  Normal = "normal",
+  Path = "path",
+  CountDown = "count_down",
+}
+
+export const START_GAME: string = "start_game" as const;
+export const GAME_STARTED: string = "game_started" as const;
+
+// turn into enum
+export const UPDATE_CUSTOMIZATION: string = "update_customization" as const;
+export const UPDATED_CUSTOMIZATION: string = "updated_customization" as const;
+export const UPDATED_GAME_CLIENT: string = "updated_game_client" as const;
+export const UPDATE_GAME_MODE: string = "update_game_mode" as const;
+
+export const PLAYER: string = "player" as const;
+export const VIEWING_PLAYER: string = "viewing_player" as const;
+export const UPDATED_VIEWING_PLAYER: string = "updated_viewing_player" as const;
+export const UPDATED_GAME_STATUS: string = "updated_game_status" as const;
+
+// turn into enum
+export const TRACKING_TIME: string = "tracking_time" as const;
+export const TRACKING_CLICKS: string = "tracking_clicks" as const;
+
+export enum Restrictions {
+  NoOpeningPara = "no-opening-para",
+  NoFind = "no-find",
+  NoBack = "no-back",
+  NoDates = "no-dates",
+  SamePageLink = "same-page-link",
+  NoPopups = "no-popups",
+}
+
+// turn into enum
+export const TILE: string = "tile" as const;
+export const SOURCE: string = "source" as const;
+
+// turn into enum
+export const AVAILABLE: string = "available" as const;
+export const CHOSEN: string = "chosen" as const;
+
+export const GAME: string = "game" as const;
+export const GAME_CUSTOMIZATIONS: string = "game-customizations" as const;
+
+export const TAB_ID: string = "tab-id" as const;
+export const WIN: string = "win" as const;
+export const WIKIPEDIA_CLICK: string = "wikipedia_click" as const;
+
+export const CLICK_COUNT: string = "click-count" as const;
+
+export const PAUSE: string = "pause" as const;
+export const UNPAUSE: string = "unpause" as const;
+export const UPDATE_PAUSE: string = "update_pause" as const;
+
+export const GET_TAB_ID: string = "get_tab_id" as const;
+
+// singleplayerEvents.ts (or wherever you want to keep it)
+
+export enum SingleplayerEvents {
+  Finish = "finish_singleplayer_game",
+  Win = "singleplayer_win",
+  Quit = "quit_singleplayer",
+  ClearEnd = "singleplayer_clear_end",
+  TimeFinished = "singleplayer_time_finished",
+  ExternalWikiVisit = "external_wiki_visit",
+  Done = "done_singleplayer",
+}
+
+export const END_CAUSE: string = "end-cause" as const;
+
+export const PLAYER_SELECTOR: string = "player-selector" as const;
+export const TRACKING_INFORMATION: string = "tracking-information" as const;
+export const PATH_PROGRESS: string = "path-progress" as const;
+export const CUSTOMIZATION_INFO: string = "customization-info" as const;
+
+export const GAME_WIDGET_MAXIMIZED: string = "game-widget-maximized" as const;
+export const GAME_END_PLAYER_SELECTOR_MAXIMIZED: string = "game-end-player-selector-maximized" as const;
+export const GAME_END_WIDGET_MAXIMIZED: string = "game-end-widget-maximized" as const;
+
+/*  COLLECT ALL STRING CONSTANTS IN A SINGLE ARRAY
+--------------------------------------------------- */
+export const allKeys = [
+  RESET,
+  GAME_MODE,
+  GamePlayMode.SinglePlayer,
+  GamePlayMode.MultiPlayer,
+  LAST_ACTIVE_ROUTE,
+  CUSTOMIZATIONS,
+  Mode.Normal,
+  Mode.Path,
+  Mode.CountDown,
+  START_GAME,
+  GAME_STARTED,
+  UPDATE_CUSTOMIZATION,
+  UPDATED_CUSTOMIZATION,
+  UPDATED_GAME_CLIENT,
+  UPDATE_GAME_MODE,
+  PLAYER,
+  VIEWING_PLAYER,
+  UPDATED_VIEWING_PLAYER,
+  UPDATED_GAME_STATUS,
+  TRACKING_TIME,
+  TRACKING_CLICKS,
+  Restrictions.NoOpeningPara,
+  Restrictions.NoFind,
+  Restrictions.NoBack,
+  Restrictions.NoDates,
+  Restrictions.SamePageLink,
+  Restrictions.NoPopups,
+  TILE,
+  SOURCE,
+  AVAILABLE,
+  CHOSEN,
+  GAME,
+  GAME_CUSTOMIZATIONS,
+  TAB_ID,
+  WIN,
+  WIKIPEDIA_CLICK,
+  CLICK_COUNT,
+  PAUSE,
+  UNPAUSE,
+  UPDATE_PAUSE,
+  GET_TAB_ID,
+  SingleplayerEvents.Finish,
+  SingleplayerEvents.Win,
+  SingleplayerEvents.Quit,
+  SingleplayerEvents.ClearEnd,
+  SingleplayerEvents.TimeFinished,
+  SingleplayerEvents.ExternalWikiVisit,
+  SingleplayerEvents.Done,
+  END_CAUSE,
+  PLAYER_SELECTOR,
+  TRACKING_INFORMATION,
+  PATH_PROGRESS,
+  CUSTOMIZATION_INFO,
+  GAME_WIDGET_MAXIMIZED,
+  GAME_END_PLAYER_SELECTOR_MAXIMIZED,
+  GAME_END_WIDGET_MAXIMIZED,
+] as const;
+
+export type MyKeys = typeof allKeys[number];
 
 export function getFormattedDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}/${month}/${day}`;
-  };
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}/${month}/${day}`;
+};
 
 
 export interface UserInterface {
-    name: string;
-    gamesPlayed: number;
-    gamesWon: number;
-    gamesList: string[]
+  name: string;
+  gamesPlayed: number;
+  gamesWon: number;
+  gamesList: string[]
 }
 
 export const defaultUser: UserInterface = {
-    name: "",
-    gamesPlayed: 0,
-    gamesWon: 0,
-    gamesList: []
+  name: "",
+  gamesPlayed: 0,
+  gamesWon: 0,
+  gamesList: []
 }
 
 export interface Article {
-    title: string,
-    link: string
+  title: string,
+  link: string
 }
 
 export interface Suggestion {
@@ -54,81 +188,79 @@ export interface Suggestion {
 }
 
 export const defaultArticle: Article = {
-  title:"",
-  link:""
+  title: "",
+  link: ""
 }
-
-export const TRACKING_TIME = "tracking_time";
-export const TRACKING_CLICKS = "tracking_clicks";
 
 export interface CustomizationInterface {
-    mode: {
-        type: string;
-        path?: {
-            pathLength: number,
-            directed: boolean,
-            connections: Article[]
-        },
-        count_down?: {
-            timer: number
-        }
+  mode: {
+    type: string;
+    path?: {
+      pathLength: number,
+      directed: boolean,
+      connections: Article[]
     },
-    start: Article,
-    end: Article,
-    track: string[],
-    restrictions: string[],
-}
+    count_down?: {
+      timer: number
+    }
+  },
+  start: Article,
+  end: Article,
+  track: string[],
+  restrictions: string[],
+};
 
 export const defaultCustomizations: CustomizationInterface = {
-    mode: {
-        type: "count_down",
-        path: {
-          pathLength: 2,
-          directed: true,
-          connections: [
-            /*
-              {
-                title: String,
-                link: String
-              }
-            */
-          ],
-        },
-        count_down: {
-          timer: 63,
-        }
+  mode: {
+    type: "count_down",
+    path: {
+      pathLength: 2,
+      directed: true,
+      connections: [
+        /*
+          {
+            title: String,
+            link: String
+          }
+        */
+      ],
     },
-    start: {
-        title: "c",
-        link: "",
-    },
-    end: {
-        title: "d",
-        link: "",
-    },
-    track: [TRACKING_CLICKS],
-    restrictions: [
-        "no-opening-para",
-        "no-find",
-        "no-back",
-        "no-dates",
-        "same-page-link",
-        "no-popups",
-    ],
-}
-//TODO: RENAME ALL THIS BROOO WTF
-export interface ClientStatusInterface {
-    [key: string] : ClientGameInterface;
+    count_down: {
+      timer: 63,
+    }
+  },
+  start: {
+    title: "c",
+    link: "",
+  },
+  end: {
+    title: "d",
+    link: "",
+  },
+  track: [TRACKING_CLICKS],
+  restrictions: [
+    "no-opening-para",
+    "no-find",
+    "no-back",
+    "no-dates",
+    "same-page-link",
+    "no-popups",
+  ],
 }
 
+//TODO: RENAME ALL THIS BROOO WTF
+export interface ClientStatusInterface {
+  [key: string]: ClientGameInterface;
+};
+
 export interface GameInterface {
-    roomID: string;
-    customizations: CustomizationInterface;
-    participants: string[];
-    gameClients: ClientStatusInterface;
-    gameStatus: GameStatusInterface,
-    path: Article[]
-}
+  roomID: string;
+  customizations: CustomizationInterface;
+  participants: string[];
+  gameClients: ClientStatusInterface;
+  gameStatus: GameStatusInterface,
+  path: Article[]
+};
 
 export interface GameStatusInterface {
   startTime: number;
@@ -137,7 +269,7 @@ export interface GameStatusInterface {
   pauseStart: number;
   pauseGap: number;
   win: string | null
-}
+};
 
 export const defaultGameStatus: GameStatusInterface = {
   startTime: 0,
@@ -146,149 +278,121 @@ export const defaultGameStatus: GameStatusInterface = {
   paused: false,
   pauseStart: 0,
   pauseGap: 0
-}
+};
 
 export const defaultGame: GameInterface = {
-    // _id: String (generated by MongoDB)
-    roomID: "",
-    customizations: defaultCustomizations,
-    participants: [/*String*/],
-    gameClients: {
-      // clientID1: defaultClientGame,
+  // _id: String (generated by MongoDB)
+  roomID: "",
+  customizations: defaultCustomizations,
+  participants: [/*String*/],
+  gameClients: {
+    // clientID1: defaultClientGame,
+  },
+  gameStatus: {
+    startTime: 0,
+    playing: false,
+    win: null,
+    paused: false,
+    pauseStart: 0,
+    pauseGap: 0
+  },
+  path: [
+    {
+      title: "a", link: "b"
     },
-    gameStatus: {
-      startTime: 0,
-      playing: false,
-      win: null,
-      paused: false,
-      pauseStart: 0,
-      pauseGap: 0
-    },
-    path: [
-      {
-        title: "a", link: "b"
-      },
-      {
-        title:"c", link:"d"
-      }
-    ]
-    
-  }
+    {
+      title: "c", link: "d"
+    }
+  ]
+
+};
 
 export interface NodeHistoryInterface {
-    clicks: number;
-    leaveTime: number | null;
-    delayTime: number;
-}
+  clicks: number;
+  leaveTime: number | null;
+  delayTime: number;
+};
 
 export interface ClientGameInterface {
-    freePath: Article[];
-    visitedPath: Article[];
-    nodeHistory: NodeHistoryInterface[];
-    edgeHistory: Article[][];
-    currentNode: number;
-}
+  freePath: Article[];
+  visitedPath: Article[];
+  nodeHistory: NodeHistoryInterface[];
+  edgeHistory: Article[][];
+  currentNode: number;
+};
 
 export const defaultClientGame: ClientGameInterface = {
-    freePath: [
-      /*
-      {
-        title: String,
-        link: String
-      }
-      */
-    ],
-    visitedPath: [
-      /* String (link) */
-    ],
-    nodeHistory: [
-      /*
-      {
-        title: String,
-        link: String
-      }
-      */
-    ],
-    edgeHistory: [
-      /*
-      {
-        title: String,
-        link: String
-      }
-      */
-    ],
-    currentNode: 0,
-  };
-
-  export interface dashboardKeyInterface {
-    "/dashboard/mode":string[];
-    "/dashboard/track":string[];
-    "/dashboard/restrictions":string[];
-  }
-
-  export const dashboardKey: dashboardKeyInterface = {
-    "/dashboard/mode" : [
-        "mode", 
-        "start",
-        "end",
-        "path",
-        "count_down"
-    ],
-    "/dashboard/track": ["track"],
-    "/dashboard/restrictions":["restrictions"]
-  }
-
-export const NO_OPENING_PARA = "no-opening-para";
-export const NO_FIND = "no-find";
-export const NO_BACK = "no-back";
-export const NO_DATES = "no-dates";
-export const SAME_PAGE_LINK = "same-page-link";
-export const NO_POPUPS = "no-popups";
+  freePath: [
+    /*
+    {
+      title: String,
+      link: String
+    }
+    */
+  ],
+  visitedPath: [
+    /* String (link) */
+  ],
+  nodeHistory: [
+    /*
+    {
+      title: String,
+      link: String
+    }
+    */
+  ],
+  edgeHistory: [
+    /*
+    {
+      title: String,
+      link: String
+    }
+    */
+  ],
+  currentNode: 0,
+};
 
 export const defaultRestrictions = [
-  NO_OPENING_PARA,
-  NO_FIND,
-  NO_BACK,
-  NO_DATES,
-  SAME_PAGE_LINK,
-  NO_POPUPS
-]
+  Restrictions.NoOpeningPara,
+  Restrictions.NoFind,
+  Restrictions.NoBack,
+  Restrictions.NoDates,
+  Restrictions.SamePageLink,
+  Restrictions.NoPopups
+];
 
-// TODO: move into RestrictionsChoice.tsx
-export const TILE = "tile";
-export const SOURCE = "source";
-export const AVAILABLE = "available";
-export const CHOSEN = "chosen";
+export enum CustomizationLabels {
+  StartArticle = "Start Article",
+  EndArticle = "End Article",
+  Tracking = "Tracking",
+  Restrictions = "Restrictions",
+  Type = "Type",
+  PathLength = "Path Length",
+  Connections = "Connections",
+  Directed = "Directed",
+  Timer = "Timer"
+}
 
-export const GAME = "game";
-export const GAME_CUSTOMIZATIONS = "game-customizations";
+export interface dashboardKeyInterface {
+  "/dashboard/mode": string[];
+  "/dashboard/track": string[];
+  "/dashboard/restrictions": string[];
+};
 
-export const TAB_ID = "tab-id";
-export const WIN = "win";
-export const WIKIPEDIA_CLICK = "wikipedia_click";
+export const dashboardKey: dashboardKeyInterface = {
+  "/dashboard/mode": [
+    CustomizationLabels.Type,
+    CustomizationLabels.StartArticle,
+    CustomizationLabels.EndArticle,
+  ],
+  "/dashboard/track": [
+    CustomizationLabels.Tracking
+  ],
+  "/dashboard/restrictions": [
+    CustomizationLabels.Restrictions
+  ]
+};
 
-export const CLICK_COUNT = "click-count";
+export enum CustomizationDataKeys {
 
-export const PAUSE = "pause";
-export const UNPAUSE = "unpause";
-
-export const UPDATE_PAUSE = "update_pause";
-export const GET_TAB_ID = "get_tab_id";
-
-export const FINISH_SINGLEPLAYER_GAME = "finish_singleplayer_game";
-export const SINGLEPLAYER_WIN = "singleplayer_win"; // TODO: idk maybe we can optimize this and also add a sub-field for winning player ID
-export const QUIT_SINGLEPLAYER = "quit_singleplayer" // TODO: deal with when one player leaves, the connection stuff
-export const SINGLEPLAYER_CLEAR_END = "singleplayer_clear_end";
-export const SINGLEPLAYER_TIME_FINISHED = "singleplayer_time_finished"; // TODO: can make this for multiplayer
-export const EXTERNAL_WIKI_VISIT = "external_wiki_visit";
-export const DONE_SINGLEPLAYER = "done_singleplayer";
-export const END_CAUSE = "end-cause";
-
-export const PLAYER_SELECTOR = "player-selector";
-export const TRACKING_INFORMATION = "tracking-information";
-export const PATH_PROGRESS = "path-progress";
-export const CUSTOMIZATION_INFO = "customization-info";
-
-export const GAME_WIDGET_MAXIMIZED = "game-widget-maximized";
-export const GAME_END_PLAYER_SELECTOR_MAXIMIZED = "game-end-player-selector-maximized";
-export const GAME_END_WIDGET_MAXIMIZED = "game-end-widget-maximized";
+}

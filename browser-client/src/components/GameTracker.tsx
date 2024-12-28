@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClientGameInterface, defaultClientGame, FINISH_SINGLEPLAYER_GAME, GameStatusInterface, NodeHistoryInterface, SINGLEPLAYER_TIME_FINISHED, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE } from "../utils/utils";
+import { ClientGameInterface, defaultClientGame, SingleplayerEvents, GameStatusInterface, NodeHistoryInterface, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE, CustomizationInterface, Mode } from "../utils/utils";
 
 function GameTracker({
   gameClientInformation,
+  mode,
   gameStatus,
   tracking,
   countDown = -1,
 }: {
   gameClientInformation: ClientGameInterface;
+  mode: string;
   gameStatus: GameStatusInterface;
   tracking: string;
   countDown: number;
@@ -27,7 +29,7 @@ function GameTracker({
   useEffect(() => {
     if(!gameStatus.paused) { // only if not paused, 
   
-      if(countDown != -1) {
+      if(countDown != -1 && mode === Mode.CountDown) {
         interval = setInterval(() => {
           setTime((prevTime) => prevTime + 1);
           const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap
@@ -35,8 +37,8 @@ function GameTracker({
 
             if(isChromeExtension) {
               chrome.runtime.sendMessage({
-                type: FINISH_SINGLEPLAYER_GAME,
-                cause: SINGLEPLAYER_TIME_FINISHED
+                type: SingleplayerEvents.Finish,
+                cause: SingleplayerEvents.TimeFinished
               });
             }
           }
@@ -69,8 +71,8 @@ function GameTracker({
                 if(Math.floor(rawElapsedTime/1000) > countDown) {
         
                   chrome.runtime.sendMessage({
-                    type: FINISH_SINGLEPLAYER_GAME,
-                    cause: SINGLEPLAYER_TIME_FINISHED
+                    type: SingleplayerEvents.Finish,
+                    cause: SingleplayerEvents.TimeFinished
                   });
                 }
               }, 1000);
@@ -150,14 +152,14 @@ function GameTracker({
 
   const renderContent = () => {
     switch (true) {
-      case tracking === TRACKING_CLICKS && countDown != -1:
+      case tracking === TRACKING_CLICKS && countDown != -1 && mode === Mode.CountDown:
         return (
           <div className="flex flex-col justify-items-center gap-2">
             {renderClicks()}
             {renderCountDown()}
           </div>
         );
-      case tracking === TRACKING_TIME && countDown != -1:
+      case tracking === TRACKING_TIME && countDown != -1 && mode === Mode.CountDown:
         return (
           <div className="flex flex-col justify-items-center gap-2">
             {renderTime()}

@@ -8,10 +8,8 @@ import {
   defaultArticle,
   defaultCustomizations,
   GAME_MODE,
-  MODE_COUNT_DOWN,
-  MODE_NORMAL,
-  MODE_PATH,
-  MULTI_PLAYER,
+  Mode,
+  GamePlayMode,
   Suggestion,
   UPDATE_CUSTOMIZATION,
   UPDATED_CUSTOMIZATION,
@@ -60,7 +58,7 @@ function ModeChoice() {
 
         // If multiplayer, then update when customizations updated
 
-        if (result[GAME_MODE] === MULTI_PLAYER) {
+        if (result[GAME_MODE] === GamePlayMode.MultiPlayer) {
           const handleMessage = (message: { type: string; customizations: CustomizationInterface },
             sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
           ) => {
@@ -145,14 +143,14 @@ function ModeChoice() {
       mode: {
         ...customizations.mode,
         type: mode,
-        ...(mode === MODE_PATH && {
+        ...(mode === Mode.Path && {
           path: {
             pathLength: pathLength,
             directed: isPathDirected,
             connections: pathArticles,
           },
         }),
-        ...(mode === MODE_COUNT_DOWN && {
+        ...(mode === Mode.CountDown && {
           count_down: {
             timer: 60 * minutes + seconds,
           },
@@ -251,7 +249,7 @@ function ModeChoice() {
     // modify later...?
     let path: Article[] = [];
 
-    if (mode === MODE_PATH) {
+    if (mode === Mode.Path) {
       path = [startArticle, ...pathArticles, endArticle];
     } else {
       path = [startArticle, endArticle];
@@ -281,7 +279,7 @@ function ModeChoice() {
   }
 
   function renderNormal() {
-    return (mode === MODE_NORMAL && (
+    return (mode === Mode.Normal && (
       <div>
         <div className="flex flex-col items-center mb-1">
           {renderPath()}
@@ -306,7 +304,7 @@ function ModeChoice() {
   }
 
   function renderCountDown() {
-    return (mode === MODE_COUNT_DOWN && (
+    return (mode === Mode.CountDown && (
       <div className="items-center justify-center">
         <div className="flex items-center justify-center mb-2 w-auto bg-slate-200 p-1 space-x-2">
           <input
@@ -358,7 +356,7 @@ function ModeChoice() {
   }
 
   function renderPathMode() {
-    return (mode === MODE_PATH && (
+    return (mode === Mode.Path && (
       <div>
         <div className="group relative grid grid-cols-3 gap-4 p-1">
           <strong className="text-base mr-1 col-span-1">Path Length</strong>
@@ -396,7 +394,7 @@ function ModeChoice() {
           <div className="w-full flex justify-center items-center">
 
             <SearchableDropdown
-              onDataChange={
+              onDataChange={ 
                 currIdx == 0 ? updateStartArticle :
                   (currIdx === pathLength - 1 ? updateEndArticle : updatePathArticles)}
               index={
@@ -442,9 +440,9 @@ function ModeChoice() {
               <option value="" disabled>
                 Select a mode
               </option>
-              <option value={MODE_NORMAL}>Normal</option>
-              <option value={MODE_COUNT_DOWN}>Count-Down</option>
-              <option value={MODE_PATH}>Path</option>
+              <option value={Mode.Normal}>Normal</option>
+              <option value={Mode.CountDown}>Count-Down</option>
+              <option value={Mode.Path}>Path</option>
               <option value="random">Random</option>
             </select>
           </div>

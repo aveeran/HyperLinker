@@ -4,19 +4,16 @@ import {
   CustomizationInterface,
   defaultClientGame,
   END_CAUSE,
-  EXTERNAL_WIKI_VISIT,
-  FINISH_SINGLEPLAYER_GAME,
+  SingleplayerEvents,
   GAME,
   GAME_CUSTOMIZATIONS,
   GAME_MODE,
   GameInterface,
   GET_TAB_ID,
-  MODE_PATH,
-  MULTI_PLAYER,
+  Mode,
+  GamePlayMode,
   PAUSE,
   PLAYER,
-  SINGLE_PLAYER,
-  SINGLEPLAYER_WIN,
   START_GAME,
   TAB_ID,
   UNPAUSE,
@@ -43,10 +40,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     case START_GAME:
       chrome.storage.local.get([GAME_MODE], (result) => {
-        let gameMode: string = result[GAME_MODE] || SINGLE_PLAYER;
-        if (gameMode === SINGLE_PLAYER) {
+        let gameMode: string = result[GAME_MODE] || GamePlayMode.SinglePlayer;
+        if (gameMode === GamePlayMode.SinglePlayer) {
           startSingleplayer(message.customizations);
-        } else if (gameMode === MULTI_PLAYER) {
+        } else if (gameMode === GamePlayMode.MultiPlayer) {
           // TODO: get start time from server
           startMultiplayer();
         }
@@ -67,7 +64,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case GET_TAB_ID:
         sendTabId(sender, sendResponse);
         return true;
-    case FINISH_SINGLEPLAYER_GAME:
+    case SingleplayerEvents.Finish:
       endSingleplayerGame(message.cause);
       break;
   }
@@ -114,7 +111,7 @@ function handlePause() {
       elapsedPause++;
     }, 1000);
   
-    if(gameMode === MULTI_PLAYER) {
+    if(gameMode === GamePlayMode.MultiPlayer) {
   
     } else {
   
@@ -141,7 +138,7 @@ function handleUnpause() {
   
     game.gameStatus.paused = false;
     
-    if(gameMode === MULTI_PLAYER) {
+    if(gameMode === GamePlayMode.MultiPlayer) {
       
     } else {
   
@@ -180,7 +177,7 @@ function handleCustomizationsUpdate(
   chrome.storage.local.set({[GAME_CUSTOMIZATIONS]: updatedCustomizations}, () => {
     chrome.storage.local.get([GAME_MODE], (result) => {
       let gameMode: string = result[GAME_MODE];
-      if (gameMode === MULTI_PLAYER) {
+      if (gameMode === GamePlayMode.MultiPlayer) {
         // TODO: socket.io message
       }
 
@@ -194,9 +191,9 @@ function handleGameModeUpdate(updatedGameMode: string) {
     let gameMode: string = updatedGameMode;
     chrome.storage.local.set({[GAME_MODE]: gameMode});
   
-    if (gameMode === MULTI_PLAYER) {
+    if (gameMode === GamePlayMode.MultiPlayer) {
       // TODO: player = id
-    } else if (gameMode === SINGLE_PLAYER) {
+    } else if (gameMode === GamePlayMode.SinglePlayer) {
       // TODO: disconnet from room
     }
 
@@ -206,8 +203,8 @@ function handleGameModeUpdate(updatedGameMode: string) {
 function startSingleplayer(customizations: CustomizationInterface) {
   chrome.storage.local.get([GAME, PLAYER, TAB_ID, VIEWING_PLAYER], (result) => {
     let game: GameInterface = result[GAME] || defaultClientGame;
-    let player: string = result[PLAYER] || SINGLE_PLAYER;
-    let viewingPlayer: string = result[VIEWING_PLAYER] || SINGLE_PLAYER;
+    let player: string = result[PLAYER] || GamePlayMode.SinglePlayer;
+    let viewingPlayer: string = result[VIEWING_PLAYER] || GamePlayMode.SinglePlayer;
     // let tabId: number = result[TAB_ID];
 
     game.participants = [player];
@@ -219,14 +216,14 @@ function startSingleplayer(customizations: CustomizationInterface) {
     game.customizations = customizations;
     // Calculating path length to determine what to put in histories
     let pathLength = 2;
-    if (game.customizations.mode.type === MODE_PATH) {
+    if (game.customizations.mode.type === Mode.Path) {
       pathLength += game.customizations.mode.path?.connections.length ?? 0;
     }
   
   
   
     // Initializing free-path
-    if (game.customizations.mode.type === MODE_PATH &&
+    if (game.customizations.mode.type === Mode.Path &&
       !game.customizations.mode.path?.directed) {
       game.gameClients[player].freePath = Array.from(
         { length: pathLength },
@@ -239,7 +236,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
     // Game Path
     game.path = [
       game.customizations.start,
-      ...(game.customizations.mode.type === MODE_PATH ? (game.customizations.mode.path?.connections ?? []) : []),
+      ...(game.customizations.mode.type === Mode.Path ? (game.customizations.mode.path?.connections ?? []) : []),
       game.customizations.end
     ];
   
@@ -271,7 +268,7 @@ function startSingleplayer(customizations: CustomizationInterface) {
   
       chrome.storage.local.set(
         { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer, 
-          [END_CAUSE]: undefined, [PLAYER]: SINGLE_PLAYER
+          [END_CAUSE]: undefined, [PLAYER]: GamePlayMode.SinglePlayer
          }
       );
 
@@ -340,7 +337,7 @@ function handleWikipediaClick(page : string ) {
                     currentNodeHistory.clicks++;
                     game.gameClients[player].nodeHistory[currentNode] = currentNodeHistory;
 
-                    if(game.customizations.mode.path?.directed === true || game.customizations.mode.type !== MODE_PATH) {
+                    if(game.customizations.mode.path?.directed === true || game.customizations.mode.type !== Mode.Path) {
                         if(page === nextPage.link) {
                             game.gameClients[player].nodeHistory[currentNode].leaveTime = Date.now();
                             game.gameClients[player].currentNode++;
@@ -365,9 +362,9 @@ function handleWikipediaClick(page : string ) {
                       [GAME] : game
                     });
                     
-                    if(gameMode === MULTI_PLAYER) {
+                    if(gameMode === GamePlayMode.MultiPlayer) {
                       // TODO: send message to socket.io server
-                    } else if (gameMode === SINGLE_PLAYER) {
+                    } else if (gameMode === GamePlayMode.SinglePlayer) {
                       chrome.runtime.sendMessage({
                         type: UPDATED_GAME_CLIENT,
                         clientID: viewingPlayer,
@@ -379,9 +376,9 @@ function handleWikipediaClick(page : string ) {
                     // Checking if the game has been won with this click     
                     if(game.gameClients[player].currentNode === game.path.length - 1
                       && (currentArticle.link == game.customizations.end.link)) {
-                        if(gameMode === SINGLE_PLAYER) {
-                          endSingleplayerGame(SINGLEPLAYER_WIN);
-                        } else if (gameMode === MULTI_PLAYER) {
+                        if(gameMode === GamePlayMode.SinglePlayer) {
+                          endSingleplayerGame(SingleplayerEvents.Win);
+                        } else if (gameMode === GamePlayMode.MultiPlayer) {
                           
                         }
                       }
@@ -406,7 +403,7 @@ chrome.webNavigation.onCommitted.addListener((details) => {
 
       if(game.gameStatus.playing) {
         if(details.tabId != tabId) {
-          endSingleplayerGame(EXTERNAL_WIKI_VISIT)
+          endSingleplayerGame(SingleplayerEvents.ExternalWikiVisit)
         }
       }
     })

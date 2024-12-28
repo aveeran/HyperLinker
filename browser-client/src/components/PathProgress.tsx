@@ -5,7 +5,7 @@ import {
   defaultClientGame,
   defaultGame,
   GameStatusInterface,
-  MODE_PATH,
+  Mode,
   UPDATE_PAUSE,
 } from "../utils/utils";
 import React from "react";
@@ -34,7 +34,7 @@ function PathProgress({
 
   const nodeHistory = gameClientInformation?.nodeHistory || [];
 
-  let isPath = pathCustomizations.type == MODE_PATH;
+  let isPath = pathCustomizations.type == Mode.Path;
   let isDirected = pathCustomizations.directed;
 
   const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
@@ -163,6 +163,10 @@ function PathProgress({
       }
     }
   };
+
+  /*
+  turn this into its own component?
+  */
   function generateNode(
     rowIndex: number,
     step: Article,

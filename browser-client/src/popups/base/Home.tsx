@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import WikiArticle from "../../components/WikiArticle";
-import { GAME_MODE, SINGLE_PLAYER, MULTI_PLAYER, RESET, getFormattedDate, UPDATE_GAME_MODE, CUSTOMIZATIONS, defaultCustomizations, defaultGame, GAME } from "../../utils/utils";
+import { GAME_MODE, GamePlayMode, RESET, getFormattedDate, UPDATE_GAME_MODE, CUSTOMIZATIONS, defaultCustomizations, defaultGame, GAME } from "../../utils/utils";
 
 interface Article {
   content_urls: {
@@ -62,7 +62,7 @@ function Home() {
       chrome.runtime.sendMessage({action: RESET});
       chrome.storage.local.clear();
       chrome.storage.local.set({
-        [GAME_MODE]: SINGLE_PLAYER,
+        [GAME_MODE]: GamePlayMode.SinglePlayer,
         [CUSTOMIZATIONS]: defaultCustomizations,
         [GAME]: defaultGame
       });
@@ -71,10 +71,10 @@ function Home() {
 
   const handleSingleplayerClick = () => {
     if(isChromeExtension) {
-      chrome.storage.local.set({[GAME_MODE] : SINGLE_PLAYER}, () => {
+      chrome.storage.local.set({[GAME_MODE] : GamePlayMode.SinglePlayer}, () => {
         chrome.runtime.sendMessage({
           type: UPDATE_GAME_MODE,
-          game_mode: SINGLE_PLAYER
+          game_mode: GamePlayMode.SinglePlayer
         });
         navigate("/dashboard");
       });
@@ -85,10 +85,10 @@ function Home() {
 
   const handleMultiplayerClick = () => {
     if(isChromeExtension) {
-      chrome.storage.local.set({[GAME_MODE] : MULTI_PLAYER}, () => {
+      chrome.storage.local.set({[GAME_MODE] : GamePlayMode.MultiPlayer}, () => {
         chrome.runtime.sendMessage({
           type: UPDATE_GAME_MODE,
-          game_mode: MULTI_PLAYER
+          game_mode: GamePlayMode.MultiPlayer
         });
         navigate("/dashboard");
       });

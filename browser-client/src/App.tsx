@@ -5,8 +5,8 @@ import RouterTracker from './popups/base/RouterTracker.tsx';
 import ModeChoice from './popups/base/ModeChoice.tsx';
 import TrackerChoice from './popups/base/TrackChoice.tsx';
 import RestrictionsChoice from './popups/base/RestrictionsChoice.tsx';
-import Game from './popups/base/Game.tsx';
-import GameStat from './popups/base/GameStat.tsx';
+import Game from './popups/base/Game/Game.tsx';
+import GameStat from './popups/base/GameStat/GameStat.tsx';
 
 
 function App() {

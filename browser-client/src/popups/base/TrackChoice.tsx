@@ -5,7 +5,7 @@ import {
   CUSTOMIZATIONS,
   defaultCustomizations,
   GAME_MODE,
-  MULTI_PLAYER,
+  GamePlayMode,
   TRACKING_CLICKS,
   TRACKING_TIME,
   UPDATE_CUSTOMIZATION,
@@ -37,7 +37,7 @@ function TrackerChoice() {
 
         // If multiplayer, then update when customizations updated
 
-        if(result[GAME_MODE] === MULTI_PLAYER) {
+        if(result[GAME_MODE] === GamePlayMode.MultiPlayer) {
             const handleMessage = (message: {type: string; customizations: CustomizationInterface},
               sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
             ) => {
