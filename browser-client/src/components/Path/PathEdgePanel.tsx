@@ -1,60 +1,62 @@
-import { Article } from "../../utils/utils";
+import { useContext } from "react";
+import { EdgeInteractionContext } from "./PathContexts/EdgeInteractionContext";
+import { GraphSettingsContext } from "./PathContexts/GraphSettingsContext";
 
-interface PathEdgePanelProps {
-    rowIndex: number,
-    index: number,
-    rowLength: number,
-    handleMouseEnterLink?: (linkIndex: number) => void,
-    handleMouseLeaveLink?: () => void,
-    handleClickLink?: (linkIndex: number) => void,
-    activeLink: number,
-    hoveredLink: number
-    visitedPath: Article[] | null
-    path: Article[] | null
-}
+function PathEdgePanel() {
+    const edgeInteraction = useContext(EdgeInteractionContext);
+    const graphSettings = useContext(GraphSettingsContext);
 
-function PathEdgePanel(
-    {
-        rowIndex,
-        index,
-        rowLength,
-        handleMouseEnterLink = (linkIndex: number) => { },
-        handleMouseLeaveLink = () => { },
-        handleClickLink = (linkIndex: number) => { },
-        activeLink,
-        hoveredLink,
-        visitedPath,
-        path
-    }: PathEdgePanelProps) {
-    const linkIndex = rowIndex % 2 === 0
-        ? index + rowIndex * rowLength
-        : rowIndex * rowLength + (rowLength - index - 1) - 1;
-
-    let isVisited = false;
-
-    if (visitedPath != null && path != null) {
-        isVisited = visitedPath.some(
-            (visitedArticle) =>
-                visitedArticle.title === path[linkIndex]?.title &&
-                visitedArticle.link === path[linkIndex]?.link
-        ) && visitedPath.some(
-            (visitedArticle) =>
-                visitedArticle.title === path[linkIndex + 1]?.title &&
-                visitedArticle.link === path[linkIndex + 1]?.link)
+    if (!edgeInteraction || !graphSettings) {
+        throw new Error(
+            "PathEdgePanel must be used within EdgeInteractionContext and GraphSettingsContext providers"
+        );
     }
 
-    const isActive = activeLink === linkIndex;
-    const isHovered = hoveredLink === linkIndex;
+    const {
+        activeEdge,
+        edgeHistory
+    } = edgeInteraction;
+
+    const {
+        freePath,
+        path,
+        isDirected,
+        isPath
+    } = graphSettings;
+
+    if (activeEdge === null) return null;
+
+    const startTitle =
+        !isDirected && isPath ? freePath[activeEdge]?.title
+            : path[activeEdge]?.title;
+
+    const endTitle =
+        !isDirected && isPath ? freePath[activeEdge + 1]?.title
+            : path[activeEdge + 1]?.title;
 
     return (
-        <div
-        key={`link-${linkIndex}`}
-        className={`h-2 w-8 ${isVisited ? "bg-green-500" : "bg-gray-300"}
-        ${isActive && "border-2 border-green-400 shadow-gray-600 drop-shadow-xl"}
-        ${isHovered && "shadow-gray-600 dropshadow-xl"}`}
-        onMouseEnter={() => handleMouseEnterLink(linkIndex)}
-        onMouseLeave={handleMouseLeaveLink}
-        onClick={() => handleClickLink(linkIndex)}
-        ></div>
+        <div className="mt-4 p-2 border border-green-300 bg-white rounded  shadow-2xl m-2">
+            <h3 className="font-bold truncate">
+                History for Edge between {startTitle} and {endTitle}
+            </h3>
+            <ul>
+                {
+                    edgeHistory?.map((subArray, outerIndex) => (
+                        <ul key={outerIndex} className="mb-4">
+                            {subArray.map((entry, innerIndex) => (
+                                <li key={innerIndex} className="text-sm text-gray-700">
+                                    <a href={entry.link} target="_blank" rel="noopener noreferrer">
+                                        {entry.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    ))
+                }
+            </ul>
+        </div>
     );
+
 }
+
+export default PathEdgePanel;

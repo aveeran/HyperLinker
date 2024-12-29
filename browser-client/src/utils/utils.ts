@@ -230,12 +230,12 @@ export const defaultCustomizations: CustomizationInterface = {
     }
   },
   start: {
-    title: "c",
-    link: "",
+    title: "A",
+    link: "https://en.wikipedia.org/wiki/A",
   },
   end: {
-    title: "d",
-    link: "",
+    title: "D",
+    link: "https://en.wikipedia.org/wiki/D",
   },
   track: [TRACKING_CLICKS],
   restrictions: [
@@ -297,12 +297,6 @@ export const defaultGame: GameInterface = {
     pauseGap: 0
   },
   path: [
-    {
-      title: "a", link: "b"
-    },
-    {
-      title: "c", link: "d"
-    }
   ]
 
 };
@@ -396,3 +390,4 @@ export const dashboardKey: dashboardKeyInterface = {
 export enum CustomizationDataKeys {
 
 }
+

@@ -137,11 +137,16 @@ function GameStat() {
     }
     setPathCustomizations(pathInfo);
 
+
+
     const playerSelectorMaximized: string[] = storageData[GAME_END_PLAYER_SELECTOR_MAXIMIZED];
+    
     setPlayerSelectorWidget(playerSelectorMaximized);
 
     const storedMaximizedWidget: string[] = storageData[GAME_END_WIDGET_MAXIMIZED];
     setMaximizedWidgets(storedMaximizedWidget);
+
+    
   }, [isChromeExtension, storageData])
 
 
@@ -163,8 +168,8 @@ function GameStat() {
       [END_CAUSE]: null,
       [TAB_ID]: null,
       [CLICK_COUNT]: 0,
-      [GAME_END_PLAYER_SELECTOR_MAXIMIZED]: false,
-      [GAME_END_WIDGET_MAXIMIZED]: null
+      [GAME_END_PLAYER_SELECTOR_MAXIMIZED]: [],
+      [GAME_END_WIDGET_MAXIMIZED]: []
     }, () => {
       navigate('/dashboard');
     })

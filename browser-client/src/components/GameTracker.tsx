@@ -64,7 +64,7 @@ function GameTracker({
           if(message.pause && interval) {
             clearInterval(interval);
           } else if (!message.pause) {
-            if(countDown != -1) {
+            if(countDown != -1 && mode == Mode.CountDown) {
               interval = setInterval(() => {
                 setTime((prevTime) => prevTime + 1);
                 const rawElapsedTime = Date.now() - gameStatus.startTime - ((gameStatus.pauseGap ?? 0) * 1000); // TODO: we need to set the pause gap

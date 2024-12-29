@@ -1,492 +1,177 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  Article,
-  ClientGameInterface,
-  defaultClientGame,
-  defaultGame,
-  GameStatusInterface,
-  Mode,
-  UPDATE_PAUSE,
-} from "../utils/utils";
-import React from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+
+import { GraphSettingsContext, GraphSettingsContextType, GraphSettingsProvider } from "./Path/PathContexts/GraphSettingsContext";
+import { NodeInteractionContext, NodeInteractionContextType, NodeInteractionProvider } from "./Path/PathContexts/NodeInteractionContext";
+import { EdgeInteractionContext, EdgeInteractionContextType, EdgeInteractionProvider } from "./Path/PathContexts/EdgeInteractionContext";
+import { Article, ClientGameInterface, defaultClientGame, GameStatusInterface, Mode, UPDATE_PAUSE } from "../utils/utils";
+import PathRow from "./Path/PathRow";
+import PathVerticalEdge from "./Path/PathVerticalEdge";
+import PathNodePanel from "./Path/PathNodePanel";
+import PathEdgePanel from "./Path/PathEdgePanel";
+
+interface PathProgressProps {
+    gameClientInformation: ClientGameInterface;
+    gameStatus: GameStatusInterface;
+    pathCustomizations: { type: string; directed: boolean };
+    path: Article[];
+}
 
 function PathProgress({
-  gameClientInformation,
-  gameStatus,
-  pathCustomizations,
-  path,
-}: {
-  gameClientInformation: ClientGameInterface;
-  gameStatus: GameStatusInterface;
-  pathCustomizations: { type: string; directed: boolean };
-  path: Article[];
-}) {
-  const [hoveredNode, setHoveredNode] = useState<number | null>(null);
-  const [hoveredLink, setHoveredLink] = useState<number | null>(null);
-  const [activeNode, setActiveNode] = useState<number | null>(null);
-  const [activeLink, setActiveLink] = useState<number | null>(null);
-  const [currentNode, setCurrentNode] = useState<number>(0);
-  const [endIndex, setEndIndex] = useState<number>(path.length - 1);
+    gameClientInformation,
+    gameStatus,
+    pathCustomizations,
+    path
+}: PathProgressProps) {
+    const [activeNode, setActiveNode] = useState<number | null>(null);
+    const [hoveredNode, setHoveredNode] = useState<number | null>(null);
+    const [activeEdge, setActiveEdge] = useState<number | null>(null);
+    const [hoveredEdge, setHoveredEdge] = useState<number | null>(null);
+    const [currentNode, setCurrentNode] = useState<number>(0);
 
-  if (!gameClientInformation) {
-    gameClientInformation = defaultClientGame;
-  }
+    if (!gameClientInformation) {
+        gameClientInformation = defaultClientGame;
+    }
 
-  const nodeHistory = gameClientInformation?.nodeHistory || [];
+    const nodeHistory = gameClientInformation?.nodeHistory || [];
 
-  let isPath = pathCustomizations.type == Mode.Path;
-  let isDirected = pathCustomizations.directed;
+    let isPath: boolean = pathCustomizations.type === Mode.Path;
+    let isDirected: boolean = pathCustomizations.directed;
 
-  const [time, setTime] = useState<number>(0); // dummy-variable to force re-render
-  let interval: NodeJS.Timeout | null = null;
-
-  useEffect(() => {
-    if (gameStatus.playing) {
-      interval = setInterval(() => {
-        setTime((prevTime) => prevTime + 1);
-      }, 1000);
-
-      return () => {
-        if (interval) {
-          clearInterval(interval);
+    useEffect(() => {
+        if (gameClientInformation?.currentNode != currentNode) {
+            setCurrentNode(gameClientInformation?.currentNode);
         }
-      };
-    }
-  }, [gameStatus.playing]);
+    }, [gameClientInformation?.currentNode, currentNode]);
 
-
-  useEffect(() => {
-    if (gameStatus.playing) {
-      chrome.runtime.onMessage.addListener((message, sender, response) => {
-        if (message.type === UPDATE_PAUSE) {
-          if (message.pause && interval) {
-            clearInterval(interval);
-          } else if (!message.pause) {
-            interval = setInterval(() => {
-              setTime((prevTime) => prevTime + 1);
-            }, 1000);
-          }
-        }
-      });
-    }
-  }, [gameStatus.playing]);
-
-  useEffect(() => {
-    if (gameClientInformation?.currentNode != currentNode) {
-      setCurrentNode(gameClientInformation?.currentNode);
-    }
-  }, [gameClientInformation?.currentNode, currentNode]);
-
-  const handleMouseEnterNode = (index: number) => {
-    setHoveredNode(index);
-  };
-
-  const handleMouseLeaveNode = () => {
-    if (activeNode === null) {
-      setHoveredNode(null);
-    }
-  };
-
-  const handleMouseEnterLink = (index: number) => {
-    setHoveredLink(index);
-  };
-
-  const handleMouseLeaveLink = () => {
-    if (activeLink === null) {
-      setHoveredLink(null);
-    }
-  };
-
-  const handleClickNode = (index: number) => {
-    setActiveNode((prevActiveNode) =>
-      prevActiveNode === index ? null : index
-    );
-    setActiveLink(null);
-  };
-
-  const handleClickLink = (index: number) => {
-    setActiveLink((prevActiveLink) =>
-      prevActiveLink === index ? null : index
-    );
-    setActiveNode(null);
-  };
-
-
-  const parseTime = useCallback((seconds: number) => {
-    seconds = Math.floor(seconds);
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-
-    const formattedHours =
-      hours > 0 ? `${String(hours).padStart(2, "0")}:` : "";
-    const formattedMinutes = `${String(minutes).padStart(2, "0")}:`;
-    const formattedSeconds = String(remainingSeconds).padStart(2, "0");
-
-    return `${formattedHours}${formattedMinutes}${formattedSeconds}`;
-  }, []);
-
-  const renderElapsedTime = () => {
-    const prevLeave = nodeHistory[(activeNode ?? 0) - 1]?.leaveTime;
-    const delay = nodeHistory[activeNode ?? 0]?.delayTime * 1000;
-
-    if (
-      nodeHistory[activeNode ?? 0]
-        .leaveTime != null
-    ) {
-      // if we already left, use leave time and either gameStatus.startTime or prevLeave
-      const leaveTime =
-        nodeHistory[activeNode ?? 0]
-          .leaveTime ?? 0;
-
-      if (prevLeave != null) {
-        return <>{parseTime((leaveTime - prevLeave - delay) / 1000)}</>;
-      } else {
-        return (
-          <>{parseTime((leaveTime - gameStatus.startTime - delay) / 1000)}</>
-        );
-      }
-    } else {
-      // if not left yet, worry about pausing
-      const reference: number = gameStatus.paused
-        ? gameStatus.pauseStart ?? Date.now()
-        : Date.now();
-
-      if (prevLeave != null) {
-
-        return <>{parseTime((reference - prevLeave - delay) / 1000)}</>;
-      } else {
-
-        return (
-          <>{parseTime((reference - gameStatus.startTime - delay) / 1000)}</>
-        );
-      }
-    }
-  };
-
-  /*
-  turn this into its own component?
-  */
-  function generateNode(
-    rowIndex: number,
-    step: Article,
-    index: number,
-    rowLength: number
-  ) {
-    const nodeIndex =
-      rowIndex % 2 === 0
-        ? index + rowIndex * rowLength
-        : rowIndex * rowLength + (rowLength - index - 1);
-    const isVisited = gameClientInformation?.visitedPath.some(
-      (visitedArticle: Article) =>
-        visitedArticle.title === step.title && visitedArticle.link === step.link
-    );
-    const isActive = activeNode === nodeIndex;
-    const isHovered = hoveredNode === nodeIndex;
-
-    return (
-      <div
-        key={nodeIndex}
-        className={`flex items-center justify-center w-12 h-12 border-2 rounded-full cursor-pointer ${isVisited
-          ? "bg-blue-500 text-white border-green-400"
-          : "bg-white border-gray-300"
-          } ${isActive ? "border-yellow-400 shadow-gray-400 drop-shadow-2xl" : ""
-          } ${isHovered ? "shadow-gray-400 drop-shadow-2xl" : ""}`}
-        onMouseEnter={() => handleMouseEnterNode(nodeIndex)}
-        onMouseLeave={handleMouseLeaveNode}
-        onClick={() => handleClickNode(nodeIndex)}
-        title={step.title}
-      >
-        <p className="truncate text-xs" aria-label={step.title}>
-          {step.title}
-        </p>
-      </div>
-    );
-  }
-
-  function generateLink(rowIndex: number, index: number, rowLength: number) {
-    const linkIndex =
-      rowIndex % 2 === 0
-        ? index + rowIndex * rowLength
-        : rowIndex * rowLength + (rowLength - index - 1) - 1;
-    const isActive = activeLink === linkIndex;
-    const isHovered = hoveredLink === linkIndex;
-    const isVisited =
-      gameClientInformation?.visitedPath.some(
-        (visitedArticle) =>
-          visitedArticle.title === path[linkIndex]?.title &&
-          visitedArticle.link === path[linkIndex]?.link
-      ) &&
-      gameClientInformation?.visitedPath.some(
-        (visitedArticle) =>
-          visitedArticle.title === path[linkIndex + 1]?.title &&
-          visitedArticle.link === path[linkIndex + 1]?.link
-      );
-
-    return (
-      <div
-        key={`link-${linkIndex}`}
-        className={`h-2 w-8 ${isVisited ? "bg-green-500" : "bg-gray-300"} ${isActive
-          ? "border-2 border-green-400 shadow-gray-600 drop-shadow-xl"
-          : ""
-          } ${isHovered ? "shadow-gray-600 drop-shadow-xl" : ""}`}
-        onMouseEnter={() => handleMouseEnterLink(linkIndex)}
-        onMouseLeave={handleMouseLeaveLink}
-        onClick={() => handleClickLink(linkIndex)}
-      ></div>
-    );
-  }
-
-  function generateRow(row: Article[], rowIndex: number, rowLength: number) {
-    return (
-      <div
-        className={`flex items-center gap-4 ${rowIndex === 1 ? "justify-end" : ""
-          }`}
-        key={`row-${rowIndex}`}
-      >
-        {row.map((step, index) => (
-          <React.Fragment key={`node-${rowIndex}-${index}`}>
-            {generateNode(rowIndex, step, index, rowLength)}
-            {index < row.length - 1 && generateLink(rowIndex, index, rowLength)}
-          </React.Fragment>
-        ))}
-      </div>
-    );
-  }
-
-  function generateVerticalConnector(rowIndex: number) {
-    const connectorIndex = rowIndex % 2 === 0 ? 2 : 5;
-    const isActive = activeLink === connectorIndex;
-    const isHovered = hoveredLink === connectorIndex;
-    const isVisited =
-      rowIndex % 2 === 0
-        ? gameClientInformation?.visitedPath.some(
-          (visitedArticle) =>
-            visitedArticle.title === path[2].title &&
-            visitedArticle.link === path[2].link
-        ) &&
-        gameClientInformation?.visitedPath.some(
-          (visitedArticle) =>
-            visitedArticle.title === path[3].title &&
-            visitedArticle.link === path[3].link
-        )
-        : gameClientInformation?.visitedPath.some(
-          (visitedArticle) =>
-            visitedArticle.title === path[5].title &&
-            visitedArticle.link === path[5].link
-        ) &&
-        gameClientInformation?.visitedPath.some(
-          (visitedArticle) =>
-            visitedArticle.title === path[6].title &&
-            visitedArticle.link === path[6].link
-        );
-
-    return (
-      <div
-        key={`connector-${rowIndex}`}
-        className={`flex ${rowIndex % 2 === 0 ? "justify-end" : "justify-start"
-          }`}
-        style={{ width: "100%" }}
-        onMouseEnter={() => handleMouseEnterLink(connectorIndex)}
-        onMouseLeave={handleMouseLeaveLink}
-        onClick={() => handleClickLink(connectorIndex)}
-      >
-        <div
-          className={`w-2 h-8 ${isVisited ? "bg-green-500" : "bg-gray-300"} ${rowIndex % 2 === 0 ? "mr-5" : "ml-5"
-            } ${isActive
-              ? "border-2 border-green-400 shadow-gray-400 drop-shadow-xl"
-              : ""
-            } ${isHovered ? "shadow-gray-400 drop-shadow-xl" : ""}`}
-        ></div>
-      </div>
-    );
-  }
-
-  // TODO: the only difference between the two is which type of path they get
-  function RenderPath() {
-    const rowLength = 3;
-
-    const rows = path.reduce<Array<Array<Article>>>((acc, step, index) => {
-      const rowIndex = Math.floor(index / rowLength);
-      if (!acc[rowIndex]) acc[rowIndex] = [];
-      acc[rowIndex].push(step);
-      return acc;
-    }, []);
-
-    // Reverse every other row
-    rows.forEach((row, index) => {
-      if (index % 2 === 1) row.reverse();
-    });
-
-
-    return (
-      <>
-        {rows.map((row, rowIndex) => (
-          <>
-            {generateRow(row, rowIndex, rowLength)}
-            {rowIndex < rows.length - 1 && generateVerticalConnector(rowIndex)}
-          </>
-        ))}
-      </>
-    );
-  }
-
-  function RenderFreePath() {
-    const rowLength = 3;
-
-    // Group the free path into rows
-    const rows = gameClientInformation?.freePath.reduce<Array<Array<Article>>>(
-      (acc, step, index) => {
-        const rowIndex = Math.floor(index / rowLength);
-        if (!acc[rowIndex]) acc[rowIndex] = [];
-        acc[rowIndex].push(step);
-        return acc;
-      },
-      []
-    );
-
-    // Reverse every other row
-    rows.forEach((row, index) => {
-      if (index % 2 === 1) row.reverse();
-    });
-
-    return (
-      <>
-
-        <div className="group relative grid grid-cols-4 gap-4 p-1 items-center ">
-          <strong className="text-sm mr-1 col-span-2">Possible articles</strong>
-          <p className="col-span-2 text-sm">
-            {
-              path
-                .filter((article: Article) =>
-                  !gameClientInformation?.freePath.some((freeArticle: Article) =>
-                    freeArticle.title === article.title && freeArticle.link === article.link
-                  )
-                )
-                .map((article: Article) => article.title)
-                .join(", ")
-            }
-          </p>
-        </div>
-
-        {rows.map((row, rowIndex) => (
-          <React.Fragment key={`free-path-row-${rowIndex}`}>
-            {generateRow(row, rowIndex, rowLength)}
-            {rowIndex < rows.length - 1 && generateVerticalConnector(rowIndex)}
-          </React.Fragment>
-        ))}
-      </>
-    );
-  }
-
-  function renderNodeHistoryPanel(
-    activeNode: number | null,
-    isDirected: boolean,
-    isPath: boolean,
-    freePath: Article[],
-    path: Article[],
-    currentNode: number,
-    gameClientInformation: ClientGameInterface,
-    renderElapsedTime: () => JSX.Element
-  ): JSX.Element | null {
-    if (activeNode === null) return null;
-
-    const nodeIndex = activeNode ?? 0;
-    const nodeTitle =
-      !isDirected && isPath
-        ? freePath[nodeIndex]?.title
-        : path[nodeIndex]?.title;
-    const innerNodeHistory = nodeHistory[nodeIndex] || {
-      clicks: 0,
+    const handleMouseEnterNode = (index: number) => {
+        setHoveredNode(index);
     };
 
+    const handleMouseLeaveNode = () => {
+        if (activeNode === null) {
+            setHoveredNode(null);
+        }
+    };
+
+    const handleMouseEnterEdge = (index: number) => {
+        setHoveredEdge(index);
+    };
+
+    const handleMouseLeaveEdge = () => {
+        if (activeEdge === null) {
+            setHoveredEdge(null);
+        }
+    };
+
+    const handleClickNode = (index: number) => {
+        setActiveNode((prevActiveNode) =>
+            prevActiveNode === index ? null : index
+        );
+        setActiveEdge(null);
+    };
+
+    const handleClickEdge = (index: number) => {
+        setActiveEdge((prevActiveLink) =>
+            prevActiveLink === index ? null : index
+        );
+        setActiveNode(null);
+    };
+
+    const parseTime = useCallback((seconds: number) => {
+        seconds = Math.floor(seconds);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = seconds % 60;
+
+        const formattedHours =
+            hours > 0 ? `${String(hours).padStart(2, "0")}:` : "";
+        const formattedMinutes = `${String(minutes).padStart(2, "0")}:`;
+        const formattedSeconds = String(remainingSeconds).padStart(2, "0");
+
+        return `${formattedHours}${formattedMinutes}${formattedSeconds}`;
+    }, []);
+
+    function renderProgress(renderPath: Article[]) {
+        const rowLength = 3;
+        const rows = renderPath.reduce<Array<Array<Article>>>((acc, step, index) => {
+            const rowIndex = Math.floor(index / rowLength);
+            if (!acc[rowIndex]) acc[rowIndex] = [];
+            acc[rowIndex].push(step);
+            return acc;
+        }, []);
+
+        // Reverse every other row
+        rows.forEach((row, index) => {
+            if (index % 2 === 1) row.reverse();
+        });
+
+        const graphSettingsValue: GraphSettingsContextType = {
+            rowLength: 3,
+            isDirected: pathCustomizations.directed,
+            isPath: pathCustomizations.type === Mode.Path,
+            path: path,
+            freePath: gameClientInformation.freePath,
+            handleMouseEnterNode: handleMouseEnterNode,
+            handleMouseLeaveNode: handleMouseLeaveNode,
+            handleClickNode: handleClickNode,
+            handleMouseEnterEdge: handleMouseEnterEdge,
+            handleMouseLeaveEdge: handleMouseLeaveEdge,
+            handleClickEdge: handleClickEdge
+        }
+
+        const nodeInteractionValue: NodeInteractionContextType = {
+            activeNode: activeNode,
+            hoveredNode: hoveredNode,
+            nodeHistory: nodeHistory,
+            visitedPath: gameClientInformation.visitedPath,
+            currentNode: currentNode,
+            gameStatus: gameStatus
+        }
+
+        const edgeInteractionValue: EdgeInteractionContextType = {
+            activeEdge: activeEdge,
+            hoveredEdge: hoveredEdge,
+            edgeHistory: gameClientInformation.edgeHistory,
+            visitedPath: gameClientInformation.visitedPath
+        }
+
+        return (
+            <div className="flex flex-col items-center">
+                <div>
+                    <GraphSettingsProvider value={graphSettingsValue}>
+                        <NodeInteractionProvider value={nodeInteractionValue}>
+                            <EdgeInteractionProvider value={edgeInteractionValue}>
+                                {rows.map((row, rowIndex) => (
+                                    <React.Fragment key={rowIndex}>
+                                        <PathRow row={row} rowIndex={rowIndex} />
+                                        {rowIndex < rows.length - 1 && (
+                                            <PathVerticalEdge rowIndex={rowIndex} />
+                                        )}
+                                    </React.Fragment>
+                                ))}
+
+                                {
+                                    activeNode != null && (
+                                        <PathNodePanel/>
+                                    )
+                                }
+
+                                {
+                                    activeEdge != null && (
+                                        <PathEdgePanel/>
+                                    )
+                                }
+                            </EdgeInteractionProvider>
+                        </NodeInteractionProvider>
+                    </GraphSettingsProvider>
+                </div>
+            </div>
+        );
+    }
+
     return (
-      <div
-        className={`mt-4 p-2 border bg-white rounded shadow-lg m-2 ${activeNode !== null ? "border-yellow-400" : "border-gray-400"
-          }`}
-      >
-        <h3 className="font-bold truncate">Node History for {nodeTitle}</h3>
-        <ul>
-          {currentNode >= nodeIndex ? (
-            <>
-              <li>clicks: {innerNodeHistory.clicks}</li>
-              <li>elapsedTime: {renderElapsedTime()}</li>
-            </>
-          ) : (
-            <p className="text-sm text-gray-700">No history to show</p>
-          )}
-        </ul>
-      </div>
+        isDirected ? renderProgress(path) : renderProgress(gameClientInformation.freePath)
     );
-  }
-
-  function renderEdgeHistoryPanel(
-    activeLink: number | null,
-    isDirected: boolean,
-    isPath: boolean,
-    freePath: Article[],
-    path: Article[],
-    gameClientInformation: ClientGameInterface
-  ): JSX.Element | null {
-    if (activeLink === null) return null;
-
-    const linkIndex = activeLink ?? 0;
-    const startTitle =
-      !isDirected && isPath
-        ? freePath[linkIndex]?.title
-        : path[linkIndex]?.title;
-    const endTitle =
-      !isDirected && isPath
-        ? freePath[linkIndex + 1]?.title
-        : path[linkIndex + 1]?.title;
-    const edgeHistory = gameClientInformation?.edgeHistory[linkIndex] || [];
-
-    return (
-      <div className="mt-4 p-2 border border-green-300 bg-white rounded shadow-2xl m-2">
-        <h3 className="font-bold truncate">
-          Edge History for Link between {startTitle} and {endTitle}
-        </h3>
-        <ul>
-          {edgeHistory.map((entry, i) => (
-            <li key={i} className="text-sm text-gray-700">
-              <a href={entry.link} target="_blank" rel="noopener noreferrer">
-                {entry.title}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="flex flex-col gap-4 p-2">
-        {(isDirected || !isPath) && RenderPath()}
-
-        {!isDirected && isPath && RenderFreePath()}
-      </div>
-      {renderNodeHistoryPanel(
-        activeNode,
-        isDirected,
-        isPath,
-        gameClientInformation?.freePath,
-        path,
-        currentNode,
-        gameClientInformation,
-        renderElapsedTime
-      )}
-
-      {renderEdgeHistoryPanel(
-        activeLink,
-        isDirected,
-        isPath,
-        gameClientInformation?.freePath,
-        path,
-        gameClientInformation
-      )}
-    </div>
-  );
 }
 
 export default PathProgress;

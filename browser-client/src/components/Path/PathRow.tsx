@@ -1,40 +1,55 @@
 import { Article } from "../../utils/utils";
-import React from "react";
-import PathNode from "./PathNode";
+import React, { useContext } from "react";
+import PathNode from "./PathNode"; 
+import PathEdge from "./PathEdge";
+import { GraphSettingsContext } from "./PathContexts/GraphSettingsContext";
 
 interface PathRowProps {
     row: Article[],
     rowIndex: number,
-    rowLength: number
 }
 
 function PathRow({
     row,
-    rowIndex,
-    rowLength
-} : PathRowProps) {
+    rowIndex
+}: PathRowProps) {
+    const graphSettings = useContext(GraphSettingsContext);
+
+    if (!graphSettings) {
+        throw new Error("PathRow must be used within a GraphSettingsContext provider");
+    }
+
+    const { rowLength } = graphSettings;
+
     return (
-        <div 
-        className={`flex items-center gap-4 
-            ${rowIndex % 2 === 0 ? "justify-left" : "justify-right"}`}
-        key={`row-${rowIndex}`}
+        <div
+            className={`flex items-center gap-4 
+            ${rowIndex % 2 === 0 ? "justify-start" : "justify-end"}`}
+            key={`row-${rowIndex}`}
         >
             {
-                row.map( (step, index) => (
+                row.map((step, index) => (
                     <React.Fragment key={`node-${rowIndex}-${index}`}>
+
+                        <PathNode
+                            rowIndex={rowIndex}
+                            step={step}
+                            index={index}
+                            rowLength={rowLength} />
                         {
-                            // maybe context would work better here
-                            // TODO: ok we will rework this with context
-                            <PathNode
-
+                            index < row.length - 1 && (
+                                <PathEdge
+                                    rowIndex={rowIndex}
+                                    index={index}
+                                    rowLength={rowLength}
+                                />
+                            )
                         }
-
                     </React.Fragment>
                 ))
             }
         </div>
-    )
-
+    );
 }
 
 export default PathRow;
