@@ -7,6 +7,7 @@ import TrackerChoice from './popups/base/TrackChoice.tsx';
 import RestrictionsChoice from './popups/base/RestrictionsChoice.tsx';
 import Game from './popups/base/Game/Game.tsx';
 import GameStat from './popups/base/GameStat/GameStat.tsx';
+import MultiplayerDashboard from './popups/base/MultiplayerDashboard.tsx';
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/dashboard" element={<Dashboard/>}/>
+          <Route path="/multiplayer_dashboard" element={<MultiplayerDashboard/>}/>
           <Route path="/dashboard/mode" element={<ModeChoice/>}/>
           <Route path="/dashboard/track" element={<TrackerChoice/>}/>
           <Route path="/dashboard/restrictions" element={<RestrictionsChoice/>}/>

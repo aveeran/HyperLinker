@@ -90,10 +90,10 @@ function Home() {
           type: UPDATE_GAME_MODE,
           game_mode: GamePlayMode.MultiPlayer
         });
-        navigate("/dashboard");
+        navigate("/multiplayer_dashboard");
       });
     } else {
-      navigate("/dashboard");
+      navigate("/multiplayer_dashboard");
     }
   }
 

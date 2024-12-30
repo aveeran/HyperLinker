@@ -49,9 +49,6 @@ function Dashboard() {
 
   // STEP 3: Whenever storageData changes, sync local state
   useEffect(() => {
-    console.log("isChromeExtension:", isChromeExtension);
-    console.log("storageData:", storageData);
-    console.log("Effect triggered");
     if(!isChromeExtension) {
       setCustomizations(defaultCustomizations);
       return;
@@ -92,6 +89,8 @@ function Dashboard() {
       } else {
         setPathError(validation?.errorMessage ?? "Error");
       }
+    } else {
+      navigate('/game');
     }
   }
 
