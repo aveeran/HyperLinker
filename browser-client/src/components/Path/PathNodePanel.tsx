@@ -33,7 +33,7 @@ function PathNodePanel() {
     let interval: NodeJS.Timeout | null = null;
 
     useEffect(() => {
-        if (gameStatus.playing) {
+        if (gameStatus?.playing) {
             interval = setInterval(() => {
                 setTime((prevTime) => prevTime + 1);
             }, 1000);
@@ -44,9 +44,9 @@ function PathNodePanel() {
                 }
             };
         }
-    }, [gameStatus.playing]);
+    }, [gameStatus?.playing]);
     useEffect(() => {
-        if (gameStatus.playing) {
+        if (gameStatus?.playing) {
             chrome.runtime.onMessage.addListener((message, sender, response) => {
                 if (message.type === UPDATE_PAUSE) {
                     if (message.pause && interval) {
@@ -59,14 +59,14 @@ function PathNodePanel() {
                 }
             });
         }
-    }, [gameStatus.playing]);
+    }, [gameStatus?.playing]);
 
 
     const nodeTitle =
         !isDirected && isPath ? freePath[activeNode].title
             : path[activeNode].title;
 
-    const innerNodeHistory = nodeHistory[activeNode] || { clicks: 0 };
+    const innerNodeHistory = (nodeHistory ?? [])[activeNode] || { clicks: 0 };
 
     const parseTime = useCallback((seconds: number) => {
         seconds = Math.floor(seconds);
@@ -84,11 +84,11 @@ function PathNodePanel() {
 
 
     const renderElapsedTime = () => {
-        const prevLeave = nodeHistory[(activeNode ?? 1) - 1]?.leaveTime;
-        const delay = nodeHistory[activeNode ?? 0]?.delayTime * 1000;
+        const prevLeave = (nodeHistory ?? [])[(activeNode ?? 1) - 1]?.leaveTime;
+        const delay = (nodeHistory ?? [])[activeNode ?? 0]?.delayTime * 1000;
 
-        if (nodeHistory[activeNode ?? 0].leaveTime != null) {
-            const leaveTime = nodeHistory[activeNode ?? 0].leaveTime ?? 0;
+        if ((nodeHistory ?? [])[activeNode ?? 0].leaveTime != null) {
+            const leaveTime = (nodeHistory ?? [])[activeNode ?? 0].leaveTime ?? 0;
 
             if (prevLeave != null) {
                 return (
@@ -102,13 +102,13 @@ function PathNodePanel() {
                 return (
                     <div>
                         {
-                            parseTime((leaveTime - gameStatus.startTime - delay) / 1000)
+                            parseTime((leaveTime - (gameStatus?.startTime ?? 0) - delay) / 1000)
                         }
                     </div>
                 );
             }
         } else {
-            const reference: number = gameStatus.paused ? gameStatus.pauseStart ?? Date.now() : Date.now();
+            const reference: number = gameStatus?.paused ? gameStatus.pauseStart ?? Date.now() : Date.now();
 
             if (prevLeave != null) {
                 return (
@@ -122,7 +122,7 @@ function PathNodePanel() {
                 return (
                     <div>
                         {
-                            parseTime((reference - gameStatus.startTime - delay) / 1000)
+                            parseTime((reference - (gameStatus?.startTime ?? 0) - delay) / 1000)
                         }
                     </div>
                 );
@@ -136,7 +136,7 @@ function PathNodePanel() {
         >
             <h3 className="font-bold truncate">Node History for {nodeTitle}</h3>
             <ul>
-                {currentNode >= activeNode ? (
+                {(currentNode ?? 0) >= activeNode ? (
                     <div>
                         <li>clicks: {innerNodeHistory.clicks}</li>
                         <li className="flex">

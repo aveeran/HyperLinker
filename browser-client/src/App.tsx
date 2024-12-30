@@ -2,7 +2,7 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './popups/base/Home.tsx';
 import Dashboard from './popups/base/Dashboard.tsx';
 import RouterTracker from './popups/base/RouterTracker.tsx';
-import ModeChoice from './popups/base/ModeChoice.tsx';
+import ModeChoice from './popups/base/Mode/ModeChoice.tsx';
 import TrackerChoice from './popups/base/TrackChoice.tsx';
 import RestrictionsChoice from './popups/base/RestrictionsChoice.tsx';
 import Game from './popups/base/Game/Game.tsx';

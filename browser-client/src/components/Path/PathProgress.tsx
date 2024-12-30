@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 
-import { GraphSettingsContext, GraphSettingsContextType, GraphSettingsProvider } from "./Path/PathContexts/GraphSettingsContext";
-import { NodeInteractionContext, NodeInteractionContextType, NodeInteractionProvider } from "./Path/PathContexts/NodeInteractionContext";
-import { EdgeInteractionContext, EdgeInteractionContextType, EdgeInteractionProvider } from "./Path/PathContexts/EdgeInteractionContext";
-import { Article, ClientGameInterface, defaultClientGame, GameStatusInterface, Mode, UPDATE_PAUSE } from "../utils/utils";
-import PathRow from "./Path/PathRow";
-import PathVerticalEdge from "./Path/PathVerticalEdge";
-import PathNodePanel from "./Path/PathNodePanel";
-import PathEdgePanel from "./Path/PathEdgePanel";
+import { GraphSettingsContext, GraphSettingsContextType, GraphSettingsProvider } from "./PathContexts/GraphSettingsContext";
+import { NodeInteractionContext, NodeInteractionContextType, NodeInteractionProvider } from "./PathContexts/NodeInteractionContext";
+import { EdgeInteractionContext, EdgeInteractionContextType, EdgeInteractionProvider } from "./PathContexts/EdgeInteractionContext";
+import { Article, ClientGameInterface, defaultClientGame, GameStatusInterface, Mode, UPDATE_PAUSE } from "../../utils/utils";
+import PathRow from "./PathRow";
+import PathVerticalEdge from "./PathVerticalEdge";
+import PathNodePanel from "./PathNodePanel";
+import PathEdgePanel from "./PathEdgePanel";
 
 interface PathProgressProps {
     gameClientInformation: ClientGameInterface;

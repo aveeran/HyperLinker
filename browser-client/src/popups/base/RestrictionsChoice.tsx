@@ -14,6 +14,7 @@ import {
   UPDATE_CUSTOMIZATION,
   UPDATED_CUSTOMIZATION,
 } from "../../utils/utils";
+import { useChromeStorage } from "../../hooks/useChromeStorage";
 
 function RestrictionsChoice() {
   const navigate = useNavigate();
@@ -31,36 +32,48 @@ function RestrictionsChoice() {
       chrome.storage.local
     );
   }, []);
+  // STEP 1: Memoize keys and default values
+  const keys = useMemo(() => [CUSTOMIZATIONS, GAME_MODE], []);
+  const defaultValues = useMemo(() => ({
+    [CUSTOMIZATIONS]: defaultCustomizations,
+    [GAME_MODE]: GamePlayMode.SinglePlayer,
+  }), []);
 
+  // STEP 2: Use the custom hook to retrieve data from Chrome storage
+  const storageData = useChromeStorage(isChromeExtension, keys, defaultValues);
+
+  // STEP 3: Sync local state with Chrome storage and handle multiplayer updates
   useEffect(() => {
-    if (isChromeExtension) {
-      chrome.storage.local.get([CUSTOMIZATIONS], (result) => {
-        const storedCustomizations = result[CUSTOMIZATIONS];
-        if (storedCustomizations) {
-          setCustomizationStates(storedCustomizations);
-        }
-        // If multiplayer, then update when customizations updated
-
-        if (result[GAME_MODE] === GamePlayMode.MultiPlayer) {
-          const handleMessage = (message: { type: string; customizations: CustomizationInterface },
-            sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void
-          ) => {
-            if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
-              setCustomizationStates(message.customizations);
-            }
-          }
-          chrome.runtime.onMessage.addListener(handleMessage);
-
-          return () => {
-            chrome.runtime.onMessage.removeListener(handleMessage);
-          }
-        }
-
-      });
-    } else {
+    if (!isChromeExtension) {
       setCustomizationStates(defaultCustomizations);
+      return;
     }
-  }, [isChromeExtension]);
+
+    // Sync customizations from storage
+    const storedCustomizations = storageData[CUSTOMIZATIONS];
+    if (storedCustomizations) {
+      setCustomizationStates(storedCustomizations);
+    }
+
+    // Handle multiplayer updates
+    if (storageData[GAME_MODE] === GamePlayMode.MultiPlayer) {
+      const handleMessage = (
+        message: { type: string; customizations: CustomizationInterface },
+        sender: chrome.runtime.MessageSender,
+        sendResponse: (response?: any) => void
+      ) => {
+        if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+          setCustomizationStates(message.customizations);
+        }
+      };
+
+      chrome.runtime.onMessage.addListener(handleMessage);
+
+      return () => {
+        chrome.runtime.onMessage.removeListener(handleMessage);
+      };
+    }
+  }, [isChromeExtension, storageData]);
 
   const setCustomizationStates = (
     updatedCustomizations: CustomizationInterface

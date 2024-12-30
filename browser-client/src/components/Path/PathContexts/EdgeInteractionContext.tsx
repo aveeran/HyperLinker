@@ -5,7 +5,7 @@ export interface EdgeInteractionContextType {
     activeEdge: number | null;
     hoveredEdge: number | null;
     edgeHistory: Article[][] | null;
-    visitedPath: Article[];
+    visitedPath: Article[] | null;
 }
 
 export const EdgeInteractionContext = createContext<EdgeInteractionContextType | null>(null);

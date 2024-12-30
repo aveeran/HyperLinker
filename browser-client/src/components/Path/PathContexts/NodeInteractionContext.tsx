@@ -4,10 +4,10 @@ import { Article, GameStatusInterface, NodeHistoryInterface } from "../../../uti
 export interface NodeInteractionContextType {
     activeNode: number | null;
     hoveredNode: number | null;
-    nodeHistory: NodeHistoryInterface[];
-    visitedPath: Article[];
-    currentNode: number;
-    gameStatus: GameStatusInterface
+    nodeHistory: NodeHistoryInterface[] | null;
+    visitedPath: Article[] | null;
+    currentNode: number | null;
+    gameStatus: GameStatusInterface | null
 }
 
 export const NodeInteractionContext = createContext<NodeInteractionContextType | null>(null);

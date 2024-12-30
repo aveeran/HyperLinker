@@ -28,6 +28,8 @@ function PathNode({ rowIndex, step, index }: PathNodeProps) {
         visitedPath,
     } = nodeInteraction;
 
+    // TODO: add error checking for nodeInteraction consumption
+
     const { handleMouseEnterNode, handleMouseLeaveNode, handleClickNode, rowLength } = graphSettings;
 
     const nodeIndex: number =

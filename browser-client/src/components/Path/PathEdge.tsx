@@ -29,6 +29,8 @@ function PathEdge({ rowIndex, index }: PathEdgeProps) {
 
     const { activeEdge, hoveredEdge, visitedPath } = edgeInteraction;
 
+    // TODO: add error checking for edgeInteraction consumption
+
     const linkIndex =
         rowIndex % 2 === 0
             ? index + rowIndex * rowLength
@@ -61,7 +63,7 @@ function PathEdge({ rowIndex, index }: PathEdgeProps) {
             ${isHovered && "shadow-gray-600 drop-shadow-xl"}`}
             onMouseEnter={() => handleMouseEnterEdge?.(linkIndex)}
             onMouseLeave={handleMouseLeaveEdge ?? (() => {})}
-            onClick={() => handleClickEdge(linkIndex)}
+            onClick={() => handleClickEdge?.(linkIndex)}
         ></div>
     );
 }

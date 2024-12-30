@@ -12,7 +12,7 @@ export interface GraphSettingsContextType {
     handleClickNode: (nodeIndex: number) => void;
     handleMouseEnterEdge: ((nodeIndex: number) => void) | null;
     handleMouseLeaveEdge: (() => void) | null;
-    handleClickEdge: (nodeIndex: number) => void;
+    handleClickEdge: ((nodeIndex: number) => void) | null;
 }
 
 export const GraphSettingsContext = createContext<GraphSettingsContextType | null>(null);

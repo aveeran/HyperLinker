@@ -16,6 +16,8 @@ function PathVerticalEdge( {rowIndex} : PathVerticalEdgeProps) {
 
     const { activeEdge, hoveredEdge, visitedPath } = edgeInteraction;
 
+    
+
     if(!graphSettings) {
         throw new Error("PathRow must be used within a GraphSettingsContext provider");
     }
@@ -32,16 +34,16 @@ function PathVerticalEdge( {rowIndex} : PathVerticalEdgeProps) {
     const isActive = activeEdge === connectorIndex;
     const isHovered = hoveredEdge === connectorIndex;
     const isVisited = rowIndex % 2 === 0
-        ? visitedPath.some((visitedArticle) =>
+        ? visitedPath?.some((visitedArticle) =>
             visitedArticle.title === path[2].title && 
             visitedArticle.link === path[2].link) 
-        && visitedPath.some((visitedArticle) =>
+        && visitedPath?.some((visitedArticle) =>
             visitedArticle.title === path[3].title && 
             visitedArticle.link === path[3].link) :
-        visitedPath.some((visitedArticle) =>
+        visitedPath?.some((visitedArticle) =>
             visitedArticle.title === path[5].title && 
             visitedArticle.link === path[5].link) && 
-        visitedPath.some((visitedArticle) =>
+        visitedPath?.some((visitedArticle) =>
             visitedArticle.title === path[6].title && 
             visitedArticle.link === path[6].link);
 
@@ -52,7 +54,7 @@ function PathVerticalEdge( {rowIndex} : PathVerticalEdgeProps) {
         style={{width: "100%"}}
         onMouseEnter={() => handleMouseEnterEdge?.(connectorIndex)}
         onMouseLeave={handleMouseLeaveEdge ?? (() => {})}
-        onClick={() => handleClickEdge(connectorIndex)}
+        onClick={() => handleClickEdge?.(connectorIndex)}
         >
             <div className={`w-2 h-8 mt-3 mb-3 ${isVisited ? "bg-green-500" : "bg-gray-300"}
             ${rowIndex % 2 == 0 ? "mr-5": "ml-5"}

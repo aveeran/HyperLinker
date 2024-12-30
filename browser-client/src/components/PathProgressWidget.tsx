@@ -1,4 +1,4 @@
-import PathProgress from "./PathProgress";
+import PathProgress from "./Path/PathProgress";
 import { Article, ClientGameInterface, GameStatusInterface } from "../utils/utils";
 
 interface PathProgressWidget {
