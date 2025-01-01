@@ -16,6 +16,8 @@ import {
 } from "../../utils/utils";
 import { useChromeStorage } from "../../hooks/useChromeStorage";
 
+// TODO: rename "Tile" to destination
+
 function RestrictionsChoice() {
   const navigate = useNavigate();
   const [customizations, setCustomizations] = useState<CustomizationInterface>(

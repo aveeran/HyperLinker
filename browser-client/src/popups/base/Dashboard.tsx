@@ -8,7 +8,6 @@ import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizat
   SingleplayerEvents} from "../../utils/utils";
 import { useMemo, useState, useEffect } from "react";
 import { useChromeStorage } from "../../hooks/useChromeStorage";
-import { useCustomizationListener } from "../../hooks/useCustomizationListener";
 import { CustomizationPanel } from "../../components/CustomizationPanel";
 import { CustomizationValidationResult, validateCustomizations } from "../../validation/validateCustomizations";
 
@@ -22,8 +21,6 @@ const getCategory = (value: string | null) => {
 }
 
 function Dashboard() {
-  console.log("Re-render");
-  // TODO: add listener for game started, possibly add 'ready' feature in the future
   const [customizations, setCustomizations] = useState<CustomizationInterface>(defaultCustomizations);
   const [pathError, setPathError] = useState<string | null>(null);
 
@@ -60,6 +57,7 @@ function Dashboard() {
 
    // 4) Use the gameMode from storage to decide if we should listen for updates
    const storedGameMode = storageData[GAME_MODE] as string;
+   // TODO: determine if singleplayer, multiplayer guest, or multiplayer host and create new var for that?
 
   //  const shouldListen = isChromeExtension && storedGameMode === GamePlayMode.MultiPlayer;
  
@@ -126,6 +124,9 @@ function Dashboard() {
       customizations={customizations}
       handleEdit={handleEdit}
       />
+      {
+        // TODO: only if singleplayer or multiplayer host, can edit
+      }
 
     </div>
 
@@ -139,7 +140,9 @@ function Dashboard() {
       <button
         className="flex bg-green-400 text-white px-4 py-2 rounded font-custom"
         onClick={handleSubmit}
-      >
+      >{
+        // TODO: only if singleplayer or multiplayer host, can edit
+      }
         Start
       </button>
     </div>

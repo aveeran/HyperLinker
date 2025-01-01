@@ -32,39 +32,39 @@ import {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
-    case UPDATE_CUSTOMIZATION:
+    case UPDATE_CUSTOMIZATION: // from singleplayer or multiplayer host
       handleCustomizationsUpdate(message.customizations);
       break;
-    case UPDATE_GAME_MODE:
+    case UPDATE_GAME_MODE: // from the user themselves
       handleGameModeUpdate(message.game_mode);
       break;
-    case START_GAME:
+    case START_GAME: // in general?
       chrome.storage.local.get([GAME_MODE], (result) => {
         let gameMode: string = result[GAME_MODE] || GamePlayMode.SinglePlayer;
         if (gameMode === GamePlayMode.SinglePlayer) {
-          startSingleplayer(message.customizations);
+          startSingleplayerGame(message.customizations);
         } else if (gameMode === GamePlayMode.MultiPlayer) {
           // TODO: get start time from server
-          startMultiplayer();
+          startMultiplayerGame();
         }
       });
       break;
-    case WIKIPEDIA_CLICK:
+    case WIKIPEDIA_CLICK: // in general
         handleWikipediaClick(message.page);
         break;
-    case UPDATED_VIEWING_PLAYER:
+    case UPDATED_VIEWING_PLAYER: // multiplayer
         handleUpdatedViewingPlayer(message.clientID);
         break;
-    case PAUSE:
-        handlePause();
+    case PAUSE: // singleplayer
+        handleSingleplayerPause();
         break;
-    case UNPAUSE:
-        handleUnpause();
+    case UNPAUSE: // singleplayer
+        handleSingleplayerUnpause();
         break;
-    case GET_TAB_ID:
+    case GET_TAB_ID: // general
         sendTabId(sender, sendResponse);
         return true;
-    case SingleplayerEvents.Finish:
+    case SingleplayerEvents.Finish: // singleplayer
       endSingleplayerGame(message.cause);
       break;
   }
@@ -97,7 +97,9 @@ function handleUpdatedViewingPlayer(clientID: string) {
   chrome.storage.local.set({[VIEWING_PLAYER]: clientID});
 }
 
-function handlePause() {
+
+//TODO: rename to handleSingleplayerPause?
+function handleSingleplayerPause() {
   chrome.storage.local.get([GAME, GAME_MODE], (result)=> {
     let game : GameInterface = result[GAME];
     let gameMode: string = result[GAME_MODE];
@@ -124,7 +126,8 @@ function handlePause() {
 let pauseInterval : NodeJS.Timeout | null = null;
 let elapsedPause = 0;
 
-function handleUnpause() {
+// TODO: rename to handleSingleplayerUnpause?
+function handleSingleplayerUnpause() {
   chrome.storage.local.get([GAME, GAME_MODE, PLAYER], (result) => {
     let game: GameInterface = result[GAME];
     let player: string = result[PLAYER];
@@ -173,12 +176,13 @@ function handleCustomizationsUpdate(
   updatedCustomizations: CustomizationInterface
 ) {
 
-  // TODO: need persistence for this
+  // TODO: need persistence for this, only if allow multiple to edit (currently, just allow host)
   chrome.storage.local.set({[GAME_CUSTOMIZATIONS]: updatedCustomizations}, () => {
     chrome.storage.local.get([GAME_MODE], (result) => {
       let gameMode: string = result[GAME_MODE];
       if (gameMode === GamePlayMode.MultiPlayer) {
         // TODO: socket.io message
+        // TODO: then we also need some sort of way to retrieve the socket.io message from client-side
       }
 
     })
@@ -200,7 +204,8 @@ function handleGameModeUpdate(updatedGameMode: string) {
   })
 }
 
-function startSingleplayer(customizations: CustomizationInterface) {
+// TODO: rename to startSingleplayerGame?
+function startSingleplayerGame(customizations: CustomizationInterface) {
   chrome.storage.local.get([GAME, PLAYER, TAB_ID, VIEWING_PLAYER], (result) => {
     let game: GameInterface = result[GAME] || defaultClientGame;
     let player: string = result[PLAYER] || GamePlayMode.SinglePlayer;
@@ -284,14 +289,9 @@ function sendTabId(sender : chrome.runtime.MessageSender, response : (response: 
   }
 }
 
+// TODO: rename to startMultiplayerGame
 // ONLY AFTER GAME_STARTED and MODE === MULTI_PLAYER
-function startMultiplayer() {}
-
-// TODO: the pausing logic completely changes...
-
-function handlePauseSingleplayer() {}
-
-function handleUnpauseSingleplayer() {}
+function startMultiplayerGame() {}
 
 function handleWikipediaClick(page : string ) {
     chrome.storage.local.get([CLICK_COUNT, GAME, PLAYER, VIEWING_PLAYER, GAME_MODE], (result) => {
@@ -409,3 +409,5 @@ chrome.webNavigation.onCommitted.addListener((details) => {
     })
   }
 });
+
+// TODO: what happened to how we were checking for internet Lol
