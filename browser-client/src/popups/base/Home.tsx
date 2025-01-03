@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import WikiArticle from "../../components/WikiArticle";
-import { GAME_MODE, GamePlayMode, RESET, getFormattedDate, UPDATE_GAME_MODE, CUSTOMIZATIONS, defaultCustomizations, defaultGame, GAME } from "../../utils/utils";
+import { GAME_MODE, GamePlayMode, RESET, getFormattedDate, UpdateInformation, CUSTOMIZATIONS, defaultCustomizations, defaultGame, GAME } from "../../utils/utils";
 
 interface Article {
   content_urls: {
@@ -73,7 +73,7 @@ function Home() {
     if(isChromeExtension) {
       chrome.storage.local.set({[GAME_MODE] : GamePlayMode.SinglePlayer}, () => {
         chrome.runtime.sendMessage({
-          type: UPDATE_GAME_MODE,
+          type: UpdateInformation.GameMode,
           game_mode: GamePlayMode.SinglePlayer
         });
         navigate("/dashboard");
@@ -87,13 +87,13 @@ function Home() {
     if(isChromeExtension) {
       chrome.storage.local.set({[GAME_MODE] : GamePlayMode.MultiPlayer}, () => {
         chrome.runtime.sendMessage({
-          type: UPDATE_GAME_MODE,
+          type: UpdateInformation.GameMode,
           game_mode: GamePlayMode.MultiPlayer
         });
-        navigate("/dashboard");
+        navigate("/multiplayer_dashboard");
       });
     } else {
-      navigate("/dashboard");
+      navigate("/multiplayer_dashboard");
     }
   }
 

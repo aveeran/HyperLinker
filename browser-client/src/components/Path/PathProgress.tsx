@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 
-import { GraphSettingsContext, GraphSettingsContextType, GraphSettingsProvider } from "./PathContexts/GraphSettingsContext";
-import { NodeInteractionContext, NodeInteractionContextType, NodeInteractionProvider } from "./PathContexts/NodeInteractionContext";
-import { EdgeInteractionContext, EdgeInteractionContextType, EdgeInteractionProvider } from "./PathContexts/EdgeInteractionContext";
-import { Article, ClientGameInterface, defaultClientGame, GameStatusInterface, Mode, UPDATE_PAUSE } from "../../utils/utils";
+import { GraphSettingsContextType, GraphSettingsProvider } from "./PathContexts/GraphSettingsContext";
+import { NodeInteractionContextType, NodeInteractionProvider } from "./PathContexts/NodeInteractionContext";
+import { EdgeInteractionContextType, EdgeInteractionProvider } from "./PathContexts/EdgeInteractionContext";
+import { Article, ClientGameInterface, defaultClientGame, GameStatusInterface, Mode } from "../../utils/utils";
 import PathRow from "./PathRow";
 import PathVerticalEdge from "./PathVerticalEdge";
 import PathNodePanel from "./PathNodePanel";
@@ -22,6 +22,7 @@ function PathProgress({
     pathCustomizations,
     path
 }: PathProgressProps) {
+
     const [activeNode, setActiveNode] = useState<number | null>(null);
     const [hoveredNode, setHoveredNode] = useState<number | null>(null);
     const [activeEdge, setActiveEdge] = useState<number | null>(null);
@@ -77,20 +78,6 @@ function PathProgress({
         setActiveNode(null);
     };
 
-    const parseTime = useCallback((seconds: number) => {
-        seconds = Math.floor(seconds);
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const remainingSeconds = seconds % 60;
-
-        const formattedHours =
-            hours > 0 ? `${String(hours).padStart(2, "0")}:` : "";
-        const formattedMinutes = `${String(minutes).padStart(2, "0")}:`;
-        const formattedSeconds = String(remainingSeconds).padStart(2, "0");
-
-        return `${formattedHours}${formattedMinutes}${formattedSeconds}`;
-    }, []);
-
     function renderProgress(renderPath: Article[]) {
         const rowLength = 3;
         const rows = renderPath.reduce<Array<Array<Article>>>((acc, step, index) => {
@@ -137,34 +124,32 @@ function PathProgress({
 
         return (
             <div className="flex flex-col items-center">
-                <div>
-                    <GraphSettingsProvider value={graphSettingsValue}>
-                        <NodeInteractionProvider value={nodeInteractionValue}>
-                            <EdgeInteractionProvider value={edgeInteractionValue}>
-                                {rows.map((row, rowIndex) => (
-                                    <React.Fragment key={rowIndex}>
-                                        <PathRow row={row} rowIndex={rowIndex} />
-                                        {rowIndex < rows.length - 1 && (
-                                            <PathVerticalEdge rowIndex={rowIndex} />
-                                        )}
-                                    </React.Fragment>
-                                ))}
+                <GraphSettingsProvider value={graphSettingsValue}>
+                    <NodeInteractionProvider value={nodeInteractionValue}>
+                        <EdgeInteractionProvider value={edgeInteractionValue}>
+                            {rows.map((row, rowIndex) => (
+                                <React.Fragment key={rowIndex}>
+                                    <PathRow row={row} rowIndex={rowIndex} />
+                                    {rowIndex < rows.length - 1 && (
+                                        <PathVerticalEdge rowIndex={rowIndex} />
+                                    )}
+                                </React.Fragment>
+                            ))}
 
-                                {
-                                    activeNode != null && (
-                                        <PathNodePanel/>
-                                    )
-                                }
+                            {
+                                activeNode != null && (
+                                    <PathNodePanel />
+                                )
+                            }
 
-                                {
-                                    activeEdge != null && (
-                                        <PathEdgePanel/>
-                                    )
-                                }
-                            </EdgeInteractionProvider>
-                        </NodeInteractionProvider>
-                    </GraphSettingsProvider>
-                </div>
+                            {
+                                activeEdge != null && (
+                                    <PathEdgePanel />
+                                )
+                            }
+                        </EdgeInteractionProvider>
+                    </NodeInteractionProvider>
+                </GraphSettingsProvider>
             </div>
         );
     }

@@ -1,7 +1,7 @@
 // hooks/useCustomizationListener.ts
 import { useEffect } from "react";
 import {
-  UPDATED_CUSTOMIZATION,
+  InformationUpdated,
   CustomizationInterface,
 } from "../utils/utils";
 
@@ -15,7 +15,7 @@ export function useCustomizationListener(
     const handleMessage = (
       message: { type: string; customizations: CustomizationInterface }
     ) => {
-      if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+      if (message.type === InformationUpdated.Customization && message.customizations) {
         onCustomizationUpdate(message.customizations);
       }
     };

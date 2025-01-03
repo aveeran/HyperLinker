@@ -11,9 +11,10 @@ import {
   Mode,
   GamePlayMode,
   Suggestion,
-  UPDATE_CUSTOMIZATION,
-  UPDATED_CUSTOMIZATION,
+  InformationUpdated,
+  UpdateInformation,
   MyKeys,
+  parseEnum,
 } from "../../../utils/utils";
 import { useChromeStorage } from "../../../hooks/useChromeStorage";
 import NormalModeSelector from "./NormalModeSelector";
@@ -25,7 +26,7 @@ function ModeChoice() {
   const [customizations, setCustomizations] = useState<CustomizationInterface>(
     defaultCustomizations
   );
-  const [mode, setMode] = useState<string>("");
+  const [mode, setMode] = useState<Mode>(Mode.Normal);
   const [startArticle, setStartArticle] = useState<Article>(defaultArticle);
   const [endArticle, setEndArticle] = useState<Article>(defaultArticle);
   const [pathLength, setPathLength] = useState<number>(0);
@@ -39,7 +40,7 @@ function ModeChoice() {
   const updateEndArticle = (value: Suggestion) => setEndArticle(value.article);
 
   const handleModeChange = (event: React.ChangeEvent<HTMLSelectElement>) =>
-    setMode(event.target.value);
+    setMode(parseEnum(Mode, event.target.value));
 
   const handleBack = () => navigate('/dashboard');
 
@@ -71,7 +72,7 @@ function ModeChoice() {
         sender: chrome.runtime.MessageSender,
         sendResponse: (response?: any) => void
       ) => {
-        if(message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+        if(message.type === InformationUpdated.Customization && message.customizations) {
           setCustomizationStates(message.customizations);
         }
       };
@@ -169,7 +170,7 @@ function ModeChoice() {
         { [CUSTOMIZATIONS]: updatedCustomizations },
         () => {
           chrome.runtime.sendMessage({
-            type: UPDATE_CUSTOMIZATION,
+            type: UpdateInformation.Customization,
             customizations: updatedCustomizations,
           });
         }
@@ -202,7 +203,7 @@ function ModeChoice() {
               <option value={Mode.Normal}>Normal</option>
               <option value={Mode.CountDown}>Count-Down</option>
               <option value={Mode.Path}>Path</option>
-              <option value="random">Random</option>
+              <option value={Mode.Random}>Random</option>
             </select>
           </div>
 
@@ -247,7 +248,7 @@ function ModeChoice() {
             />
           )}
 
-          {mode === "random" ? <div></div> : null}
+          {mode === Mode.Random ? <div></div> : null}
         </div>
       </div>
       <div className="flex justify-center mb-3">

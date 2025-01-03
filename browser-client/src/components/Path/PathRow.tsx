@@ -15,6 +15,7 @@ function PathRow({
 }: PathRowProps) {
     const graphSettings = useContext(GraphSettingsContext);
 
+
     if (!graphSettings) {
         throw new Error("PathRow must be used within a GraphSettingsContext provider");
     }
