@@ -1,10 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { CustomizationInterface, CUSTOMIZATIONS, dashboardKey, defaultCustomizations, GAME_MODE, GAME_STARTED, 
+import { 
+  CustomizationInterface, 
+  CUSTOMIZATIONS, 
+  dashboardKey, 
+  defaultCustomizations, 
+  GAME_MODE, 
   Mode, 
   GamePlayMode, 
   MyKeys, 
-  START_GAME, 
-  UPDATED_CUSTOMIZATION, 
+  InformationUpdated,
   SingleplayerEvents} from "../../utils/utils";
 import { useMemo, useState, useEffect } from "react";
 import { useChromeStorage } from "../../hooks/useChromeStorage";
@@ -79,10 +83,12 @@ function Dashboard() {
   }
 
   const handleSubmit = () => {
+    // TODO: handle the singleplayer vs multiplayer here!!
+
     if (isChromeExtension) {
       const validation: CustomizationValidationResult = validateCustomizations(customizations);
       if(validation.isValid) {
-        chrome.runtime.sendMessage({type: START_GAME, customizations: customizations})
+        chrome.runtime.sendMessage({type: SingleplayerEvents.Start, customizations: customizations})
         navigate('/game');
       } else {
         setPathError(validation?.errorMessage ?? "Error");

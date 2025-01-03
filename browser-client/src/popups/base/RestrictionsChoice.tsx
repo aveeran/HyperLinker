@@ -1,18 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AVAILABLE,
-  CHOSEN,
   CustomizationInterface,
   CUSTOMIZATIONS,
   defaultCustomizations,
   defaultRestrictions,
   GAME_MODE,
   GamePlayMode,
-  SOURCE,
-  TILE,
-  UPDATE_CUSTOMIZATION,
-  UPDATED_CUSTOMIZATION,
+  InformationUpdated,
+  parseEnum,
+  Restrictions,
+  RestrictionWidget,
+  RestrictionWidgetStatus,
+  UpdateInformation,
+
 } from "../../utils/utils";
 import { useChromeStorage } from "../../hooks/useChromeStorage";
 
@@ -24,8 +25,8 @@ function RestrictionsChoice() {
     defaultCustomizations
   );
   const [availableRestrictions, setAvailableRestrictions] =
-    useState<string[]>(defaultRestrictions);
-  const [chosenRestrictions, setChosenRestrictions] = useState<string[]>([]);
+    useState<Restrictions[]>(defaultRestrictions);
+  const [chosenRestrictions, setChosenRestrictions] = useState<Restrictions[]>([]);
 
   const isChromeExtension = useMemo<boolean>(() => {
     return !!(
@@ -64,7 +65,7 @@ function RestrictionsChoice() {
         sender: chrome.runtime.MessageSender,
         sendResponse: (response?: any) => void
       ) => {
-        if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+        if (message.type === InformationUpdated.Customization && message.customizations) {
           setCustomizationStates(message.customizations);
         }
       };
@@ -92,21 +93,20 @@ function RestrictionsChoice() {
     }
   };
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, restriction: string, sourceWidget: typeof AVAILABLE | typeof CHOSEN) => {
-    e.dataTransfer.setData(TILE, restriction);
-    e.dataTransfer.setData(SOURCE, sourceWidget);
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, restriction: Restrictions, sourceWidget: RestrictionWidgetStatus) => {
+    e.dataTransfer.setData(RestrictionWidget.Destination, restriction);
+    e.dataTransfer.setData(RestrictionWidget.Source, sourceWidget);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, destinationWidget: typeof AVAILABLE | typeof CHOSEN) => {
-    // TODO: potential issue: async duplicate
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, destinationWidget: RestrictionWidgetStatus) => {
     e.preventDefault();
-    const tile = e.dataTransfer.getData(TILE);
-    const source = e.dataTransfer.getData(SOURCE);
+    const tile : Restrictions = parseEnum(Restrictions, e.dataTransfer.getData(RestrictionWidget.Destination));
+    const source: RestrictionWidgetStatus = parseEnum(RestrictionWidgetStatus, e.dataTransfer.getData(RestrictionWidget.Source));
 
-    if (source === AVAILABLE && destinationWidget === CHOSEN) {
+    if (source === RestrictionWidgetStatus.Available && destinationWidget === RestrictionWidgetStatus.Chosen) {
       setAvailableRestrictions(availableRestrictions.filter((t) => t !== tile));
       setChosenRestrictions([...chosenRestrictions, tile]);
-    } else if (source === CHOSEN && destinationWidget === AVAILABLE) {
+    } else if (source === RestrictionWidgetStatus.Chosen && destinationWidget === RestrictionWidgetStatus.Available) {
       setChosenRestrictions(chosenRestrictions.filter((t) => t !== tile));
       setAvailableRestrictions([...availableRestrictions, tile]);
     }
@@ -131,7 +131,7 @@ function RestrictionsChoice() {
         { [CUSTOMIZATIONS]: updatedCustomizations },
         () => {
           chrome.runtime.sendMessage({
-            type: UPDATE_CUSTOMIZATION,
+            type: UpdateInformation.Customization,
             customizations: updatedCustomizations,
           });
         }
@@ -172,7 +172,7 @@ function RestrictionsChoice() {
           <div
             className="flex-1 border-r-2 border-dotted border-gray-600"
             onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, "available")}
+            onDrop={(e) => handleDrop(e, RestrictionWidgetStatus.Available)}
           >
             <div className="p-2">
               <div className="flex flex-col gap-2">
@@ -181,7 +181,7 @@ function RestrictionsChoice() {
                     key={tile}
                     className="bg-gray-200 p-2 text-center rounded shadow-md cursor-pointer"
                     draggable="true"
-                    onDragStart={(e) => handleDragStart(e, tile, "available")}
+                    onDragStart={(e) => handleDragStart(e, tile, RestrictionWidgetStatus.Available)}
                   >
                     {" "}
                     {tile}
@@ -193,7 +193,7 @@ function RestrictionsChoice() {
           <div
             className="flex-1 flex-col items-center"
             onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, "chosen")}
+            onDrop={(e) => handleDrop(e, RestrictionWidgetStatus.Chosen)}
           >
             <div className="p-2">
               <div className="flex flex-col gap-2">
@@ -202,7 +202,7 @@ function RestrictionsChoice() {
                     key={tile}
                     className="bg-gray-200 p-2 text-center rounded shadow-md cursor-pointer"
                     draggable="true"
-                    onDragStart={(e) => handleDragStart(e, tile, "chosen")}
+                    onDragStart={(e) => handleDragStart(e, tile, RestrictionWidgetStatus.Chosen)}
                   >
                     {" "}
                     {tile}

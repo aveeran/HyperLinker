@@ -86,6 +86,7 @@ export enum Mode {
   Normal = "normal",
   Path = "path",
   CountDown = "count_down",
+  Random="random"
 }
 
 export enum UpdateInformation {
@@ -126,19 +127,60 @@ export enum MultiplayerEvents {
 
 }
 
+export function parseEnum<T extends Record<string, string | number>>(
+  enumType: T,
+  value: any
+): T[keyof T] {
+  if (Object.values(enumType).includes(value)) {
+    return value as T[keyof T];
+  }
+  throw new Error(`Invalid value for enum: ${value}`);
+}
+
+
 // Key
 
 export const allKeys = [
-  GamePlayMode,
-  Mode,
-  InformationUpdated,
-  UpdateInformation,
-  Tracking,
-  Restrictions,
-  RestrictionWidget,
-  RestrictionWidgetStatus,
-  SingleplayerEvents,
-  Widget,
+  GamePlayMode.MultiPlayer,
+  GamePlayMode.SinglePlayer,
+  Mode.Normal,
+  Mode.Path,
+  Mode.CountDown,
+  Mode.Random,
+  InformationUpdated.Customization,
+  InformationUpdated.GameClient,
+  InformationUpdated.GameStarted,
+  InformationUpdated.GameStatus,
+  InformationUpdated.ViewingPlayer,
+  UpdateInformation.Customization,
+  UpdateInformation.GameMode,
+  UpdateInformation.Pause,
+  Tracking.Clicks,
+  Tracking.Time,
+  Restrictions.NoBack,
+  Restrictions.NoDates,
+  Restrictions.NoFind,
+  Restrictions.NoOpeningPara,
+  Restrictions.NoPopups,
+  Restrictions.SamePageLink,
+  RestrictionWidget.Destination,
+  RestrictionWidget.Source,
+  RestrictionWidgetStatus.Available,
+  RestrictionWidgetStatus.Chosen,
+  SingleplayerEvents.ClearEnd,
+  SingleplayerEvents.Done,
+  SingleplayerEvents.ExternalWikiVisit,
+  SingleplayerEvents.Finish,
+  SingleplayerEvents.Pause,
+  SingleplayerEvents.Quit,
+  SingleplayerEvents.Start,
+  SingleplayerEvents.TimeFinished,
+  SingleplayerEvents.Unpause,
+  SingleplayerEvents.Win,
+  Widget.CustomizationInfo,
+  Widget.PathProgress,
+  Widget.PlayerSelector,
+  Widget.TrackingInformation,
   RESET,
   GAME_MODE,
   LAST_ACTIVE_ROUTE,
@@ -304,6 +346,18 @@ export const defaultGame: GameInterface = {
     pauseGap: 0
   },
   path: [
+    {
+      title: "A",
+      link: "https://en.wikipedia.org/wiki/A",
+    },
+    {
+      title: "B",
+      link: "https://en.wikipedia.org/wiki/B",
+    },
+    {
+      title: "C",
+      link: "https://en.wikipedia.org/wiki/C",
+    }
   ]
 
 };

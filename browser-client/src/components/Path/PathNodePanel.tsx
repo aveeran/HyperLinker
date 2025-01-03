@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useContext } from "react";
-import { Article, UPDATE_PAUSE } from "../../utils/utils";
+import { Article, UpdateInformation } from "../../utils/utils";
 import { NodeInteractionContext } from "./PathContexts/NodeInteractionContext";
 import { GraphSettingsContext } from "./PathContexts/GraphSettingsContext";
 
@@ -48,7 +48,7 @@ function PathNodePanel() {
     useEffect(() => {
         if (gameStatus?.playing) {
             chrome.runtime.onMessage.addListener((message, sender, response) => {
-                if (message.type === UPDATE_PAUSE) {
+                if (message.type === UpdateInformation.Pause) {
                     if (message.pause && interval) {
                         clearInterval(interval);
                     } else if (!message.pause) {

@@ -6,10 +6,10 @@ import {
   defaultCustomizations,
   GAME_MODE,
   GamePlayMode,
-  TRACKING_CLICKS,
-  TRACKING_TIME,
-  UPDATE_CUSTOMIZATION,
-  UPDATED_CUSTOMIZATION,
+  Tracking,
+  UpdateInformation,
+  InformationUpdated,
+  parseEnum
 } from "../../utils/utils";
 import { useChromeStorage } from "../../hooks/useChromeStorage";
 
@@ -18,7 +18,7 @@ function TrackerChoice() {
   const [customizations, setCustomizations] = useState<CustomizationInterface>(
     defaultCustomizations
   );
-  const [track, setTrack] = useState<string>(TRACKING_CLICKS);
+  const [track, setTrack] = useState<Tracking>(Tracking.Clicks);
 
   const isChromeExtension = useMemo<boolean>(() => {
     return !!(
@@ -58,7 +58,7 @@ function TrackerChoice() {
          sender: chrome.runtime.MessageSender,
          sendResponse: (response?: any) => void
        ) => {
-         if (message.type === UPDATED_CUSTOMIZATION && message.customizations) {
+         if (message.type === InformationUpdated.Customization && message.customizations) {
            setCustomizationStates(message.customizations);
          }
        };
@@ -81,7 +81,7 @@ function TrackerChoice() {
   };
 
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTrack(event.target.value);
+    setTrack(parseEnum(Tracking, event.target.value));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -95,7 +95,7 @@ function TrackerChoice() {
       { [CUSTOMIZATIONS]: updatedCustomizations },
       () => {
         chrome.runtime.sendMessage({
-          type: UPDATE_CUSTOMIZATION,
+          type: UpdateInformation.Customization,
           customizations: updatedCustomizations,
         });
       }
@@ -124,25 +124,25 @@ function TrackerChoice() {
           className="flex flex-col items-center"
         >
           <div className="flex flex-col mb-1">
-            <label htmlFor={TRACKING_CLICKS} className="mr-4">
+            <label htmlFor={Tracking.Clicks} className="mr-4">
               <input
                 type="radio"
-                id={TRACKING_CLICKS}
+                id={Tracking.Clicks}
                 name="tracking"
-                value={TRACKING_CLICKS}
-                checked={track === TRACKING_CLICKS}
+                value={Tracking.Clicks}
+                checked={track === Tracking.Clicks}
                 onChange={handleOptionChange}
                 className="mr-2"
               />
               <span>Clicks</span>
             </label>
-            <label htmlFor={TRACKING_TIME} className="mr-4">
+            <label htmlFor={Tracking.Time} className="mr-4">
               <input
                 type="radio"
-                id={TRACKING_TIME}
+                id={Tracking.Time}
                 name="tracking"
-                value={TRACKING_TIME}
-                checked={track === TRACKING_TIME}
+                value={Tracking.Time}
+                checked={track === Tracking.Time}
                 onChange={handleOptionChange}
                 className="mr-2"
               />

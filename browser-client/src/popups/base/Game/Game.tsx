@@ -9,19 +9,13 @@ import {
   GameInterface,
   Mode,
   GamePlayMode,
-  UPDATED_GAME_CLIENT,
-  UPDATED_VIEWING_PLAYER,
+  InformationUpdated,
   VIEWING_PLAYER,
   GameStatusInterface,
   defaultGameStatus,
   Article,
-  UNPAUSE,
-  PAUSE,
-  UPDATED_GAME_STATUS,
   END_CAUSE,
-  PLAYER_SELECTOR,
-  TRACKING_INFORMATION,
-  PATH_PROGRESS,
+  Widget,
   defaultGame,
   GAME_WIDGET_MAXIMIZED,
   SingleplayerEvents,
@@ -69,7 +63,8 @@ function Game() {
     return !!(typeof chrome !== "undefined" && chrome.storage && chrome.storage.local);
   }, []);
 
-  const { maximizedWidgets, toggleWidget, setMaximizedWidgets } = useMaximizedWidgets([TRACKING_INFORMATION, PATH_PROGRESS], 2);
+  const { maximizedWidgets, toggleWidget, setMaximizedWidgets } 
+  = useMaximizedWidgets([Widget.TrackingInformation, Widget.PathProgress], 2);
 
   function handleMaximize(widget: string) {
     const updated = toggleWidget(widget);
@@ -157,12 +152,12 @@ function Game() {
     if (!isChromeExtension) return;
 
     const handleMessage = (message: any) => {
-      if (message.type === UPDATED_GAME_CLIENT) {
+      if (message.type === InformationUpdated.GameClient) {
         if (message.clientID === currentPlayerRef.current) {
           const updatedGameInformation = message.gameClient;
           setGameClientsInformation(updatedGameInformation);
         }
-      } else if (message.type === UPDATED_GAME_STATUS) {
+      } else if (message.type === InformationUpdated.GameStatus) {
         setGameStatus(message.gameStatus);
       }
     }
@@ -189,7 +184,7 @@ function Game() {
   const updateCurrentPlayer = (playerID: string) => {
     chrome.storage.local.set({ [VIEWING_PLAYER]: playerID }, () => {
       chrome.runtime.sendMessage({
-        type: UPDATED_VIEWING_PLAYER,
+        type: InformationUpdated.ViewingPlayer,
         clientID: playerID,
       });
     });
@@ -206,11 +201,11 @@ function Game() {
   const handleTogglePause = () => {
     if (isChromeExtension) {
       if (paused) {
-        chrome.runtime.sendMessage({ type: UNPAUSE }, () => {
+        chrome.runtime.sendMessage({ type: SingleplayerEvents.Unpause }, () => {
           setPaused(false);
         });
       } else {
-        chrome.runtime.sendMessage({ type: PAUSE }, () => {
+        chrome.runtime.sendMessage({ type: SingleplayerEvents.Pause }, () => {
           setPaused(true);
         });
       }
@@ -223,8 +218,8 @@ function Game() {
       <div className="border-gray-400 border-2 border-solid p-1.5 m-1 bg-slate-100">
         {tempMode === GamePlayMode.MultiPlayer && (
           <PlayerSelectorWidget
-            widgetKey={PLAYER_SELECTOR}
-            isExpanded={maximizedWidgets.includes(PLAYER_SELECTOR)}
+            widgetKey={Widget.PlayerSelector}
+            isExpanded={maximizedWidgets.includes(Widget.PlayerSelector)}
             onToggle={handleMaximize}
             currentPlayer={currentPlayer}
             playerIDs={playerIDs}
@@ -233,8 +228,8 @@ function Game() {
         )}
 
         <TrackingWidgetProps
-          widgetKey={TRACKING_INFORMATION}
-          isExpanded={maximizedWidgets.includes(TRACKING_INFORMATION)}
+          widgetKey={Widget.TrackingInformation}
+          isExpanded={maximizedWidgets.includes(Widget.TrackingInformation)}
           onToggle={handleMaximize}
           gameClientInformation={gameClientsInformation}
           gameStatus={gameStatus}
@@ -244,8 +239,8 @@ function Game() {
         />
 
         <PathProgressWidget
-          widgetKey={PATH_PROGRESS}
-          isExpanded={maximizedWidgets.includes(PATH_PROGRESS)}
+          widgetKey={Widget.PathProgress}
+          isExpanded={maximizedWidgets.includes(Widget.PathProgress)}
           onToggle={handleMaximize}
           gameClientInformation={gameClientsInformation}
           pathCustomizations={pathCustomizations}

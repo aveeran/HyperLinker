@@ -13,15 +13,13 @@ import {
   Mode,
   GamePlayMode,
   TAB_ID,
-  UPDATED_VIEWING_PLAYER,
+  InformationUpdated,
   VIEWING_PLAYER,
-  PATH_PROGRESS,
-  CUSTOMIZATION_INFO,
+  Widget,
   GAME_END_PLAYER_SELECTOR_MAXIMIZED,
   GAME_END_WIDGET_MAXIMIZED,
   SingleplayerEvents,
-  MyKeys,
-  PLAYER_SELECTOR
+  MyKeys
 } from "../../../utils/utils";
 import { useNavigate } from "react-router-dom";
 import { useChromeStorage } from "../../../hooks/useChromeStorage";
@@ -71,7 +69,7 @@ function GameStat() {
     maximizedWidgets: playerSelectorWidget, 
     toggleWidget: togglePlayerSelectorWidget, 
     setMaximizedWidgets: setPlayerSelectorWidget 
-  } = useMaximizedWidgets([PLAYER_SELECTOR], 1);
+  } = useMaximizedWidgets([Widget.PlayerSelector], 1);
 
   function handleMaximize(widget: string) {
     const updated = toggleWidget(widget);
@@ -80,7 +78,7 @@ function GameStat() {
     }
   }
 
-  const { maximizedWidgets, toggleWidget, setMaximizedWidgets } = useMaximizedWidgets([PATH_PROGRESS], 1);
+  const { maximizedWidgets, toggleWidget, setMaximizedWidgets } = useMaximizedWidgets([Widget.PathProgress], 1);
 
   const keys = useMemo(() => [
     GAME,
@@ -153,7 +151,7 @@ function GameStat() {
   const updateCurrentPlayer = (playerID: string) => {
     chrome.storage.local.set({ [VIEWING_PLAYER]: playerID }, () => {
       chrome.runtime.sendMessage({
-        type: UPDATED_VIEWING_PLAYER,
+        type: InformationUpdated.ViewingPlayer,
         clientID: playerID,
       });
     });
@@ -185,8 +183,8 @@ function GameStat() {
 
         {tempMode === GamePlayMode.MultiPlayer && (
           <PlayerSelectorWidget
-          widgetKey={PLAYER_SELECTOR}
-          isExpanded={playerSelectorWidget.includes(PLAYER_SELECTOR)}
+          widgetKey={Widget.PlayerSelector}
+          isExpanded={playerSelectorWidget.includes(Widget.PlayerSelector)}
           onToggle={handlePlayerSelectorMaximize}
           currentPlayer={currentPlayer}
           playerIDs={playerIDs}
@@ -195,15 +193,15 @@ function GameStat() {
         )}
 
         <CustomizationWidget
-        widgetKey={CUSTOMIZATION_INFO}
-        isExpanded={maximizedWidgets.includes(CUSTOMIZATION_INFO)}
+        widgetKey={Widget.CustomizationInfo}
+        isExpanded={maximizedWidgets.includes(Widget.CustomizationInfo)}
         onToggle={handleMaximize}
         customizations={gameCustomizations}
         />
 
         <PathProgressWidget
-        widgetKey={PATH_PROGRESS}
-        isExpanded={maximizedWidgets.includes(PATH_PROGRESS)}
+        widgetKey={Widget.PathProgress}
+        isExpanded={maximizedWidgets.includes(Widget.PathProgress)}
         onToggle={handleMaximize}
         gameClientInformation={gameInformation.gameClients[currentPlayerRef.current]}
         pathCustomizations={pathCustomizations}

@@ -1,6 +1,6 @@
 import {
   Article,
-    CLICK_COUNT,
+  CLICK_COUNT,
   CustomizationInterface,
   defaultClientGame,
   END_CAUSE,
@@ -12,53 +12,37 @@ import {
   GET_TAB_ID,
   Mode,
   GamePlayMode,
-  PAUSE,
   PLAYER,
-  START_GAME,
   TAB_ID,
-  UNPAUSE,
-  UPDATE_CUSTOMIZATION,
-  UPDATE_GAME_MODE,
-  UPDATE_PAUSE,
-  UPDATED_GAME_CLIENT,
-  UPDATED_GAME_STATUS,
-  UPDATED_VIEWING_PLAYER,
   VIEWING_PLAYER,
   WIKIPEDIA_CLICK,
-  WIN,
+  UpdateInformation,
+  InformationUpdated,
+ 
 } from "../utils/utils";
 
-// TODO: extra provisions for gameMode
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
-    case UPDATE_CUSTOMIZATION: // from singleplayer or multiplayer host
+    case UpdateInformation.Customization: // from singleplayer or multiplayer host
       handleCustomizationsUpdate(message.customizations);
       break;
-    case UPDATE_GAME_MODE: // from the user themselves
+    case UpdateInformation.GameMode: // from the user themselves
       handleGameModeUpdate(message.game_mode);
       break;
-    case START_GAME: // in general?
-      chrome.storage.local.get([GAME_MODE], (result) => {
-        let gameMode: string = result[GAME_MODE] || GamePlayMode.SinglePlayer;
-        if (gameMode === GamePlayMode.SinglePlayer) {
-          startSingleplayerGame(message.customizations);
-        } else if (gameMode === GamePlayMode.MultiPlayer) {
-          // TODO: get start time from server
-          startMultiplayerGame();
-        }
-      });
+    case SingleplayerEvents.Start: // in general?
+      startSingleplayerGame(message.customizations);    
       break;
     case WIKIPEDIA_CLICK: // in general
         handleWikipediaClick(message.page);
         break;
-    case UPDATED_VIEWING_PLAYER: // multiplayer
+    case InformationUpdated.ViewingPlayer: // multiplayer
         handleUpdatedViewingPlayer(message.clientID);
         break;
-    case PAUSE: // singleplayer
+    case SingleplayerEvents.Pause: // singleplayer
         handleSingleplayerPause();
         break;
-    case UNPAUSE: // singleplayer
+    case SingleplayerEvents.Unpause: // singleplayer
         handleSingleplayerUnpause();
         break;
     case GET_TAB_ID: // general
@@ -106,8 +90,8 @@ function handleSingleplayerPause() {
 
     game.gameStatus.paused = true;
     game.gameStatus.pauseStart = Date.now();
-    chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus})
-    chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: true});
+    chrome.runtime.sendMessage({type: InformationUpdated.GameStatus, gameStatus: game.gameStatus})
+    chrome.runtime.sendMessage({type: UpdateInformation.Pause, pause: true});
   
     pauseInterval = setInterval(() => {
       elapsedPause++;
@@ -126,7 +110,6 @@ function handleSingleplayerPause() {
 let pauseInterval : NodeJS.Timeout | null = null;
 let elapsedPause = 0;
 
-// TODO: rename to handleSingleplayerUnpause?
 function handleSingleplayerUnpause() {
   chrome.storage.local.get([GAME, GAME_MODE, PLAYER], (result) => {
     let game: GameInterface = result[GAME];
@@ -154,16 +137,15 @@ function handleSingleplayerUnpause() {
       game.gameStatus.pauseGap = elapsedPause;
     }
     
-    // TODO: this only works for singleplayer currently
     // setting delay for current node
     const currentNode = game.gameClients[player].currentNode;
     game.gameClients[player].nodeHistory[currentNode].delayTime += elapsedPause;
     game.gameStatus.paused = false;
 
     
-    chrome.runtime.sendMessage({type: UPDATED_GAME_CLIENT, clientID: player, gameClient: game.gameClients[player]}) // TODO: complex pause in multi-player
-    chrome.runtime.sendMessage({type: UPDATED_GAME_STATUS, gameStatus: game.gameStatus});
-    chrome.runtime.sendMessage({type: UPDATE_PAUSE, pause: false});
+    chrome.runtime.sendMessage({type: InformationUpdated.GameClient, clientID: player, gameClient: game.gameClients[player]}) // TODO: complex pause in multi-player
+    chrome.runtime.sendMessage({type: InformationUpdated.GameStatus, gameStatus: game.gameStatus});
+    chrome.runtime.sendMessage({type: UpdateInformation.Pause, pause: false});
   
     elapsedPause = 0;
     chrome.storage.local.set({[GAME]: game});
@@ -204,7 +186,6 @@ function handleGameModeUpdate(updatedGameMode: string) {
   })
 }
 
-// TODO: rename to startSingleplayerGame?
 function startSingleplayerGame(customizations: CustomizationInterface) {
   chrome.storage.local.get([GAME, PLAYER, TAB_ID, VIEWING_PLAYER], (result) => {
     let game: GameInterface = result[GAME] || defaultClientGame;
@@ -224,9 +205,7 @@ function startSingleplayerGame(customizations: CustomizationInterface) {
     if (game.customizations.mode.type === Mode.Path) {
       pathLength += game.customizations.mode.path?.connections.length ?? 0;
     }
-  
-  
-  
+    
     // Initializing free-path
     if (game.customizations.mode.type === Mode.Path &&
       !game.customizations.mode.path?.directed) {
@@ -272,7 +251,7 @@ function startSingleplayerGame(customizations: CustomizationInterface) {
       };
   
       chrome.storage.local.set(
-        { [GAME]: game, [WIN]: false, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer, 
+        { [GAME]: game, [TAB_ID]: newTab.id, [PLAYER]: player, [VIEWING_PLAYER] : viewingPlayer, 
           [END_CAUSE]: undefined, [PLAYER]: GamePlayMode.SinglePlayer
          }
       );
@@ -289,8 +268,6 @@ function sendTabId(sender : chrome.runtime.MessageSender, response : (response: 
   }
 }
 
-// TODO: rename to startMultiplayerGame
-// ONLY AFTER GAME_STARTED and MODE === MULTI_PLAYER
 function startMultiplayerGame() {}
 
 function handleWikipediaClick(page : string ) {
@@ -366,7 +343,7 @@ function handleWikipediaClick(page : string ) {
                       // TODO: send message to socket.io server
                     } else if (gameMode === GamePlayMode.SinglePlayer) {
                       chrome.runtime.sendMessage({
-                        type: UPDATED_GAME_CLIENT,
+                        type: InformationUpdated.GameClient,
                         clientID: viewingPlayer,
                         gameClient: game.gameClients[viewingPlayer]
                       });

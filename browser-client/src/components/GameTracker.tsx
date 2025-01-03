@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClientGameInterface, defaultClientGame, SingleplayerEvents, GameStatusInterface, NodeHistoryInterface, TRACKING_CLICKS, TRACKING_TIME, UPDATE_PAUSE, CustomizationInterface, Mode } from "../utils/utils";
+import { 
+  ClientGameInterface, 
+  defaultClientGame, 
+  SingleplayerEvents, 
+  GameStatusInterface, 
+  NodeHistoryInterface, 
+  Tracking, 
+  UpdateInformation, 
+  CustomizationInterface, 
+  Mode } from "../utils/utils";
 
 function GameTracker({
   gameClientInformation,
@@ -44,7 +53,7 @@ function GameTracker({
           }
         }, 1000);
   
-      } else if (tracking === TRACKING_TIME) {
+      } else if (tracking === Tracking.Time) {
         interval = setInterval(() => {
           setTime((prevTime) => prevTime + 1);
         }, 1000);
@@ -60,7 +69,7 @@ function GameTracker({
   useEffect(() => {
     if(isChromeExtension) {
       chrome.runtime.onMessage.addListener((message, sender, response) => {
-        if(message.type === UPDATE_PAUSE) {
+        if(message.type === UpdateInformation.Pause) {
           if(message.pause && interval) {
             clearInterval(interval);
           } else if (!message.pause) {
@@ -77,7 +86,7 @@ function GameTracker({
                 }
               }, 1000);
         
-            } else if (tracking === TRACKING_TIME) {
+            } else if (tracking === Tracking.Time) {
               interval = setInterval(() => {
                 setTime((prevTime) => prevTime + 1);
               }, 1000);
@@ -152,23 +161,23 @@ function GameTracker({
 
   const renderContent = () => {
     switch (true) {
-      case tracking === TRACKING_CLICKS && countDown != -1 && mode === Mode.CountDown:
+      case tracking === Tracking.Clicks && countDown != -1 && mode === Mode.CountDown:
         return (
           <div className="flex flex-col justify-items-center gap-2">
             {renderClicks()}
             {renderCountDown()}
           </div>
         );
-      case tracking === TRACKING_TIME && countDown != -1 && mode === Mode.CountDown:
+      case tracking === Tracking.Time && countDown != -1 && mode === Mode.CountDown:
         return (
           <div className="flex flex-col justify-items-center gap-2">
             {renderTime()}
             {renderCountDown()}
           </div>
         )
-      case tracking === TRACKING_CLICKS:
+      case tracking === Tracking.Clicks:
         return renderClicks();
-      case tracking === TRACKING_TIME:
+      case tracking === Tracking.Time:
         return renderTime();
 
       default:

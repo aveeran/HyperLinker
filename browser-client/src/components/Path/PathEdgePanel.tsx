@@ -44,7 +44,7 @@ function PathEdgePanel() {
                     edgeHistory?.map((subArray, outerIndex) => (
                         <ul key={outerIndex} className="mb-4">
                             {subArray.map((entry, innerIndex) => (
-                                <li key={innerIndex} className="text-sm text-gray-700">
+                                <li key={innerIndex} className="flex text-sm text-gray-700">
                                     <a href={entry.link} target="_blank" rel="noopener noreferrer">
                                         {entry.title}
                                     </a>
